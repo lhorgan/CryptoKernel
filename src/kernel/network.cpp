@@ -72,12 +72,12 @@ CryptoKernel::Network::~Network() {
     listener.close();
 }
 
-void CryptoKernel::Network::cacheConnections(std::map<std::string, std::unique_ptr<PeerInfo>>& connectedCache,
-											 std::chrono::high_resolution_clock::time_point lastCall,
+bool CryptoKernel::Network::cacheConnections(std::map<std::string, std::unique_ptr<PeerInfo>>& connectedCache,
+											 std::chrono::high_resolution_clock::time_point lastUpdate,
 											 double cacheInterval) {
 
 	std::chrono::high_resolution_clock::time_point currTime = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(lastCall - lastCall);
+	std::chrono::duration<double> elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(currTime - lastUpdate);
 
 	if(elapsedTime.count() > cacheInterval || connectedCache.size() == 0) {
 		std::lock_guard<std::recursive_mutex> lock(connectedMutex);
@@ -102,14 +102,18 @@ void CryptoKernel::Network::cacheConnections(std::map<std::string, std::unique_p
 			//connections.insert(std::pair<std::string, std::unique_ptr<PeerInfo>>(entry.first, pif));
 			connectedCache[entry.first].reset(peerInfo);
 		}
+		return true;
 	}
+	return false;
 }
 
 void CryptoKernel::Network::makeOutgoingConnectionsWrapper() {
-	std::chrono::high_resolution_clock::time_point lastCacheCall = std::chrono::high_resolution_clock::now();
+	std::chrono::high_resolution_clock::time_point lastUpdate = std::chrono::high_resolution_clock::now();
+	std::map<std::string, std::unique_ptr<PeerInfo>> connected; // rename cachedConnected?
 	while(running) {
-		std::map<std::string, std::unique_ptr<PeerInfo>> connected; // rename cachedConnected?
-		cacheConnections(connected, lastCacheCall, 1.0);
+		if(cacheConnections(connected, lastUpdate, 1.0)) {
+			lastUpdate = std::chrono::high_resolution_clock::now();
+		}
 
 		makeOutgoingConnections(connected);
 
@@ -118,10 +122,12 @@ void CryptoKernel::Network::makeOutgoingConnectionsWrapper() {
 }
 
 void CryptoKernel::Network::infoOutgoingConnectionsWrapper() {
-	std::chrono::high_resolution_clock::time_point lastCacheCall = std::chrono::high_resolution_clock::now();
-		while(running) {
-		std::map<std::string, std::unique_ptr<PeerInfo>> connected; // rename cachedConnected?
-		cacheConnections(connected, lastCacheCall, 1.0);
+	std::chrono::high_resolution_clock::time_point lastUpdate = std::chrono::high_resolution_clock::now();
+	std::map<std::string, std::unique_ptr<PeerInfo>> connected; // rename cachedConnected?
+	while(running) {
+		if(cacheConnections(connected, lastUpdate, 1.0)) {
+			lastUpdate = std::chrono::high_resolution_clock::now();
+		}
 
 		infoOutgoingConnections(connected);
 
@@ -139,10 +145,12 @@ void CryptoKernel::Network::networkFuncWrapper() {
 	heightMutex.unlock();
 	uint64_t startHeight = currentHeight;
 
-	std::chrono::high_resolution_clock::time_point lastCacheCall = std::chrono::high_resolution_clock::now();
+	std::chrono::high_resolution_clock::time_point lastUpdate = std::chrono::high_resolution_clock::now();
+	std::map<std::string, std::unique_ptr<PeerInfo>> connected; // rename cachedConnected?
 	while(running) {
-		std::map<std::string, std::unique_ptr<PeerInfo>> connected; // rename cachedConnected?
-		cacheConnections(connected, lastCacheCall, 1.0);
+		if(cacheConnections(connected, lastUpdate, 1.0)) {
+			lastUpdate = std::chrono::high_resolution_clock::now();
+		}
 
 		networkFunc(connected, failure, blockProcessor, currentHeight, startHeight);
 	}
@@ -153,10 +161,12 @@ void CryptoKernel::Network::networkFuncWrapper() {
 }
 
 void CryptoKernel::Network::connectionFuncWrapper() {
-	std::chrono::high_resolution_clock::time_point lastCacheCall = std::chrono::high_resolution_clock::now();
+	std::chrono::high_resolution_clock::time_point lastUpdate = std::chrono::high_resolution_clock::now();
+	std::map<std::string, std::unique_ptr<PeerInfo>> connected; // rename cachedConnected?
 	while(running) {
-		std::map<std::string, std::unique_ptr<PeerInfo>> connected; // rename cachedConnected?
-		cacheConnections(connected, lastCacheCall, 1.0);
+		if(cacheConnections(connected, lastUpdate, 1.0)) {
+			lastUpdate = std::chrono::high_resolution_clock::now();
+		}
 
 		connectionFunc(connected);
 	}
@@ -321,7 +331,7 @@ void CryptoKernel::Network::networkFunc(std::map<std::string, std::unique_ptr<Pe
 										uint64_t& currentHeight,
 										uint64_t& startHeight) {
 	//Determine best chain
-	connectedMutex.lock();
+	//connectedMutex.lock();
 	uint64_t bestHeight = currentHeight;
 	for(std::map<std::string, std::unique_ptr<PeerInfo>>::iterator it = connected.begin();
 			it != connected.end(); it++) {
@@ -481,7 +491,7 @@ void CryptoKernel::Network::networkFunc(std::map<std::string, std::unique_ptr<Pe
 			}
 		}
 
-		connectedMutex.unlock();
+		//connectedMutex.unlock();
 	}
 
 	if(bestHeight <= currentHeight || connected.size() == 0 || !madeProgress) {
@@ -498,7 +508,7 @@ void CryptoKernel::Network::networkFunc(std::map<std::string, std::unique_ptr<Pe
 void CryptoKernel::Network::connectionFunc(std::map<std::string, std::unique_ptr<PeerInfo>>& connected) {
 	sf::TcpSocket* client = new sf::TcpSocket();
 	if(listener.accept(*client) == sf::Socket::Done) {
-		std::lock_guard<std::recursive_mutex> lock(connectedMutex);
+		//std::lock_guard<std::recursive_mutex> lock(connectedMutex);
 		if(connected.find(client->getRemoteAddress().toString()) != connected.end()) {
 			log->printf(LOG_LEVEL_INFO,
 						"Network(): Incoming connection duplicates existing connection for " +

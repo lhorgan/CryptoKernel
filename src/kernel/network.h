@@ -149,7 +149,7 @@ private:
 
     unsigned int port;
 
-    void cacheConnections(std::map<std::string, std::unique_ptr<PeerInfo>>& connectedCache,
+    bool cacheConnections(std::map<std::string, std::unique_ptr<PeerInfo>>& connectedCache,
     					  std::chrono::high_resolution_clock::time_point lastCall,
     					  double cacheInterval);
 };
