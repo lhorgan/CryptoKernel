@@ -54,6 +54,8 @@ private:
     std::default_random_engine generator;
     
     Network::peerStats stats;
+
+    std::recursive_mutex peerMutex;
 };
 
 #endif // NETWORKPEER_H_INCLUDED

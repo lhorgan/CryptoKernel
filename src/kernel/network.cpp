@@ -72,7 +72,7 @@ CryptoKernel::Network::~Network() {
     listener.close();
 }
 
-bool CryptoKernel::Network::cacheConnections(std::map<std::string, std::unique_ptr<PeerInfo>>& connectedCache,
+bool CryptoKernel::Network::cacheConnections(std::map<std::string, std::shared_ptr<PeerInfo>>& connectedCache,
 											 std::chrono::high_resolution_clock::time_point lastUpdate,
 											 double cacheInterval) {
 
@@ -87,7 +87,10 @@ bool CryptoKernel::Network::cacheConnections(std::map<std::string, std::unique_p
 				PeerInfo* peerInfo = new PeerInfo;
 				peerInfo->info = entry.second->info;
 				peerInfo->peer.reset(entry.second->peer.get());
-				std::unique_ptr<PeerInfo> pif(peerInfo);
+				if(!entry.second->peer.get()) {
+					log->printf(LOG_LEVEL_INFO, "warning, null pointer!");
+				}
+				//std::unique_ptr<PeerInfo> pif(peerInfo);
 				//connections.insert(std::pair<std::string, std::unique_ptr<PeerInfo>>(entry.first, pif));
 				connections[entry.first].reset(peerInfo);
 			}
@@ -98,7 +101,7 @@ bool CryptoKernel::Network::cacheConnections(std::map<std::string, std::unique_p
 			PeerInfo* peerInfo = new PeerInfo;
 			peerInfo->info = entry.second->info;
 			peerInfo->peer.reset(entry.second->peer.get());
-			std::unique_ptr<PeerInfo> pif(peerInfo);
+			//std::unique_ptr<PeerInfo> pif(peerInfo);
 			//connections.insert(std::pair<std::string, std::unique_ptr<PeerInfo>>(entry.first, pif));
 			connectedCache[entry.first].reset(peerInfo);
 		}
@@ -109,7 +112,7 @@ bool CryptoKernel::Network::cacheConnections(std::map<std::string, std::unique_p
 
 void CryptoKernel::Network::makeOutgoingConnectionsWrapper() {
 	std::chrono::high_resolution_clock::time_point lastUpdate = std::chrono::high_resolution_clock::now();
-	std::map<std::string, std::unique_ptr<PeerInfo>> connected; // rename cachedConnected?
+	std::map<std::string, std::shared_ptr<PeerInfo>> connected; // rename cachedConnected?
 	while(running) {
 		if(cacheConnections(connected, lastUpdate, 1.0)) {
 			lastUpdate = std::chrono::high_resolution_clock::now();
@@ -123,7 +126,7 @@ void CryptoKernel::Network::makeOutgoingConnectionsWrapper() {
 
 void CryptoKernel::Network::infoOutgoingConnectionsWrapper() {
 	std::chrono::high_resolution_clock::time_point lastUpdate = std::chrono::high_resolution_clock::now();
-	std::map<std::string, std::unique_ptr<PeerInfo>> connected; // rename cachedConnected?
+	std::map<std::string, std::shared_ptr<PeerInfo>> connected; // rename cachedConnected?
 	while(running) {
 		if(cacheConnections(connected, lastUpdate, 1.0)) {
 			lastUpdate = std::chrono::high_resolution_clock::now();
@@ -146,7 +149,7 @@ void CryptoKernel::Network::networkFuncWrapper() {
 	uint64_t startHeight = currentHeight;
 
 	std::chrono::high_resolution_clock::time_point lastUpdate = std::chrono::high_resolution_clock::now();
-	std::map<std::string, std::unique_ptr<PeerInfo>> connected; // rename cachedConnected?
+	std::map<std::string, std::shared_ptr<PeerInfo>> connected; // rename cachedConnected?
 	while(running) {
 		if(cacheConnections(connected, lastUpdate, 1.0)) {
 			lastUpdate = std::chrono::high_resolution_clock::now();
@@ -162,7 +165,7 @@ void CryptoKernel::Network::networkFuncWrapper() {
 
 void CryptoKernel::Network::connectionFuncWrapper() {
 	std::chrono::high_resolution_clock::time_point lastUpdate = std::chrono::high_resolution_clock::now();
-	std::map<std::string, std::unique_ptr<PeerInfo>> connected; // rename cachedConnected?
+	std::map<std::string, std::shared_ptr<PeerInfo>> connected; // rename cachedConnected?
 	while(running) {
 		if(cacheConnections(connected, lastUpdate, 1.0)) {
 			lastUpdate = std::chrono::high_resolution_clock::now();
@@ -172,7 +175,7 @@ void CryptoKernel::Network::connectionFuncWrapper() {
 	}
 }
 
-void CryptoKernel::Network::makeOutgoingConnections(std::map<std::string, std::unique_ptr<PeerInfo>>& connected) {
+void CryptoKernel::Network::makeOutgoingConnections(std::map<std::string, std::shared_ptr<PeerInfo>>& connected) {
 	std::map<std::string, Json::Value> peersToTry;
 	//{
 	log->printf(LOG_LEVEL_INFO, "hey, it's my turn!");
@@ -249,7 +252,7 @@ void CryptoKernel::Network::makeOutgoingConnections(std::map<std::string, std::u
 	}
 }
 
-void CryptoKernel::Network::infoOutgoingConnections(std::map<std::string, std::unique_ptr<PeerInfo>>& connected) {
+void CryptoKernel::Network::infoOutgoingConnections(std::map<std::string, std::shared_ptr<PeerInfo>>& connected) {
 	//std::lock_guard<std::recursive_mutex> lock(connectedMutex);
 	log->printf(LOG_LEVEL_INFO, "getting block info");
 
@@ -257,7 +260,7 @@ void CryptoKernel::Network::infoOutgoingConnections(std::map<std::string, std::u
 
 	std::set<std::string> removals;
 
-	for(std::map<std::string, std::unique_ptr<PeerInfo>>::iterator it = connected.begin();
+	for(std::map<std::string, std::shared_ptr<PeerInfo>>::iterator it = connected.begin();
 				it != connected.end(); it++) {
 		try {
 
@@ -325,7 +328,7 @@ void CryptoKernel::Network::infoOutgoingConnections(std::map<std::string, std::u
 	dbTx->commit();
 }
 
-void CryptoKernel::Network::networkFunc(std::map<std::string, std::unique_ptr<PeerInfo>>& connected,
+void CryptoKernel::Network::networkFunc(std::map<std::string, std::shared_ptr<PeerInfo>>& connected,
 										bool& failure,
 										std::unique_ptr<std::thread>& blockProcessor,
 										uint64_t& currentHeight,
@@ -333,7 +336,7 @@ void CryptoKernel::Network::networkFunc(std::map<std::string, std::unique_ptr<Pe
 	//Determine best chain
 	//connectedMutex.lock();
 	uint64_t bestHeight = currentHeight;
-	for(std::map<std::string, std::unique_ptr<PeerInfo>>::iterator it = connected.begin();
+	for(std::map<std::string, std::shared_ptr<PeerInfo>>::iterator it = connected.begin();
 			it != connected.end(); it++) {
 		if(it->second->info["height"].asUInt64() > bestHeight) {
 			bestHeight = it->second->info["height"].asUInt64();
@@ -360,7 +363,7 @@ void CryptoKernel::Network::networkFunc(std::map<std::string, std::unique_ptr<Pe
 	if(bestHeight > currentHeight) {
 		//connectedMutex.lock();
 
-		for(std::map<std::string, std::unique_ptr<PeerInfo>>::iterator it = connected.begin();
+		for(std::map<std::string, std::shared_ptr<PeerInfo>>::iterator it = connected.begin();
 				it != connected.end() && running; ) {
 			if(it->second->info["height"].asUInt64() > currentHeight) {
 				std::list<CryptoKernel::Blockchain::block> blocks;
@@ -505,7 +508,7 @@ void CryptoKernel::Network::networkFunc(std::map<std::string, std::unique_ptr<Pe
 	}
 }
 
-void CryptoKernel::Network::connectionFunc(std::map<std::string, std::unique_ptr<PeerInfo>>& connected) {
+void CryptoKernel::Network::connectionFunc(std::map<std::string, std::shared_ptr<PeerInfo>>& connected) {
 	sf::TcpSocket* client = new sf::TcpSocket();
 	if(listener.accept(*client) == sf::Socket::Done) {
 		//std::lock_guard<std::recursive_mutex> lock(connectedMutex);
@@ -599,7 +602,7 @@ unsigned int CryptoKernel::Network::getConnections() {
 
 void CryptoKernel::Network::broadcastTransactions(const
         std::vector<CryptoKernel::Blockchain::transaction> transactions) {
-    for(std::map<std::string, std::unique_ptr<PeerInfo>>::iterator it = connections.begin();
+    for(std::map<std::string, std::shared_ptr<PeerInfo>>::iterator it = connections.begin();
             it != connections.end(); it++) {
         try {
             it->second->peer->sendTransactions(transactions);
@@ -610,7 +613,7 @@ void CryptoKernel::Network::broadcastTransactions(const
 }
 
 void CryptoKernel::Network::broadcastBlock(const CryptoKernel::Blockchain::block block) {
-    for(std::map<std::string, std::unique_ptr<PeerInfo>>::iterator it = connections.begin();
+    for(std::map<std::string, std::shared_ptr<PeerInfo>>::iterator it = connections.begin();
             it != connections.end(); it++) {
         try {
             it->second->peer->sendBlock(block);

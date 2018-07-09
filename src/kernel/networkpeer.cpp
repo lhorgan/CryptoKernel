@@ -39,6 +39,7 @@ CryptoKernel::Network::Peer::Peer(sf::TcpSocket* client, CryptoKernel::Blockchai
 //}
 
 CryptoKernel::Network::Peer::~Peer() {
+	//std::lock_guard<std::recursive_mutex> pm(peerMutex);
     running = false;
     requestThread->join();
     clientMutex.lock();
@@ -48,6 +49,8 @@ CryptoKernel::Network::Peer::~Peer() {
 }
 
 Json::Value CryptoKernel::Network::Peer::sendRecv(const Json::Value& request) {
+	std::lock_guard<std::recursive_mutex> pm(peerMutex);
+
     std::uniform_int_distribution<uint64_t> distribution(0,
             std::numeric_limits<uint64_t>::max());
     const uint64_t nonce = distribution(generator);
@@ -99,6 +102,7 @@ Json::Value CryptoKernel::Network::Peer::sendRecv(const Json::Value& request) {
 }
 
 void CryptoKernel::Network::Peer::send(const Json::Value& response) {
+	std::lock_guard<std::recursive_mutex> pm(peerMutex);
     sf::Packet packet;
     packet << CryptoKernel::Storage::toString(response, false);
 
@@ -116,6 +120,7 @@ void CryptoKernel::Network::Peer::send(const Json::Value& response) {
 }
 
 void CryptoKernel::Network::Peer::requestFunc() {
+	std::lock_guard<std::recursive_mutex> pm(peerMutex);
     uint64_t nRequests = 0;
     uint64_t startTime = static_cast<uint64_t>(std::time(nullptr));
 
@@ -284,6 +289,7 @@ void CryptoKernel::Network::Peer::requestFunc() {
 }
 
 Json::Value CryptoKernel::Network::Peer::getInfo() {
+	std::lock_guard<std::recursive_mutex> pm(peerMutex);
     Json::Value request;
     request["command"] = "info";
 
@@ -292,6 +298,7 @@ Json::Value CryptoKernel::Network::Peer::getInfo() {
 
 void CryptoKernel::Network::Peer::sendTransactions(const
         std::vector<CryptoKernel::Blockchain::transaction>& transactions) {
+	std::lock_guard<std::recursive_mutex> pm(peerMutex);
     Json::Value request;
     request["command"] = "transactions";
     for(const CryptoKernel::Blockchain::transaction& tx : transactions) {
@@ -303,6 +310,7 @@ void CryptoKernel::Network::Peer::sendTransactions(const
 
 void CryptoKernel::Network::Peer::sendBlock(const CryptoKernel::Blockchain::block&
         block) {
+	std::lock_guard<std::recursive_mutex> pm(peerMutex);
     Json::Value request;
     request["command"] = "block";
     request["data"] = block.toJson();
@@ -312,6 +320,7 @@ void CryptoKernel::Network::Peer::sendBlock(const CryptoKernel::Blockchain::bloc
 
 std::vector<CryptoKernel::Blockchain::transaction>
 CryptoKernel::Network::Peer::getUnconfirmedTransactions() {
+	std::lock_guard<std::recursive_mutex> pm(peerMutex);
     Json::Value request;
     request["command"] = "getunconfirmed";
     Json::Value unconfirmed = sendRecv(request);
@@ -331,6 +340,7 @@ CryptoKernel::Network::Peer::getUnconfirmedTransactions() {
 
 CryptoKernel::Blockchain::block CryptoKernel::Network::Peer::getBlock(
     const uint64_t height, const std::string& id) {
+	std::lock_guard<std::recursive_mutex> pm(peerMutex);
     Json::Value request;
     request["command"] = "getblock";
     Json::Value block;
@@ -352,6 +362,7 @@ CryptoKernel::Blockchain::block CryptoKernel::Network::Peer::getBlock(
 
 std::vector<CryptoKernel::Blockchain::block> CryptoKernel::Network::Peer::getBlocks(
     const uint64_t start, const uint64_t end) {
+	std::lock_guard<std::recursive_mutex> pm(peerMutex);
     Json::Value request;
     request["command"] = "getblocks";
     request["data"]["start"] = start;

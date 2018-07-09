@@ -99,10 +99,10 @@ private:
     void changeScore(const std::string& url, const uint64_t score);
 
     struct PeerInfo {
-        std::unique_ptr<Peer> peer;
+        std::shared_ptr<Peer> peer;
         Json::Value info;
     };
-    std::map<std::string, std::unique_ptr<PeerInfo>> connections;
+    std::map<std::string, std::shared_ptr<PeerInfo>> connections;
     std::recursive_mutex connectedMutex;
 
     std::map<std::string, peerStats> connectedStats;
@@ -116,7 +116,7 @@ private:
 
     bool running;
 
-    void networkFunc(std::map<std::string, std::unique_ptr<PeerInfo>>& connected,
+    void networkFunc(std::map<std::string, std::shared_ptr<PeerInfo>>& connected,
     					bool& failure,
 						std::unique_ptr<std::thread>& blockProcessor,
 						uint64_t& currentHeight,
@@ -124,15 +124,15 @@ private:
     void networkFuncWrapper();
     std::unique_ptr<std::thread> networkThread;
 
-    void connectionFunc(std::map<std::string, std::unique_ptr<PeerInfo>>& connected);
+    void connectionFunc(std::map<std::string, std::shared_ptr<PeerInfo>>& connected);
     void connectionFuncWrapper();
 	std::unique_ptr<std::thread> connectionThread;
 
-	void makeOutgoingConnections(std::map<std::string, std::unique_ptr<PeerInfo>>& connected);
+	void makeOutgoingConnections(std::map<std::string, std::shared_ptr<PeerInfo>>& connected);
 	void makeOutgoingConnectionsWrapper();
     std::unique_ptr<std::thread> makeOutgoingConnectionsThread;
 
-    void infoOutgoingConnections(std::map<std::string, std::unique_ptr<PeerInfo>>& connected);
+    void infoOutgoingConnections(std::map<std::string, std::shared_ptr<PeerInfo>>& connected);
     void infoOutgoingConnectionsWrapper();
     std::unique_ptr<std::thread> infoOutgoingConnectionsThread;
 
@@ -149,7 +149,7 @@ private:
 
     unsigned int port;
 
-    bool cacheConnections(std::map<std::string, std::unique_ptr<PeerInfo>>& connectedCache,
+    bool cacheConnections(std::map<std::string, std::shared_ptr<PeerInfo>>& connectedCache,
     					  std::chrono::high_resolution_clock::time_point lastCall,
     					  double cacheInterval);
 };
