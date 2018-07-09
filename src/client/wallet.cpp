@@ -409,8 +409,8 @@ void CryptoKernel::Wallet::digestBlock(CryptoKernel::Storage::Transaction* walle
     */
     std::lock_guard<std::recursive_mutex> lock(walletLock);
 
-    log->printf(LOG_LEVEL_INFO,
-                "Wallet::digestBlock(): Digesting block " + std::to_string(block.getHeight()));
+    /*log->printf(LOG_LEVEL_INFO,
+                "Wallet::digestBlock(): Digesting block " + std::to_string(block.getHeight()));*/
 
     std::set<CryptoKernel::Blockchain::transaction> txs = block.getTransactions();
     txs.insert(block.getCoinbaseTx());

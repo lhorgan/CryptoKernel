@@ -539,9 +539,9 @@ std::tuple<bool, bool> CryptoKernel::Blockchain::submitBlock(Storage::Transactio
         genesisBlockId = newBlock.getId();
     }
 
-    log->printf(LOG_LEVEL_INFO,
+    /*log->printf(LOG_LEVEL_INFO,
                 "blockchain::submitBlock(): successfully submitted block: " +
-                CryptoKernel::Storage::toString(getBlockDB(dbTx, idAsString).toJson(), true));
+                CryptoKernel::Storage::toString(getBlockDB(dbTx, idAsString).toJson(), true));*/
 
     return std::make_tuple(true, false);
 }

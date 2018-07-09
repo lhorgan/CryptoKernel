@@ -22,6 +22,22 @@ CryptoKernel::Network::Peer::Peer(sf::TcpSocket* client, CryptoKernel::Blockchai
     requestThread.reset(new std::thread(&CryptoKernel::Network::Peer::requestFunc, this));
 }
 
+//CryptoKernel::Network::Peer::Peer(const Peer& other) {
+//	this->client = other.client;
+//	this->blockchain = other.blockchain;
+//	this->network = other.network;
+//
+//	this->stats.connectedSince = other.stats.connectedSince;
+//	this->stats.ping = other.stats.ping;
+//	this->stats.transferUp = other.stats.transferUp;
+//	this->stats.transferDown = other.stats.transferDown;
+//	this->stats.incoming = other.stats.incoming;
+//
+//	this->running = other.running;
+//
+//	this->requestThread = other.requestThread; // can we do this?  is this okay?  we shall see!
+//}
+
 CryptoKernel::Network::Peer::~Peer() {
     running = false;
     requestThread->join();

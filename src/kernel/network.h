@@ -102,7 +102,7 @@ private:
         std::unique_ptr<Peer> peer;
         Json::Value info;
     };
-    std::map<std::string, std::unique_ptr<PeerInfo>> connected;
+    std::map<std::string, std::unique_ptr<PeerInfo>> connections;
     std::recursive_mutex connectedMutex;
 
     std::map<std::string, peerStats> connectedStats;
@@ -116,30 +116,42 @@ private:
 
     bool running;
 
-    void networkFunc();
+    void networkFunc(std::map<std::string, std::unique_ptr<PeerInfo>>& connected,
+    					bool& failure,
+						std::unique_ptr<std::thread>& blockProcessor,
+						uint64_t& currentHeight,
+						uint64_t& startHeight);
+    void networkFuncWrapper();
     std::unique_ptr<std::thread> networkThread;
 
-    void connectionFunc();
+    void connectionFunc(std::map<std::string, std::unique_ptr<PeerInfo>>& connected);
+    void connectionFuncWrapper();
 	std::unique_ptr<std::thread> connectionThread;
 
-	void makeOutgoingConnections();
+	void makeOutgoingConnections(std::map<std::string, std::unique_ptr<PeerInfo>>& connected);
 	void makeOutgoingConnectionsWrapper();
     std::unique_ptr<std::thread> makeOutgoingConnectionsThread;
 
-    void infoOutgoingConnections();
+    void infoOutgoingConnections(std::map<std::string, std::unique_ptr<PeerInfo>>& connected);
     void infoOutgoingConnectionsWrapper();
     std::unique_ptr<std::thread> infoOutgoingConnectionsThread;
 
     sf::TcpListener listener;
 
+    std::mutex bannedMutex;
     std::map<std::string, uint64_t> banned;
 
     sf::IpAddress myAddress;
 
+    std::mutex heightMutex;
     uint64_t bestHeight;
     uint64_t currentHeight;
 
     unsigned int port;
+
+    void cacheConnections(std::map<std::string, std::unique_ptr<PeerInfo>>& connectedCache,
+    					  std::chrono::high_resolution_clock::time_point lastCall,
+    					  double cacheInterval);
 };
 }
 
