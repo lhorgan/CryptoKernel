@@ -1,0 +1,23 @@
+{
+	"coinbaseTx" : 
+	{
+		"outputs" : 
+		[
+			{
+				"data" : 
+				{
+					"contract" : null,
+					"publicKey" : "BPBDDsk7OnxL8j5yGk0hBkx+hZkK6DIUPpAftFdgQX6HRx6cuRC6z2NXuwcp5LhfT62hVNd86H0WuVIDrMyX79I="
+				},
+				"nonce" : 446455707,
+				"value" : 100000000
+			}
+		],
+		"timestamp" : 1531243402
+	},
+	"consensusData" : null,
+	"data" : null,
+	"height" : 1,
+	"previousBlockId" : "0",
+	"timestamp" : 1531243402
+}

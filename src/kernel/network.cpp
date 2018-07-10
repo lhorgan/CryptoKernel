@@ -50,16 +50,16 @@ CryptoKernel::Network::Network(CryptoKernel::Log* log,
     listener.setBlocking(false);
 
     // Start connection thread
-    connectionThread.reset(new std::thread(&CryptoKernel::Network::connectionFunc, this));
+    //connectionThread.reset(new std::thread(&CryptoKernel::Network::connectionFunc, this));
 
     // Start management thread
-    networkThread.reset(new std::thread(&CryptoKernel::Network::networkFunc, this));
+    //networkThread.reset(new std::thread(&CryptoKernel::Network::networkFunc, this));
 
     // Start peer thread
    	makeOutgoingConnectionsThread.reset(new std::thread(&CryptoKernel::Network::makeOutgoingConnectionsWrapper, this));
 
     // Start peer thread
-    infoOutgoingConnectionsThread.reset(new std::thread(&CryptoKernel::Network::infoOutgoingConnectionsWrapper, this));
+    //infoOutgoingConnectionsThread.reset(new std::thread(&CryptoKernel::Network::infoOutgoingConnectionsWrapper, this));
 }
 
 CryptoKernel::Network::~Network() {
@@ -89,78 +89,86 @@ void CryptoKernel::Network::infoOutgoingConnectionsWrapper() {
 
 void CryptoKernel::Network::makeOutgoingConnections() {
 	std::map<std::string, Json::Value> peersToTry;
-	{
-		std::lock_guard<std::recursive_mutex> lock(connectedMutex);
-		CryptoKernel::Storage::Table::Iterator* it = new CryptoKernel::Storage::Table::Iterator(
-				peers.get(), networkdb.get());
+	auto it = new CryptoKernel::Storage::Table::Iterator(
+			peers.get(), networkdb.get());
 
-		for(it->SeekToFirst(); it->Valid(); it->Next()) {
-			if(connected.size() >= 8) { // honestly, this is enough
-				std::this_thread::sleep_for(std::chrono::seconds(20)); // so stop looking for a while
-			}
+	for(it->SeekToFirst(); it->Valid(); it->Next()) {
+		/*if(connected.size() >= 8) { // honestly, this is enough
+			std::this_thread::sleep_for(std::chrono::seconds(20)); // so stop looking for a while
+		}*/
 
-			Json::Value peerInfo = it->value();
+		Json::Value peerInfo = it->value();
 
-			if(connected.find(it->key()) != connected.end()) {
-				continue;
-			}
-
-			std::time_t result = std::time(nullptr);
-
-			const auto banIt = banned.find(it->key());
-			if(banIt != banned.end()) {
-				if(banIt->second > static_cast<uint64_t>(result)) {
-					continue;
-				}
-			}
-
-			if(peerInfo["lastattempt"].asUInt64() + 5 * 60 > static_cast<unsigned long long int>
-					(result) && peerInfo["lastattempt"].asUInt64() != peerInfo["lastseen"].asUInt64()) {
-				continue;
-			}
-
-			sf::IpAddress addr(it->key());
-
-			if(addr == sf::IpAddress::getLocalAddress()
-					|| addr == myAddress
-					|| addr == sf::IpAddress::LocalHost
-					|| addr == sf::IpAddress::None) {
-				continue;
-			}
-
-			log->printf(LOG_LEVEL_INFO, "Network(): Attempting to connect to " + it->key());
-			peersToTry.insert(std::pair<std::string, Json::Value>(it->key(), peerInfo));
+		if(isConnected(it->key())) {
+			continue;
 		}
-		delete it;
-	}
 
-	// here, we only access local data (except where there are more locks)
-	for(std::map<std::string, Json::Value>::iterator entry = peersToTry.begin(); entry != peersToTry.end(); ++entry) {
-		std::string peerIp = entry->first;
-		Json::Value peerData = entry->second;
+		std::time_t result = std::time(nullptr);
+
+		/*const auto banIt = banned.find(it->key());
+		if(banIt != banned.end()) {
+			if(banIt->second > static_cast<uint64_t>(result)) {
+				continue;
+			}
+		}*/
+
+		if(peerInfo["lastattempt"].asUInt64() + 5 * 60 > static_cast<unsigned long long int>
+				(result) && peerInfo["lastattempt"].asUInt64() != peerInfo["lastseen"].asUInt64()) {
+			continue;
+		}
+
+		sf::IpAddress addr(it->key());
+
+		if(addr == sf::IpAddress::getLocalAddress()
+				|| addr == myAddress
+				|| addr == sf::IpAddress::LocalHost
+				|| addr == sf::IpAddress::None) {
+			continue;
+		}
 
 		sf::TcpSocket* socket = new sf::TcpSocket();
-		if(socket->connect(peerIp, port, sf::seconds(3)) == sf::Socket::Done) {
-			log->printf(LOG_LEVEL_INFO, "Network(): Successfully connected to " + peerIp);
-			{ // this scoping is unnecessary
-				std::lock_guard<std::recursive_mutex> lock(connectedMutex);
-				PeerInfo* peerInfo = new PeerInfo;
-				peerInfo->peer.reset(new Peer(socket, blockchain, this, false));
-
-				peerData["lastseen"] = static_cast<uint64_t>(std::time(nullptr));
-				peerData["score"] = 0;
-
-				peerInfo->info = peerData;
-
-				connected[peerIp].reset(peerInfo);
-			}
+		if(socket->connect(it->key(), port, sf::seconds(3)) == sf::Socket::Done) {
+			log->printf(LOG_LEVEL_INFO, "Network(): Successfully connected to " + it->key());
+			addConnection(it->key(), socket, peerInfo);
 		}
 		else {
-			log->printf(LOG_LEVEL_WARN, "Network(): Failed to connect to " + peerIp);
+			log->printf(LOG_LEVEL_WARN, "Network(): Failed to connect to " + it->key());
 			delete socket;
 		}
 	}
+	delete it;
 }
+
+void CryptoKernel::Network::addConnection(std::string ip, sf::TcpSocket* socket, Json::Value info) {
+	for(auto& it : connected) {
+		if(it->acquire() && it->isFree()) {
+			it->peer.reset(new Peer(socket, blockchain, this, false));
+			it->info["lastseen"] = static_cast<uint64_t>(std::time(nullptr));
+
+			info["lastseen"] = static_cast<uint64_t>(std::time(nullptr));
+			info["score"] = 0;
+
+			it->info = info;
+			it->release();
+			break;
+		}
+	}
+	log->printf(LOG_LEVEL_WARN, "Network(): No connection slots avaialble :(");
+}
+
+bool CryptoKernel::Network::isConnected(std::string ip) {
+	for(auto& it : connected) {
+		if(it->acquire()) {
+			if(it->ip == ip) {
+				it->release();
+				return true;
+			}
+			it->release();
+		}
+	}
+	return false;
+}
+
 
 void CryptoKernel::Network::infoOutgoingConnections() {
 	std::lock_guard<std::recursive_mutex> lock(connectedMutex);
@@ -169,28 +177,27 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 
 	std::set<std::string> removals;
 
-	for(std::map<std::string, std::unique_ptr<PeerInfo>>::iterator it = connected.begin();
-				it != connected.end(); it++) {
+	for(auto& it : connected) {
 		try {
-			const Json::Value info = it->second->peer->getInfo();
+			const Json::Value info = it->peer->getInfo();
 			try {
 				const std::string peerVersion = info["version"].asString();
 				if(peerVersion.substr(0, peerVersion.find(".")) != version.substr(0, version.find("."))) {
 					log->printf(LOG_LEVEL_WARN,
-								"Network(): " + it->first + " has a different major version than us");
+								"Network(): " + it->ip + " has a different major version than us");
 					throw Peer::NetworkError();
 				}
 
-				const auto banIt = banned.find(it->first);
+				/*const auto banIt = banned.find(it->ip);
 				if(banIt != banned.end()) {
 					if(banIt->second > static_cast<uint64_t>(std::time(nullptr))) {
 						log->printf(LOG_LEVEL_WARN,
-									"Network(): Disconnecting " + it->first + " for being banned");
+									"Network(): Disconnecting " + it->ip + " for being banned");
 						throw Peer::NetworkError();
 					}
-				}
+				}*/
 
-				it->second->info["height"] = info["tipHeight"].asUInt64();
+				it->info["height"] = info["tipHeight"].asUInt64();
 
 				for(const Json::Value& peer : info["peers"]) {
 					sf::IpAddress addr(peer.asString());
@@ -204,31 +211,31 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 							peers->put(dbTx.get(), addr.toString(), newSeed);
 						}
 					} else {
-						changeScore(it->first, 10);
+						changeScore(it->ip, 10);
 						throw Peer::NetworkError();
 					}
 				}
 			} catch(const Json::Exception& e) {
-				changeScore(it->first, 50);
+				changeScore(it->ip, 50);
 				throw Peer::NetworkError();
 			}
 
 			const std::time_t result = std::time(nullptr);
-			it->second->info["lastseen"] = static_cast<uint64_t>(result);
+			it->info["lastseen"] = static_cast<uint64_t>(result);
 		} catch(const Peer::NetworkError& e) {
 			log->printf(LOG_LEVEL_WARN,
-						"Network(): Failed to contact " + it->first + ", disconnecting it");
-			removals.insert(it->first);
+						"Network(): Failed to contact " + it->ip + ", disconnecting it");
+			removals.insert(it->ip);
 		}
 	}
 
-	for(const auto& peer : removals) {
+	/*for(const auto& peer : removals) {
 		const auto it = connected.find(peer);
-		peers->put(dbTx.get(), peer, it->second->info);
+		peers->put(dbTx.get(), peer, it->info);
 		if(it != connected.end()) {
 			connected.erase(it);
 		}
-	}
+	}*/
 
 	dbTx->commit();
 }
@@ -244,10 +251,9 @@ void CryptoKernel::Network::networkFunc() {
         //Determine best chain
         connectedMutex.lock();
         uint64_t bestHeight = currentHeight;
-        for(std::map<std::string, std::unique_ptr<PeerInfo>>::iterator it = connected.begin();
-                it != connected.end(); it++) {
-            if(it->second->info["height"].asUInt64() > bestHeight) {
-                bestHeight = it->second->info["height"].asUInt64();
+        for(auto& it : connected) {
+            if(it->info["height"].asUInt64() > bestHeight) {
+                bestHeight = it->info["height"].asUInt64();
             }
         }
 
@@ -267,12 +273,15 @@ void CryptoKernel::Network::networkFunc() {
         if(bestHeight > currentHeight) {
             connectedMutex.lock();
 
-            for(std::map<std::string, std::unique_ptr<PeerInfo>>::iterator it = connected.begin();
-                    it != connected.end() && running; ) {
-                if(it->second->info["height"].asUInt64() > currentHeight) {
+            for(auto& it: connected) {
+            	if(!running) {
+            		break;
+            	}
+
+                if(it->info["height"].asUInt64() > currentHeight) {
                     std::list<CryptoKernel::Blockchain::block> blocks;
 
-                    const std::string peerUrl = it->first;
+                    const std::string peerUrl = it->ip;
 
                     if(currentHeight == startHeight) {
                         auto nBlocks = 0;
@@ -281,7 +290,7 @@ void CryptoKernel::Network::networkFunc() {
                                         "Network(): Downloading blocks " + std::to_string(currentHeight + 1) + " to " +
                                         std::to_string(currentHeight + 6));
                             try {
-                                const auto newBlocks = it->second->peer->getBlocks(currentHeight + 1, currentHeight + 6);
+                                const auto newBlocks = it->peer->getBlocks(currentHeight + 1, currentHeight + 6);
                                 nBlocks = newBlocks.size();
                                 blocks.insert(blocks.end(), newBlocks.rbegin(), newBlocks.rend());
                                 if(nBlocks > 0) {
@@ -291,7 +300,7 @@ void CryptoKernel::Network::networkFunc() {
                                 }
                             } catch(Peer::NetworkError& e) {
                                 log->printf(LOG_LEVEL_WARN,
-                                            "Network(): Failed to contact " + it->first + " " + e.what() +
+                                            "Network(): Failed to contact " + it->ip + " " + e.what() +
                                             " while downloading blocks");
                                 it++;
                                 break;
@@ -304,7 +313,7 @@ void CryptoKernel::Network::networkFunc() {
                             } catch(const CryptoKernel::Blockchain::NotFoundException& e) {
                                 if(currentHeight == 1) {
                                     // This peer has a different genesis block to us
-                                    changeScore(it->first, 250);
+                                    changeScore(it->ip, 250);
                                     it++;
                                     break;
                                 } else {
@@ -331,7 +340,7 @@ void CryptoKernel::Network::networkFunc() {
 
                         auto nBlocks = 0;
                         try {
-                            const auto newBlocks = it->second->peer->getBlocks(currentHeight + 1, currentHeight + 6);
+                            const auto newBlocks = it->peer->getBlocks(currentHeight + 1, currentHeight + 6);
                             nBlocks = newBlocks.size();
                             blocks.insert(blocks.begin(), newBlocks.rbegin(), newBlocks.rend());
                             if(nBlocks > 0) {
@@ -342,7 +351,7 @@ void CryptoKernel::Network::networkFunc() {
                             }
                         } catch(Peer::NetworkError& e) {
                             log->printf(LOG_LEVEL_WARN,
-                                        "Network(): Failed to contact " + it->first + " " + e.what() +
+                                        "Network(): Failed to contact " + it->ip + " " + e.what() +
                                         " while downloading blocks");
                             it++;
                             break;
@@ -416,7 +425,7 @@ void CryptoKernel::Network::connectionFunc() {
         if(listener.accept(*client) == sf::Socket::Done) {
             std::lock_guard<std::recursive_mutex> lock(connectedMutex);
         	//connectedMutex.lock();
-            if(connected.find(client->getRemoteAddress().toString()) != connected.end()) {
+            if(isConnected(client->getRemoteAddress().toString())) {
                 log->printf(LOG_LEVEL_INFO,
                             "Network(): Incoming connection duplicates existing connection for " +
                             client->getRemoteAddress().toString());
@@ -425,7 +434,7 @@ void CryptoKernel::Network::connectionFunc() {
                 continue;
             }
 
-            const auto it = banned.find(client->getRemoteAddress().toString());
+            /*const auto it = banned.find(client->getRemoteAddress().toString());
             if(it != banned.end()) {
                 if(it->second > static_cast<uint64_t>(std::time(nullptr))) {
                     log->printf(LOG_LEVEL_INFO,
@@ -434,7 +443,7 @@ void CryptoKernel::Network::connectionFunc() {
                     delete client;
                     continue;
                 }
-            }
+            }*/
 
             sf::IpAddress addr(client->getRemoteAddress());
 
@@ -454,38 +463,40 @@ void CryptoKernel::Network::connectionFunc() {
             log->printf(LOG_LEVEL_INFO,
                         "Network(): Peer connected from " + client->getRemoteAddress().toString() + ":" +
                         std::to_string(client->getRemotePort()));
-            PeerInfo* peerInfo = new PeerInfo();
-            peerInfo->peer.reset(new Peer(client, blockchain, this, true));
 
-            Json::Value info;
-
-            try {
-                info = peerInfo->peer->getInfo();
-            } catch(const Peer::NetworkError& e) {
-                log->printf(LOG_LEVEL_WARN, "Network(): Failed to get information from connecting peer");
-                delete peerInfo;
-                continue;
-            }
-
-            try {
-                peerInfo->info["height"] = info["tipHeight"].asUInt64();
-                peerInfo->info["version"] = info["version"].asString();
-            } catch(const Json::Exception& e) {
-                log->printf(LOG_LEVEL_WARN, "Network(): Incoming peer sent invalid info message");
-                delete peerInfo;
-                continue;
-            }
-
-            const std::time_t result = std::time(nullptr);
-            peerInfo->info["lastseen"] = static_cast<uint64_t>(result);
-
-            peerInfo->info["score"] = 0;
-
-            connected[client->getRemoteAddress().toString()].reset(peerInfo);
-
-            std::unique_ptr<Storage::Transaction> dbTx(networkdb->begin());
-            peers->put(dbTx.get(), client->getRemoteAddress().toString(), peerInfo->info);
-            dbTx->commit();
+            /// PUT THIS BACK
+//            PeerInfo* peerInfo = new PeerInfo();
+//            peerInfo->peer.reset(new Peer(client, blockchain, this, true));
+//
+//            Json::Value info;
+//
+//            try {
+//                info = peerInfo->peer->getInfo();
+//            } catch(const Peer::NetworkError& e) {
+//                log->printf(LOG_LEVEL_WARN, "Network(): Failed to get information from connecting peer");
+//                delete peerInfo;
+//                continue;
+//            }
+//
+//            try {
+//                peerInfo->info["height"] = info["tipHeight"].asUInt64();
+//                peerInfo->info["version"] = info["version"].asString();
+//            } catch(const Json::Exception& e) {
+//                log->printf(LOG_LEVEL_WARN, "Network(): Incoming peer sent invalid info message");
+//                delete peerInfo;
+//                continue;
+//            }
+//
+//            const std::time_t result = std::time(nullptr);
+//            peerInfo->info["lastseen"] = static_cast<uint64_t>(result);
+//
+//            peerInfo->info["score"] = 0;
+//
+//            connected[client->getRemoteAddress().toString()].reset(peerInfo);
+//
+//            std::unique_ptr<Storage::Transaction> dbTx(networkdb->begin());
+//            peers->put(dbTx.get(), client->getRemoteAddress().toString(), peerInfo->info);
+//            dbTx->commit();
         } else {
             delete client;
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -499,10 +510,9 @@ unsigned int CryptoKernel::Network::getConnections() {
 
 void CryptoKernel::Network::broadcastTransactions(const
         std::vector<CryptoKernel::Blockchain::transaction> transactions) {
-    for(std::map<std::string, std::unique_ptr<PeerInfo>>::iterator it = connected.begin();
-            it != connected.end(); it++) {
+    for(auto& it : connected) {
         try {
-            it->second->peer->sendTransactions(transactions);
+            it->peer->sendTransactions(transactions);
         } catch(CryptoKernel::Network::Peer::NetworkError& err) {
             log->printf(LOG_LEVEL_WARN, "Network::broadcastTransactions(): Failed to contact peer");
         }
@@ -510,10 +520,9 @@ void CryptoKernel::Network::broadcastTransactions(const
 }
 
 void CryptoKernel::Network::broadcastBlock(const CryptoKernel::Blockchain::block block) {
-    for(std::map<std::string, std::unique_ptr<PeerInfo>>::iterator it = connected.begin();
-            it != connected.end(); it++) {
+    for(auto& it : connected) {
         try {
-            it->second->peer->sendBlock(block);
+            it->peer->sendBlock(block);
         } catch(CryptoKernel::Network::Peer::NetworkError& err) {
             log->printf(LOG_LEVEL_WARN, "Network::broadcastBlock(): Failed to contact peer");
         }
@@ -525,25 +534,26 @@ double CryptoKernel::Network::syncProgress() {
 }
 
 void CryptoKernel::Network::changeScore(const std::string& url, const uint64_t score) {
-    if(connected[url]) {
-        connected[url]->info["score"] = connected[url]->info["score"].asUInt64() + score;
-        log->printf(LOG_LEVEL_WARN,
-                    "Network(): " + url + " misbehaving, increasing ban score by " + std::to_string(
-                        score) + " to " + connected[url]->info["score"].asString());
-        if(connected[url]->info["score"].asUInt64() > 200) {
-            log->printf(LOG_LEVEL_WARN,
-                        "Network(): Banning " + url + " for being above the ban score threshold");
-            // Ban for 24 hours
-            banned[url] = static_cast<uint64_t>(std::time(nullptr)) + 24 * 60 * 60;
-        }
-        connected[url]->info["disconnect"] = true;
-    }
+	// PUT THIS BACK TOO
+//    if(isCoconnected[url]) {
+//        connected[url]->info["score"] = connected[url]->info["score"].asUInt64() + score;
+//        log->printf(LOG_LEVEL_WARN,
+//                    "Network(): " + url + " misbehaving, increasing ban score by " + std::to_string(
+//                        score) + " to " + connected[url]->info["score"].asString());
+//        if(connected[url]->info["score"].asUInt64() > 200) {
+//            log->printf(LOG_LEVEL_WARN,
+//                        "Network(): Banning " + url + " for being above the ban score threshold");
+//            // Ban for 24 hours
+//            banned[url] = static_cast<uint64_t>(std::time(nullptr)) + 24 * 60 * 60;
+//        }
+//        connected[url]->info["disconnect"] = true;
+//    }
 }
 
 std::set<std::string> CryptoKernel::Network::getConnectedPeers() {
     std::set<std::string> peerUrls;
-    for(const auto& peer : connected) {
-        peerUrls.insert(peer.first);
+    for(const auto& it : connected) {
+        peerUrls.insert(it->ip);
     }
 
     return peerUrls;

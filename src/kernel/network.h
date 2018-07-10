@@ -95,14 +95,51 @@ public:
 
 private:
     class Peer;
+    //class Connection;
 
     void changeScore(const std::string& url, const uint64_t score);
 
-    struct PeerInfo {
+    /*struct PeerInfo {
         std::unique_ptr<Peer> peer;
         Json::Value info;
+    };*/
+
+    class Connection {
+    public:
+    	Connection();
+
+    	bool acquire() {
+    		return peerMutex.try_lock();
+    	}
+    	bool isFree() {
+    		return peer.get() != nullptr;
+    	}
+    	void release() {
+    		peerMutex.unlock();
+    	}
+
+    	std::string getIp() {
+    		std::lock_guard<std::mutex> im(ipMutex);
+    		return ip;
+    	}
+
+    	std::string setIp() {
+
+    	}
+
+    	~Connection();
+
+    	std::unique_ptr<CryptoKernel::Network::Peer> peer;
+    	Json::Value info;
+
+    private:
+    	std::mutex peerMutex;
+    	std::mutex ipMutex;
+    	std::string ip;
     };
-    std::map<std::string, std::unique_ptr<PeerInfo>> connected;
+
+    //std::map<std::string, std::unique_ptr<PeerInfo>> connected;
+    std::vector<std::unique_ptr<Connection>> connected;
     std::recursive_mutex connectedMutex;
 
     std::map<std::string, peerStats> connectedStats;
@@ -129,6 +166,9 @@ private:
     void infoOutgoingConnections();
     void infoOutgoingConnectionsWrapper();
     std::unique_ptr<std::thread> infoOutgoingConnectionsThread;
+
+    bool isConnected(std::string ip);
+    void addConnection(std::string ip, sf::TcpSocket* socket, Json::Value info);
 
     sf::TcpListener listener;
 
