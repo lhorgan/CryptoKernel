@@ -51,10 +51,10 @@ CryptoKernel::Network::Network(CryptoKernel::Log* log,
     listener.setBlocking(false);
 
     // Start connection thread
-    connectionThread.reset(new std::thread(&CryptoKernel::Network::connectionFuncWrapper, this));
+    //connectionThread.reset(new std::thread(&CryptoKernel::Network::connectionFuncWrapper, this));
 
     // Start management thread
-    networkThread.reset(new std::thread(&CryptoKernel::Network::networkFuncWrapper, this));
+    //networkThread.reset(new std::thread(&CryptoKernel::Network::networkFuncWrapper, this));
 
     // Start peer thread
    	makeOutgoingConnectionsThread.reset(new std::thread(&CryptoKernel::Network::makeOutgoingConnectionsWrapper, this));
@@ -84,26 +84,26 @@ bool CryptoKernel::Network::cacheConnections(std::map<std::string, std::shared_p
 
 		for(auto& entry: connectedCache) { // todo, handle deleted connections
 			if(connections.find(entry.first) == connections.end()) {
-				PeerInfo* peerInfo = new PeerInfo;
-				peerInfo->info = entry.second->info;
-				peerInfo->peer.reset(entry.second->peer.get());
-				if(!entry.second->peer.get()) {
-					log->printf(LOG_LEVEL_INFO, "warning, null pointer!");
-				}
-				//std::unique_ptr<PeerInfo> pif(peerInfo);
-				//connections.insert(std::pair<std::string, std::unique_ptr<PeerInfo>>(entry.first, pif));
-				connections[entry.first].reset(peerInfo);
+				//PeerInfo* peerInfo = new PeerInfo;
+				//peerInfo->info = entry.second->info;
+				//peerInfo->peer.reset(new Peer(entry.second->peer.get()));
+				//peerInfo->peer.reset(entry.second->peer.get());
+				//connections[entry.first].reset(peerInfo);
+				//connections.insert(std::pair<std::string, std::shared_ptr<PeerInfo>>(entry.first, entry.second));
+				connections.insert(entry);
 			}
 		}
 		connectedCache.clear();
 
 		for(auto& entry : connections) {
-			PeerInfo* peerInfo = new PeerInfo;
-			peerInfo->info = entry.second->info;
-			peerInfo->peer.reset(entry.second->peer.get());
-			//std::unique_ptr<PeerInfo> pif(peerInfo);
-			//connections.insert(std::pair<std::string, std::unique_ptr<PeerInfo>>(entry.first, pif));
-			connectedCache[entry.first].reset(peerInfo);
+			//PeerInfo* peerInfo = new PeerInfo;
+			//peerInfo->info = entry.second->info;
+			//peerInfo->peer.reset(new Peer(entry.second->peer.get()));
+			//peerInfo->peer.reset(entry.second->peer.get());
+			//connectedCache[entry.first].reset(peerInfo);
+
+			//connectedCache.insert(std::pair<std::string, std::shared_ptr<PeerInfo>>(entry.first, entry.second));
+			connections.insert(entry);
 		}
 		return true;
 	}
@@ -299,31 +299,34 @@ void CryptoKernel::Network::infoOutgoingConnections(std::map<std::string, std::s
 							peers->put(dbTx.get(), addr.toString(), newSeed);
 						}
 					} else {
+						log->printf(LOG_LEVEL_INFO, "Network(): Some random network error");
 						changeScore(it->first, 10);
 						throw Peer::NetworkError();
 					}
 				}
 			} catch(const Json::Exception& e) {
 				changeScore(it->first, 50);
+				log->printf(LOG_LEVEL_INFO, "Network(): Some other random network error");
 				throw Peer::NetworkError();
 			}
 
 			const std::time_t result = std::time(nullptr);
 			it->second->info["lastseen"] = static_cast<uint64_t>(result);
 		} catch(const Peer::NetworkError& e) {
+			log->printf(LOG_LEVEL_WARN, e.what());
 			log->printf(LOG_LEVEL_WARN,
 						"Network(): Failed to contact " + it->first + ", disconnecting it");
 			removals.insert(it->first);
 		}
 	}
 
-	for(const auto& peer : removals) {
+	/*for(const auto& peer : removals) {
 		const auto it = connected.find(peer);
 		peers->put(dbTx.get(), peer, it->second->info);
 		if(it != connected.end()) {
 			connected.erase(it);
 		}
-	}
+	}*/
 
 	dbTx->commit();
 }

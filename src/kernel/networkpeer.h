@@ -13,7 +13,7 @@ public:
     Peer(sf::TcpSocket* client, CryptoKernel::Blockchain* blockchain,
          CryptoKernel::Network* network, const bool incoming);
 
-    //Peer(const Peer& other);
+    Peer(const Peer* other);
 
     ~Peer();
 
