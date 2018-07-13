@@ -318,14 +318,20 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 				log->printf(LOG_LEVEL_WARN,
 							"Network(): Failed to contact " + it->first + ", disconnecting it");
 
-				connected.erase(it);
-				continue;
+				//connected.erase(it);
+				//continue;
 			}
+
+			peerStats stats = it->second->getPeerStats();
+			stats.version = it->second->getInfo("version").asString();
+			stats.blockHeight = it->second->getInfo("height").asUInt64();
+			connectedStats.insert(it->first, stats);
+
 			it->second->release();
 		}
 	}
 
-	connectedStats.clear();
+	/*connectedStats.clear();
 	keys = connected.keys();
 	std::random_shuffle(keys.begin(), keys.end());
 	for(const std::string key : keys) {
@@ -337,7 +343,7 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 			connectedStats.insert(it->first, stats);
 		}
 		it->second->release();
-	}
+	}*/
 
 	dbTx->commit();
 }
