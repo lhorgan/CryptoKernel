@@ -93,7 +93,7 @@ public:
 		std::map<KEY, VAL> mapCopy;
 		mapMutex.lock();
 		for(auto it = map.begin(); it != map.end(); it++) {
-			mapCopy[it->first] = it->second;
+			mapCopy.insert(std::pair<KEY, VAL>(it->first, it->second));
 		}
 		mapMutex.unlock();
 		return mapCopy;

@@ -7,9 +7,7 @@
 #include <cstdlib>
 #include <ctime>
 
-CryptoKernel::Network::Connection::Connection() {
-
-}
+CryptoKernel::Network::Connection::Connection() {};
 
 Json::Value CryptoKernel::Network::Connection::getInfo() {
 	std::lock_guard<std::mutex> mm(modMutex);
@@ -94,9 +92,7 @@ Json::Value& CryptoKernel::Network::Connection::getInfo(std::string key) {
 	return this->info[key];
 }
 
-CryptoKernel::Network::Connection::~Connection() {
-
-}
+CryptoKernel::Network::Connection::~Connection() {};
 
 CryptoKernel::Network::Network(CryptoKernel::Log* log,
                                CryptoKernel::Blockchain* blockchain,
@@ -191,12 +187,13 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 	std::map<std::string, Json::Value> peersToTry;
 	std::vector<std::string> peerIps;
 
-	CryptoKernel::Storage::Table::Iterator* it = new CryptoKernel::Storage::Table::Iterator(
-			peers.get(), networkdb.get());
+	std::unique_ptr<CryptoKernel::Storage::Table::Iterator> it(
+			new CryptoKernel::Storage::Table::Iterator(peers.get(), networkdb.get()));
 
 	for(it->SeekToFirst(); it->Valid(); it->Next()) {
 		if(connected.size() >= 8) { // honestly, this is enough
 			wait = true;
+			it.reset();
 			return;
 		}
 
@@ -232,7 +229,7 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 		peersToTry.insert(std::pair<std::string, Json::Value>(it->key(), peerInfo));
 		peerIps.push_back(it->key());
 	}
-	delete it;
+	it.reset();
 
 	std::random_shuffle(peerIps.begin(), peerIps.end());
 	for(std::string peerIp : peerIps) {
@@ -342,19 +339,6 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 	}
 
 	dbTx->commit();
-
-	connectedStats.clear();
-	keys = connected.keys();
-	std::random_shuffle(keys.begin(), keys.end());
-	for(const std::string key : keys) {
-		auto it = connected.find(key);
-		if(it != connected.end() && it->second->acquire()) {
-			peerStats stats = it->second->getPeerStats();
-			stats.version = it->second->getInfo("version").asString();
-			stats.blockHeight = it->second->getInfo("height").asUInt64();
-			connectedStats.insert(it->first, stats);
-		}
-	}
 }
 
 void CryptoKernel::Network::networkFunc() {
