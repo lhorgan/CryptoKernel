@@ -335,6 +335,7 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 			stats.version = it->second->getInfo("version").asString();
 			stats.blockHeight = it->second->getInfo("height").asUInt64();
 			connectedStats.insert(it->first, stats);
+			it->second->release();
 		}
 	}
 
