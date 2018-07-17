@@ -346,7 +346,7 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 								newSeed["lastseen"] = 0;
 								newSeed["height"] = 1;
 								newSeed["score"] = 0;
-								peers->put(dbTx.get(), addr.toString(), newSeed);
+								//peers->put(dbTx.get(), addr.toString(), newSeed); // todo restore
 							}
 						} else {
 							changeScore(it->first, 10);
@@ -632,7 +632,7 @@ void CryptoKernel::Network::connectionFunc() {
             connected.at(client->getRemoteAddress().toString()).reset(connection);
 
             std::unique_ptr<Storage::Transaction> dbTx(networkdb->begin());
-            peers->put(dbTx.get(), client->getRemoteAddress().toString(), connection->getCachedInfo());
+            //peers->put(dbTx.get(), client->getRemoteAddress().toString(), connection->getCachedInfo()); // todo restore
             dbTx->commit();
         } else {
             delete client;
