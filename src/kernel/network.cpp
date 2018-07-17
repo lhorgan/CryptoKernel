@@ -171,7 +171,7 @@ CryptoKernel::Network::Network(CryptoKernel::Log* log,
     //connectionThread.reset(new std::thread(&CryptoKernel::Network::connectionFunc, this));
 
     // Start management thread
-    //networkThread.reset(new std::thread(&CryptoKernel::Network::networkFunc, this));
+    networkThread.reset(new std::thread(&CryptoKernel::Network::networkFunc, this));
 
     // Start peer thread
    	makeOutgoingConnectionsThread.reset(new std::thread(&CryptoKernel::Network::makeOutgoingConnectionsWrapper, this));
@@ -629,7 +629,7 @@ void CryptoKernel::Network::connectionFunc() {
             	log->printf(LOG_LEVEL_INFO, "Network(): connection has override port " + info["overrideport"].asString());
             }
 
-            connected.at(client->getRemoteAddress().toString()).reset(connection);
+            //connected.at(client->getRemoteAddress().toString()).reset(connection);
 
             std::unique_ptr<Storage::Transaction> dbTx(networkdb->begin());
             //peers->put(dbTx.get(), client->getRemoteAddress().toString(), connection->getCachedInfo()); // todo restore
