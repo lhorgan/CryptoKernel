@@ -144,14 +144,12 @@ CryptoKernel::Network::Network(CryptoKernel::Log* log,
 
     overridePort = -1;
     for(const auto& op : overridePorts) {
-    	overridePort = op.asUInt64();
     	log->printf(LOG_LEVEL_INFO, "Network(): Trying override port " + op.asString());
     	if(listener.listen(op.asUInt64()) == sf::Socket::Done) {
     		log->printf(LOG_LEVEL_INFO, "Network(): Listening on override port " + op.asString());
+    		overridePort = op.asUInt64();
     		break;
     	}
-
-    	break; // just for now
     }
     if(overridePort < 0 && listener.listen(port) != sf::Socket::Done) {
         log->printf(LOG_LEVEL_ERR, "Network(): Could not bind to port " + std::to_string(port));
@@ -623,6 +621,9 @@ void CryptoKernel::Network::connectionFunc() {
 
             connection->setInfo("lastseen", static_cast<uint64_t>(result));
             connection->setInfo("score", 0);
+            if(info["overrideport"]) {
+            	log->printf(LOG_LEVEL_INFO, "Network(): connection has override port " + info["overrideport"].asString());
+            }
 
             connected.at(client->getRemoteAddress().toString()).reset(connection);
 
