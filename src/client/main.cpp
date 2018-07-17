@@ -89,6 +89,8 @@ int main(int argc, char* argv[]) {
 
         int offset = 0;
 
+        int listenPort = -1;
+
         if(command == "-p" && argc >= 4) {
             command = std::string(argv[3]);
             port = std::string(argv[2]);

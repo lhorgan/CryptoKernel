@@ -133,6 +133,7 @@ void CryptoKernel::Network::Peer::requestFunc() {
                     if(request["command"] == "info") {
                         Json::Value response;
                         response["data"]["version"] = version;
+                        // todo, set port here
                         response["data"]["tipHeight"] = network->getCurrentHeight();
                         for(const auto& peer : network->getConnectedPeers()) {
                             response["data"]["peers"].append(peer);

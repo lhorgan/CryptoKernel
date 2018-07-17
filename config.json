@@ -15,6 +15,7 @@
 			"name" : "K320",
 			"peerdb" : "./peers",
 			"port" : 49000,
+			"overrideports": [7777, 7878],
 			"rpcport" : 8383,
 			"subsidy" : "k320",
 			"walletdb" : "./addressesdb"

@@ -43,6 +43,7 @@ CryptoKernel::MulticoinLoader::MulticoinLoader(const std::string& configFile,
 
         newCoin->network.reset(new Network(log, newCoin->blockchain.get(),
                                            coin["port"].asUInt(),
+										   coin["overrideports"],
                                            coin["peerdb"].asString()));
 
         if(!coin["walletdb"].empty()) {

@@ -107,6 +107,7 @@ CryptoKernel::Network::Connection::~Connection() {
 CryptoKernel::Network::Network(CryptoKernel::Log* log,
                                CryptoKernel::Blockchain* blockchain,
                                const unsigned int port,
+							   const unsigned int* overridePorts,
                                const std::string& dbDir) {
     this->log = log;
     this->blockchain = blockchain;
