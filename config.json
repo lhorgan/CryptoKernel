@@ -15,8 +15,7 @@
 			"name" : "K320",
 			"overrideports" : 
 			[
-				7777,
-				7878
+				9230
 			],
 			"peerdb" : "./peers",
 			"port" : 49000,

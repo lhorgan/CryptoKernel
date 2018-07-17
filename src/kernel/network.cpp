@@ -218,6 +218,7 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 	std::unique_ptr<Storage::Table::Iterator> it(new Storage::Table::Iterator(peers.get(), networkdb.get(), dbTx->snapshot));
 
 	for(it->SeekToFirst(); it->Valid(); it->Next()) {
+		//log->printf(LOG_LEVEL_INFO, "trying " + it->key());
 		if(connected.size() >= 8) { // honestly, this is enough
 			wait = true;
 			it.reset();
@@ -243,8 +244,11 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 				(result) && peerInfo["lastattempt"].asUInt64() != peerInfo["lastseen"].asUInt64()) {
 			continue;
 		}
-
-		sf::IpAddress addr(it->key());
+		
+		std::string saddr;
+		unsigned int addrPort;
+		parseIp(it->key(), saddr, addrPort);
+		sf::IpAddress addr(saddr);
 
 		if(addr == sf::IpAddress::getLocalAddress()
 				|| addr == myAddress
