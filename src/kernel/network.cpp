@@ -259,7 +259,15 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 
 		sf::TcpSocket* socket = new sf::TcpSocket();
 		log->printf(LOG_LEVEL_INFO, "Network(): Attempting to connect to " + peerIp);
-		if(socket->connect(peerIp, port, sf::seconds(3)) == sf::Socket::Done) {
+
+		std::string ipToConnect = peerIp;
+		unsigned int portToConnect = port;
+		bool overridePort = parseIp(peerIp, ipToConnect, portToConnect);
+		if(overridePort) {
+			log->printf(LOG_LEVEL_INFO, "Overriding coin default port " + std::string(port) + " and connecting on " + std::string(portToConnect));
+		}
+
+		if(socket->connect(ipToConnect, portToConnect, sf::seconds(3)) == sf::Socket::Done) {
 			log->printf(LOG_LEVEL_INFO, "Network(): Successfully connected to " + peerIp);
 			Connection* connection = new Connection;
 			connection->setPeer(new Peer(socket, blockchain, this, false));
@@ -539,14 +547,14 @@ void CryptoKernel::Network::connectionFunc() {
     while(running) {
         sf::TcpSocket* client = new sf::TcpSocket();
         if(listener.accept(*client) == sf::Socket::Done) {
-            if(connected.contains(client->getRemoteAddress().toString())) {
+            /*if(connected.contains(client->getRemoteAddress().toString())) {
                 log->printf(LOG_LEVEL_INFO,
                             "Network(): Incoming connection duplicates existing connection for " +
                             client->getRemoteAddress().toString());
                 client->disconnect();
                 delete client;
                 continue;
-            }
+            }*/
 
             const auto it = banned.find(client->getRemoteAddress().toString());
             if(it != banned.end()) {
@@ -690,4 +698,16 @@ uint64_t CryptoKernel::Network::getCurrentHeight() {
 std::map<std::string, CryptoKernel::Network::peerStats>
 CryptoKernel::Network::getPeerStats() {
     return connectedStats.copyMap();
+}
+
+bool CryptoKernel::Network::parseIp(std::string toParse, std::string& ip, unsigned int& port) {
+	int colonInd = toParse.find(':');
+	if(colonInd >= 0) {
+		ip = toParse.substr(0, colonInd);
+		port = stoi(toParse.substr(colonInd + 1));
+		return true;
+	}
+
+	ip = toParse;
+	return false;
 }

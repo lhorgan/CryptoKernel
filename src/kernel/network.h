@@ -76,6 +76,8 @@ public:
     */
     uint64_t getCurrentHeight();
 
+    bool parseIp(std::string toParse, std::string& ip, unsigned int& port);
+
     struct peerStats {
         unsigned int ping;
         bool incoming;
