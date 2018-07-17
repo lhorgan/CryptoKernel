@@ -177,7 +177,7 @@ CryptoKernel::Network::Network(CryptoKernel::Log* log,
    	makeOutgoingConnectionsThread.reset(new std::thread(&CryptoKernel::Network::makeOutgoingConnectionsWrapper, this));
 
     // Start peer thread
-    //infoOutgoingConnectionsThread.reset(new std::thread(&CryptoKernel::Network::infoOutgoingConnectionsWrapper, this));
+    infoOutgoingConnectionsThread.reset(new std::thread(&CryptoKernel::Network::infoOutgoingConnectionsWrapper, this));
 }
 
 CryptoKernel::Network::~Network() {
@@ -338,7 +338,7 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 					connectedStats.insert(std::make_pair(it->first, stats));
 
 					for(const Json::Value& peer : info["peers"]) {
-						sf::IpAddress addr(peer.asString());
+						sf::IpAddress addr(getIp(peer.asString()));
 						if(addr != sf::IpAddress::None) {
 							if(!peers->get(dbTx.get(), addr.toString()).isObject()) {
 								log->printf(LOG_LEVEL_INFO, "Network(): Discovered new peer: " + addr.toString());
@@ -346,7 +346,7 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 								newSeed["lastseen"] = 0;
 								newSeed["height"] = 1;
 								newSeed["score"] = 0;
-								//peers->put(dbTx.get(), addr.toString(), newSeed); // todo restore
+								peers->put(dbTx.get(), peer.asString(), newSeed); // todo make sure peer.asString is valid
 							}
 						} else {
 							changeScore(it->first, 10);
@@ -727,4 +727,13 @@ bool CryptoKernel::Network::parseIp(std::string toParse, std::string& ip, unsign
 
 	ip = toParse;
 	return false;
+}
+
+std::string CryptoKernel::Network::getIp(std::string toParse) {
+	int colonInd = toParse.find(':');
+	std::string ip = toParse;
+	if(colonInd >= 0) {
+		ip = toParse.substr(0, colonInd);
+	}
+	return ip;
 }
