@@ -26,7 +26,7 @@ public:
     * @param dbDir the directory of the peers database
     */
     Network(CryptoKernel::Log* log, CryptoKernel::Blockchain* blockchain,
-            const unsigned int port, const unsigned int* overridePorts, const std::string& dbDir);
+            const unsigned int port, const Json::Value& overridePorts, const std::string& dbDir);
 
     /**
     * Default destructor
