@@ -265,7 +265,7 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 		unsigned int portToConnect = port;
 		bool overridePort = parseIp(peerIp, ipToConnect, portToConnect);
 		if(overridePort) {
-			log->printf(LOG_LEVEL_INFO, "Overriding coin default port " + std::string(port) + " and connecting on " + std::string(portToConnect));
+			log->printf(LOG_LEVEL_INFO, "Overriding coin default port " + std::to_string(port) + " and connecting on " + std::to_string(portToConnect));
 		}
 
 		if(socket->connect(ipToConnect, portToConnect, sf::seconds(3)) == sf::Socket::Done) {
