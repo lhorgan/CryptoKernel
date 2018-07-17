@@ -150,6 +150,8 @@ CryptoKernel::Network::Network(CryptoKernel::Log* log,
     		overridePort = op.asUInt64();
     		break;
     	}
+
+    	break; // just for now
     }
     if(overridePort < 0 && listener.listen(port) != sf::Socket::Done) {
         log->printf(LOG_LEVEL_ERR, "Network(): Could not bind to port " + std::to_string(port));
