@@ -144,10 +144,10 @@ CryptoKernel::Network::Network(CryptoKernel::Log* log,
 
     overridePort = -1;
     for(const auto& op : overridePorts) {
+    	overridePort = op.asUInt64();
     	log->printf(LOG_LEVEL_INFO, "Network(): Trying override port " + op.asString());
     	if(listener.listen(op.asUInt64()) != sf::Socket::Done) {
     		log->printf(LOG_LEVEL_INFO, "Network(): Listening on override port " + op.asString());
-    		overridePort = op.asUInt64();
     		break;
     	}
 
