@@ -13,17 +13,21 @@
 			},
 			"genesisblock" : "genesisblock.json",
 			"name" : "K320",
+			"overrideports" : 
+			[
+				7777,
+				7878
+			],
 			"peerdb" : "./peers",
 			"port" : 49000,
-			"overrideports": [7777, 7878],
 			"rpcport" : 8383,
 			"subsidy" : "k320",
 			"walletdb" : "./addressesdb"
 		}
 	],
-	"rpcpassword" : "password",
+	"miner" : false,
+	"pubKey" : "BGOjpbmxzX26d7zHmNxy3RWb94MzTciGhF7y8ehF2EH2BlTDStCrAhSmmfmbaWDuRYqagRViAhVj6QhOsfp4oT4=",
+	"rpcpassword" : "4YwMdz1NA6aO0dWphhWwRmNn3dvAdtPtNcHhYwcsWAs=",
 	"rpcuser" : "ckrpc",
-	"verbose" : true,
-	"pubKey": "BGOjpbmxzX26d7zHmNxy3RWb94MzTciGhF7y8ehF2EH2BlTDStCrAhSmmfmbaWDuRYqagRViAhVj6QhOsfp4oT4=",
-	"miner": false
+	"verbose" : true
 }
