@@ -134,8 +134,8 @@ void CryptoKernel::Network::Peer::requestFunc() {
                         Json::Value response;
                         response["data"]["version"] = version;
 
-                        if(overridePort >= 0) {
-                        	response["data"]["overrideport"] = overridePort;
+                        if(network->overridePort >= 0) {
+                        	response["data"]["overrideport"] = network->overridePort;
                         }
 
                         response["data"]["tipHeight"] = network->getCurrentHeight();
