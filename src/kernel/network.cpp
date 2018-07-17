@@ -142,11 +142,16 @@ CryptoKernel::Network::Network(CryptoKernel::Log* log,
 
     dbTx->commit();
 
-    for(const auto& overridePort : overridePorts) {
-    	log->printf(LOG_LEVEL_INFO, "override port " + overridePort.asString());
+    overridePort = -1;
+    for(const auto& op : overridePorts) {
+    	//log->printf(LOG_LEVEL_INFO, "override port " + overridePort.asString());
+    	if(listener.listen(op.asUInt64()) != sf::Socket::Done) {
+    		log->printf(LOG_LEVEL_INFO, "Network(): Listening on override port " + op.asString());
+    		overridePort = op.asUInt64();
+    		break;
+    	}
     }
-
-    if(listener.listen(port) != sf::Socket::Done) {
+    if(overridePort < 0 && listener.listen(port) != sf::Socket::Done) {
         log->printf(LOG_LEVEL_ERR, "Network(): Could not bind to port " + std::to_string(port));
     }
 
