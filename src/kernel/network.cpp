@@ -628,7 +628,7 @@ void CryptoKernel::Network::connectionFunc() {
             std::string remoteAddr = client->getRemoteAddress().toString();
             if(info["overrideport"]) {
             	log->printf(LOG_LEVEL_INFO, "Network(): connection has override port " + info["overrideport"].asString());
-            	remoteAddr += info["overrideport"].asString();
+            	remoteAddr += ":" + info["overrideport"].asString();
             }
             log->printf(LOG_LEVEL_INFO, "Network(): adding " +remoteAddr);
             connected.at(remoteAddr).reset(connection);
