@@ -613,10 +613,13 @@ void CryptoKernel::Network::connectionFunc() {
                             "Network(): Incoming connection " + client->getRemoteAddress().toString() +
                             " is connecting to self " + std::to_string(client->getLocalPort()) + " " + std::to_string(client->getRemotePort()));
                 if(client->getLocalPort() == localPortInUse) { // only disallow connections to self IF the connection is from the same local port
-                	log->printf(LOG_LEVEL_INFO, "Network(): Incoming connection from self is on same port, rejecting... " + client->getLocalPort());
+                	log->printf(LOG_LEVEL_INFO, "Network(): Incoming connection from self is on same port, rejecting... " + std::to_string(client->getLocalPort()));
                 	client->disconnect();
 					delete client;
 					continue;
+                }
+                else {
+                	log->printf(LOG_LEVEL_INFO, "Network(): We're okay with this? " + std::to_string(client->getLocalPort()) + ", " + std::to_string(localPortInUse));
                 }
             }
 
