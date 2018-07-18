@@ -259,7 +259,11 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 				|| addr == myAddress
 				|| addr == sf::IpAddress::LocalHost
 				|| addr == sf::IpAddress::None) {
-			continue;
+			if(port == addrPort) {
+				log->printf(LOG_LEVEL_INFO, "Connection from localhost is on the same port, rejected");
+				continue;
+			}
+			log->printf(LOG_LEVEL_INFO, "Accepting localhost connection FROM port " + std::to_string(addrPort) + " TO " + std::to_string(port));
 		}
 
 		//log->printf(LOG_LEVEL_INFO, "Network(): Attempting to connect to " + it->key());
