@@ -340,7 +340,7 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 					for(const Json::Value& peer : info["peers"]) {
 						sf::IpAddress addr(getIp(peer.asString()));
 						if(addr != sf::IpAddress::None) {
-							if(!peers->get(dbTx.get(), addr.toString()).isObject()) {
+							if(!peers->get(dbTx.get(), peer.asString()).isObject()) { // todo make sure peer.asString is valid
 								log->printf(LOG_LEVEL_INFO, "Network(): Discovered new peer: " + addr.toString());
 								Json::Value newSeed;
 								newSeed["lastseen"] = 0;
