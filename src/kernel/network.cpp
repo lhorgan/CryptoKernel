@@ -379,6 +379,8 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 				const std::time_t result = std::time(nullptr);
 				it->second->setInfo("lastseen", static_cast<uint64_t>(result));
 			} catch(const Peer::NetworkError& e) {
+				std::string error(e.what());
+				log->printf(LOG_LEVEL_INFO, error);
 				log->printf(LOG_LEVEL_WARN,
 							"Network(): Failed to contact " + it->first + ", disconnecting it");
 
