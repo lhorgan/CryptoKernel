@@ -630,6 +630,7 @@ void CryptoKernel::Network::connectionFunc() {
             	log->printf(LOG_LEVEL_INFO, "Network(): connection has override port " + info["overrideport"].asString());
             	remoteAddr += info["overrideport"].asString();
             }
+            log->printf(LOG_LEVEL_INFO, "Network(): adding " +remoteAddr);
             connected.at(remoteAddr).reset(connection);
 
             std::unique_ptr<Storage::Transaction> dbTx(networkdb->begin());
