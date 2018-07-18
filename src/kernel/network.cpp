@@ -168,7 +168,7 @@ CryptoKernel::Network::Network(CryptoKernel::Log* log,
     listener.setBlocking(false);
 
     // Start connection thread
-    //connectionThread.reset(new std::thread(&CryptoKernel::Network::connectionFunc, this));
+    connectionThread.reset(new std::thread(&CryptoKernel::Network::connectionFunc, this));
 
     // Start management thread
     networkThread.reset(new std::thread(&CryptoKernel::Network::networkFunc, this));
@@ -182,7 +182,7 @@ CryptoKernel::Network::Network(CryptoKernel::Log* log,
 
 CryptoKernel::Network::~Network() {
     running = false;
-    //connectionThread->join();
+    connectionThread->join();
     networkThread->join();
     makeOutgoingConnectionsThread->join();
     infoOutgoingConnectionsThread->join();
@@ -628,6 +628,8 @@ void CryptoKernel::Network::connectionFunc() {
             if(info["overrideport"]) {
             	log->printf(LOG_LEVEL_INFO, "Network(): connection has override port " + info["overrideport"].asString());
             }
+
+            log->printf(LOG_LEVEL_INFO, "OVERRIDE PORT: " + info["overrideport"].asString());
 
             //connected.at(client->getRemoteAddress().toString()).reset(connection);
 
