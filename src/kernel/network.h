@@ -174,7 +174,7 @@ private:
     uint64_t currentHeight;
 
     unsigned int port;
-    unsigned int overridePort;
+    int overridePort;
 };
 }
 
