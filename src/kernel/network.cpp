@@ -268,7 +268,7 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 				//log->printf(LOG_LEVEL_INFO, "Connection from localhost is on the same port (" + std::to_string(localPortInUse) + "), rejected");
 				continue;
 			}
-			log->printf(LOG_LEVEL_INFO, "Accepting localhost connection FROM port " + std::to_string(addrPort) + " TO " + std::to_string(port));
+			log->printf(LOG_LEVEL_INFO, "Accepting localhost connection FROM port " + std::to_string(addrPort) + " TO " + std::to_string(localPortInUse));
 		}
 
 		//log->printf(LOG_LEVEL_INFO, "Network(): Attempting to connect to " + it->key());
@@ -611,7 +611,7 @@ void CryptoKernel::Network::connectionFunc() {
                     || addr == sf::IpAddress::None) {
                 log->printf(LOG_LEVEL_INFO,
                             "Network(): Incoming connection " + client->getRemoteAddress().toString() +
-                            " is connecting to self" + std::to_string(client->getLocalPort()) + " " + std::to_string(client->getRemotePort()));
+                            " is connecting to self " + std::to_string(client->getLocalPort()) + " " + std::to_string(client->getRemotePort()));
                 if(client->getLocalPort() == localPortInUse) { // only disallow connections to self IF the connection is from the same local port
                 	log->printf(LOG_LEVEL_INFO, "Network(): Incoming connection from self is on same port, rejecting... " + client->getLocalPort());
                 	client->disconnect();
