@@ -171,7 +171,7 @@ CryptoKernel::Network::Network(CryptoKernel::Log* log,
     //connectionThread.reset(new std::thread(&CryptoKernel::Network::connectionFunc, this));
 
     // Start management thread
-    //networkThread.reset(new std::thread(&CryptoKernel::Network::networkFunc, this));
+    networkThread.reset(new std::thread(&CryptoKernel::Network::networkFunc, this));
 
     // Start peer thread
    	makeOutgoingConnectionsThread.reset(new std::thread(&CryptoKernel::Network::makeOutgoingConnectionsWrapper, this));
@@ -183,7 +183,7 @@ CryptoKernel::Network::Network(CryptoKernel::Log* log,
 CryptoKernel::Network::~Network() {
     running = false;
     //connectionThread->join();
-    //networkThread->join();
+    networkThread->join();
     makeOutgoingConnectionsThread->join();
     infoOutgoingConnectionsThread->join();
     listener.close();
