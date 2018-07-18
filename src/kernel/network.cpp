@@ -205,7 +205,12 @@ void CryptoKernel::Network::makeOutgoingConnectionsWrapper() {
 void CryptoKernel::Network::infoOutgoingConnectionsWrapper() {
 	while(running) {
 		infoOutgoingConnections();
-		std::this_thread::sleep_for(std::chrono::milliseconds(2000)); // just do this once every two seconds
+		for(unsigned int i = 0; i < 20; i++) {  // just do this once every two seconds
+			if(!running) {
+				break;
+			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
 	}
 }
 
@@ -308,6 +313,10 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 	std::vector<std::string> keys = connected.keys();
 	std::random_shuffle(keys.begin(), keys.end());
 	for(auto key: keys) {
+		if(!running) {
+			break;
+		}
+
 		auto it = connected.find(key);
 		if(it != connected.end() && it->second->acquire()) {
 			try {
