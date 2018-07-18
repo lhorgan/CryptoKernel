@@ -625,16 +625,15 @@ void CryptoKernel::Network::connectionFunc() {
 
             connection->setInfo("lastseen", static_cast<uint64_t>(result));
             connection->setInfo("score", 0);
+            std::string remoteAddr = client->getRemoteAddress().toString();
             if(info["overrideport"]) {
             	log->printf(LOG_LEVEL_INFO, "Network(): connection has override port " + info["overrideport"].asString());
+            	remoteAddr += info["overrideport"].asString();
             }
-
-            log->printf(LOG_LEVEL_INFO, "OVERRIDE PORT: " + info["overrideport"].asString());
-
-            //connected.at(client->getRemoteAddress().toString()).reset(connection);
+            connected.at(remoteAddr).reset(connection);
 
             std::unique_ptr<Storage::Transaction> dbTx(networkdb->begin());
-            //peers->put(dbTx.get(), client->getRemoteAddress().toString(), connection->getCachedInfo()); // todo restore
+            peers->put(dbTx.get(), remoteAddr, connection->getCachedInfo()); // todo restore
             dbTx->commit();
         } else {
             delete client;
