@@ -602,10 +602,12 @@ void CryptoKernel::Network::connectionFunc() {
                     || addr == sf::IpAddress::None) {
                 log->printf(LOG_LEVEL_INFO,
                             "Network(): Incoming connection " + client->getRemoteAddress().toString() +
-                            " is connecting to self " + std::to_string(client->getLocalPort()) + " " + std::to_string(client->getRemotePort()));
-                client->disconnect();
-                delete client;
-                continue;
+                            " is connecting to self"); //+ std::to_string(client->getLocalPort()) + " " + std::to_string(client->getRemotePort()));
+                if(client->getLocalPort() == port) { // only disallow connections to self IF the connection is from the same local port
+                	client->disconnect();
+					delete client;
+					continue;
+                }
             }
 
 
