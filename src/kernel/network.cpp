@@ -609,6 +609,9 @@ void CryptoKernel::Network::connectionFunc() {
 					delete client;
 					continue;
                 }
+                else {
+                	log->printf(LOG_LEVEL_INFO, "Network(): Turns out " + std::to_string(client->getLocalPort()) + " is NOT EQUAL to " + std::to_string(port));
+                }
             }
 
 
