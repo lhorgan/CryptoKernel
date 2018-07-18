@@ -222,6 +222,11 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 
 	std::unique_ptr<Storage::Table::Iterator> it(new Storage::Table::Iterator(peers.get(), networkdb.get(), dbTx->snapshot));
 
+	unsigned int localPortInUse = port;
+	if(overridePort >= 0) {
+		localPortInUse = overridePort;
+	}
+
 	for(it->SeekToFirst(); it->Valid(); it->Next()) {
 		//log->printf(LOG_LEVEL_INFO, "trying " + it->key());
 		if(connected.size() >= 8) { // honestly, this is enough
@@ -259,7 +264,7 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 				|| addr == myAddress
 				|| addr == sf::IpAddress::LocalHost
 				|| addr == sf::IpAddress::None) {
-			if(port == addrPort) {
+			if(localPortInUse == addrPort) {
 				log->printf(LOG_LEVEL_INFO, "Connection from localhost is on the same port, rejected");
 				continue;
 			}
@@ -596,6 +601,10 @@ void CryptoKernel::Network::connectionFunc() {
 
             sf::IpAddress addr(client->getRemoteAddress());
 
+            unsigned int localPortInUse = port;
+            if(overridePort >= 0) {
+            	localPortInUse = overridePort;
+            }
             if(addr == sf::IpAddress::getLocalAddress()
                     || addr == myAddress
                     || addr == sf::IpAddress::LocalHost
@@ -603,14 +612,11 @@ void CryptoKernel::Network::connectionFunc() {
                 log->printf(LOG_LEVEL_INFO,
                             "Network(): Incoming connection " + client->getRemoteAddress().toString() +
                             " is connecting to self" + std::to_string(client->getLocalPort()) + " " + std::to_string(client->getRemotePort()));
-                if(client->getLocalPort() == port) { // only disallow connections to self IF the connection is from the same local port
+                if(client->getLocalPort() == localPortInUse) { // only disallow connections to self IF the connection is from the same local port
                 	log->printf(LOG_LEVEL_INFO, "Network(): Incoming connection from self is on same port, rejecting... " + client->getLocalPort());
                 	client->disconnect();
 					delete client;
 					continue;
-                }
-                else {
-                	log->printf(LOG_LEVEL_INFO, "Network(): Turns out " + std::to_string(client->getLocalPort()) + " is NOT EQUAL to " + std::to_string(port));
                 }
             }
 
