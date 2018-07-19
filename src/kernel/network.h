@@ -175,6 +175,7 @@ private:
 
     unsigned int port;
     unsigned int overridePort;
+    bool usingOverridePort;
 };
 }
 

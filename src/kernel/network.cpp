@@ -142,12 +142,14 @@ CryptoKernel::Network::Network(CryptoKernel::Log* log,
 
     dbTx->commit();
 
-    overridePort = -1;
+    overridePort = 0;
+    usingOverridePort = 0;
     for(const auto& op : overridePorts) {
     	log->printf(LOG_LEVEL_INFO, "Network(): Trying override port " + op.asString());
     	if(listener.listen(op.asUInt64()) == sf::Socket::Done) {
     		log->printf(LOG_LEVEL_INFO, "Network(): Listening on override port " + op.asString());
     		overridePort = op.asUInt64();
+    		usingOverridePort = true;
     		break;
     	}
     }
@@ -250,6 +252,11 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 			continue;
 		}
 		
+		unsigned int localPortInUse = port;
+		if(usingOverridePort) {
+			localPortInUse = overridePort;
+		}
+
 		std::string saddr;
 		unsigned int addrPort;
 		parseIp(it->key(), saddr, addrPort);
@@ -259,8 +266,8 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 				|| addr == myAddress
 				|| addr == sf::IpAddress::LocalHost
 				|| addr == sf::IpAddress::None) {
-			if(port == addrPort) {
-				log->printf(LOG_LEVEL_INFO, "Connection from localhost is on the same port, rejected");
+			if(localPortInUse == addrPort) {
+				log->printf(LOG_LEVEL_INFO, "Connection from localhost is on the same port (" + std::to_string(localPortInUse) + "), rejected");
 				continue;
 			}
 			log->printf(LOG_LEVEL_INFO, "Accepting localhost connection FROM port " + std::to_string(addrPort) + " TO " + std::to_string(port));
@@ -596,21 +603,6 @@ void CryptoKernel::Network::connectionFunc() {
 
             sf::IpAddress addr(client->getRemoteAddress());
 
-            if(addr == sf::IpAddress::getLocalAddress()
-                    || addr == myAddress
-                    || addr == sf::IpAddress::LocalHost
-                    || addr == sf::IpAddress::None) {
-                log->printf(LOG_LEVEL_INFO,
-                            "Network(): Incoming connection " + client->getRemoteAddress().toString() +
-                            " is connecting to self" + std::to_string(client->getLocalPort()) + " " + std::to_string(client->getRemotePort()));
-                if(client->getLocalPort() == port) { // only disallow connections to self IF the connection is from the same local port
-                	log->printf(LOG_LEVEL_INFO, "Network(): Incoming connection from self is on same port, rejecting... " + client->getLocalPort());
-                	client->disconnect();
-					delete client;
-					continue;
-                }
-            }
-
 
             log->printf(LOG_LEVEL_INFO,
                         "Network(): Peer connected from " + client->getRemoteAddress().toString() + ":" +
@@ -642,11 +634,32 @@ void CryptoKernel::Network::connectionFunc() {
             connection->setInfo("lastseen", static_cast<uint64_t>(result));
             connection->setInfo("score", 0);
             std::string remoteAddr = client->getRemoteAddress().toString();
-            if(info["overrideport"]) {
+
+            if(!info["overrideport"].empty()) {
             	log->printf(LOG_LEVEL_INFO, "Network(): connection has override port " + info["overrideport"].asString());
             	remoteAddr += ":" + info["overrideport"].asString();
             }
             log->printf(LOG_LEVEL_INFO, "Network(): adding " +remoteAddr);
+
+            unsigned int localPortInUse = port;
+            if(overridePort >= 0) {
+            	localPortInUse = overridePort;
+            }
+            if(addr == sf::IpAddress::getLocalAddress()
+					|| addr == myAddress
+					|| addr == sf::IpAddress::LocalHost
+					|| addr == sf::IpAddress::None) {
+				log->printf(LOG_LEVEL_INFO,
+							"Network(): Incoming connection " + client->getRemoteAddress().toString() +
+							" is connecting to self");
+				if(!info["overrideport"].empty() && info["overrideport"].asUInt64() == localPortInUse) { // only disallow connections to self IF the connection is from the same local port
+					log->printf(LOG_LEVEL_INFO, "Network(): Incoming connection from self is on same port, rejecting... " + info["overrideport"].asString());
+					client->disconnect();
+					delete client;
+					continue;
+				}
+			}
+
             connected.at(remoteAddr).reset(connection);
 
             std::unique_ptr<Storage::Transaction> dbTx(networkdb->begin());
