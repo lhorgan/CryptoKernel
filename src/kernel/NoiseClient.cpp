@@ -169,7 +169,7 @@ void NoiseClient::writeInfo() {
 	}
 
 	/* If the action is not "split", then the handshake has failed */
-	if(noise_handshakestate_get_action(handshake) != NOISE_ACTION_SPLIT) {
+	if(ok && noise_handshakestate_get_action(handshake) != NOISE_ACTION_SPLIT) {
 		log->printf(LOG_LEVEL_ERR, "Noise(): Client, protocol handshake failed");
 		ok = 0;
 	}
