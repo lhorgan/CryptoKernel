@@ -74,8 +74,10 @@ void NoiseClient::writeInfo() {
 	while(!getHandshakeComplete()) { // it might fail in another thread, and so become "complete"
 		if(server->getRemoteAddress() == sf::IpAddress::None) {
 			log->printf(LOG_LEVEL_ERR, "Noise(): Client, the remote port has been invalidated");
-			setHandshakeComplete(true, false);
-			return;
+			//setHandshakeComplete(true, false);
+			//return;
+			ok = 0;
+			break;
 		}
 
 		if(!sentPubKey) { // we need to share our public key over the network
@@ -83,8 +85,10 @@ void NoiseClient::writeInfo() {
 			sf::Packet pubKeyPacket;
 			if(!noiseUtil.loadPublicKey("keys/client_key_25519.pub", clientKey25519, sizeof(clientKey25519))) {
 				if(!noiseUtil.writeKeys("keys/client_key_25519.pub", "keys/client_key_25519", &pub_key, &priv_key)) {
-					setHandshakeComplete(true, false);
-					return;
+					//setHandshakeComplete(true, false);
+					//return;
+					ok = 0;
+					break;
 				}
 				memcpy(clientKey25519, pub_key, CURVE25519_KEY_LEN); // put the new key in its proper place
 			}
@@ -94,8 +98,10 @@ void NoiseClient::writeInfo() {
 			if (!initializeHandshake(handshake, &id, sizeof(id))) { // now that we have keys, initialize handshake
 				log->printf(LOG_LEVEL_ERR, "Noise(): Client, error initializing handshake.");
 				noise_handshakestate_free(handshake);
-				setHandshakeComplete(true, false);
-				return;
+				//setHandshakeComplete(true, false);
+				//return;
+				ok = 0;
+				break;
 			}
 
 			pubKeyPacket.append(clientKey25519, sizeof(clientKey25519));
@@ -116,8 +122,10 @@ void NoiseClient::writeInfo() {
 			err = noise_handshakestate_start(handshake);
 			if (err != NOISE_ERROR_NONE) {
 				log->printf(LOG_LEVEL_ERR, "Noise(): Client start handshake error, " + noiseUtil.errToString(err));
-				setHandshakeComplete(true, false);
-				return;
+				//setHandshakeComplete(true, false);
+				//return;
+				ok = 0;
+				break;
 			}
 			sentId = true;
 		}
@@ -132,8 +140,10 @@ void NoiseClient::writeInfo() {
 				err = noise_handshakestate_write_message(handshake, &mbuf, NULL);
 				if (err != NOISE_ERROR_NONE) {
 					log->printf(LOG_LEVEL_ERR, "Noise(): Client, handshake failed on write message: " + noiseUtil.errToString(err));
-					setHandshakeComplete(true, false);
-					return;
+					//setHandshakeComplete(true, false);
+					//return;
+					ok = 0;
+					break;
 				}
 				message[0] = (uint8_t)(mbuf.size >> 8);
 				message[1] = (uint8_t)mbuf.size;
@@ -143,8 +153,10 @@ void NoiseClient::writeInfo() {
 				packet.append(message, mbuf.size + 2);
 				if(server->send(packet) != sf::Socket::Done) {
 					log->printf(LOG_LEVEL_ERR, "Noise(): Client couldn't send packet.");
-					setHandshakeComplete(true, false);
-					return;
+					//setHandshakeComplete(true, false);
+					//return;
+					ok = 0;
+					break;
 				}
 			}
 			else if(action != NOISE_ACTION_READ_MESSAGE) {
