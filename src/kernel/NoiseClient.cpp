@@ -168,6 +168,7 @@ void NoiseClient::writeInfo() {
 		std::this_thread::sleep_for(std::chrono::milliseconds(50)); // again, totally arbitrary
 	}
 
+	log->printf(LOG_LEVEL_INFO, "806 Client: We still live!!!");
 	/* If the action is not "split", then the handshake has failed */
 	if(ok && noise_handshakestate_get_action(handshake) != NOISE_ACTION_SPLIT) {
 		log->printf(LOG_LEVEL_ERR, "Noise(): Client, protocol handshake failed");
@@ -187,6 +188,7 @@ void NoiseClient::writeInfo() {
 	noise_handshakestate_free(handshake);
 	handshake = 0;
 
+	log->printf(LOG_LEVEL_INFO, "806 Client: And we live here too!");
 	// padding would go here, if we used it
 
 	/* Tell the user that the handshake has been successful */
