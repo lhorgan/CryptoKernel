@@ -221,16 +221,17 @@ void NoiseClient::receivePacket(sf::Packet packet) {
 }
 
 void NoiseClient::setHandshakeComplete(bool complete, bool success) {
-	if(success) {
-		log->printf(LOG_LEVEL_INFO, "Noise(): Client handshake succeeded");
+	std::lock_guard<std::mutex> hcm(handshakeCompleteMutex);
+		if(success) {
+		log->printf(LOG_LEVEL_INFO, "Noise(): Server handshake succeeded");
 	}
 	else {
-		log->printf(LOG_LEVEL_INFO, "Noise(): Client handshake finished, failed");
+		log->printf(LOG_LEVEL_INFO, "Noise(): Server handshake finished, failed");
 	}
-
-	std::lock_guard<std::mutex> hcm(handshakeCompleteMutex);
-	handshakeComplete = complete;
-	handshakeSuccess = success;
+	if(!complete && !success) {
+		handshakeComplete = complete;
+		handshakeSuccess = success;
+	}
 }
 
 bool NoiseClient::getHandshakeComplete() {

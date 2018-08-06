@@ -234,16 +234,17 @@ int NoiseServer::initializeHandshake(NoiseHandshakeState* handshake, const Noise
 }
 
 void NoiseServer::setHandshakeComplete(bool complete, bool success) {
+	std::lock_guard<std::mutex> hcm(handshakeCompleteMutex);
 	if(success) {
 		log->printf(LOG_LEVEL_INFO, "Noise(): Server handshake succeeded");
 	}
 	else {
 		log->printf(LOG_LEVEL_INFO, "Noise(): Server handshake finished, failed");
 	}
-
-	std::lock_guard<std::mutex> hcm(handshakeCompleteMutex);
-	handshakeComplete = complete;
-	handshakeSuccess = success;
+	if(!complete && !success) {
+		handshakeComplete = complete;
+		handshakeSuccess = success;
+	}
 }
 
 bool NoiseServer::getHandshakeSuccess() {
