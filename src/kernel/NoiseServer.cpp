@@ -237,6 +237,9 @@ void NoiseServer::setHandshakeComplete(bool complete, bool success) {
 	if(success) {
 		log->printf(LOG_LEVEL_INFO, "Noise(): Server handshake succeeded");
 	}
+	else {
+		log->printf(LOG_LEVEL_INFO, "Noise(): Server handshake finished, failed");
+	}
 
 	std::lock_guard<std::mutex> hcm(handshakeCompleteMutex);
 	handshakeComplete = complete;
