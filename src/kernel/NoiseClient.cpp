@@ -70,6 +70,7 @@ void NoiseClient::writeInfo() {
 
 	bool sentPubKey = false;
 
+	// seems like we can sget stuck in here....
 	while(!getHandshakeComplete()) { // it might fail in another thread, and so become "complete"
 		if(server->getRemoteAddress() == sf::IpAddress::None) {
 			log->printf(LOG_LEVEL_ERR, "Noise(): Client, the remote port has been invalidated");
