@@ -73,9 +73,10 @@ void NoiseClient::writeInfo() {
 	// seems like we can sget stuck in here....
 	while(true) { // it might fail in another thread, and so become "complete"
 		if(server->getRemoteAddress() == sf::IpAddress::None) {
-			log->printf(LOG_LEVEL_ERR, "Noise(): Client, the remote port has been invalidated");
+			log->printf(LOG_LEVEL_INFO, "Noise(): Client, the remote port has been invalidated");
 			//setHandshakeComplete(true, false);
 			//return;
+			log->printf(LOG_LEVEL_INFO, "Noise(): 806 fjasjwerjaksdf");
 			ok = 0;
 			log->printf(LOG_LEVEL_INFO, "806 Client still alive");
 			break;
