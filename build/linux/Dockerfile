@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:16.04
 
 RUN apt update && apt dist-upgrade -y && \
     apt install -y make git cmake wget build-essential
@@ -69,11 +69,11 @@ WORKDIR ../
 
 RUN wget https://www.lua.org/ftp/lua-5.3.4.tar.gz && \
     tar xzvf lua-5.3.4.tar.gz
-WORKDIR lua-5.3.4
-RUN make generic && make local && cp -r install/lib/liblua.a /usr/local/lib/liblua5.3.a && \
-    cp -r install/include/* /usr/local/include/
+WORKDIR lua-5.3.4/src
+RUN make liblua.a SYSCFLAGS="-DLUA_USE_LINUX" && cp liblua.a /usr/local/lib/liblua5.3.a && \
+    mkdir /usr/include/lua5.3 && cp -r *.h /usr/include/lua5.3
 
-WORKDIR ../
+WORKDIR ../../
 
 RUN git clone https://github.com/metalicjames/selene.git
 RUN cp -r selene/include/* /usr/local/include
@@ -94,12 +94,12 @@ RUN cp lua-lz4/lz4.so cryptokernel
 
 RUN git clone https://github.com/metalicjames/cschnorr.git
 WORKDIR cschnorr
-RUN premake5 gmake2 && make cschnorr && \
+RUN premake5 gmake2 && make config=release_static cschnorr && \
     mkdir /usr/local/include/cschnorr/ && \
     cp src/*.h /usr/local/include/cschnorr/ && \
-    cp bin/Static/Debug/libcschnorr.a /usr/local/lib
+    cp bin/Static/Release/libcschnorr.a /usr/local/lib
 WORKDIR ../
 
 WORKDIR cryptokernel
 
-RUN premake5 gmake2 && make ckd
+RUN premake5 gmake2 --include-dir=/usr/include/lua5.3 && make config=release_static ckd
