@@ -24,8 +24,15 @@ test-ck
 .cproject
 *.make
 Makefile
+test.make
 Default/*
 .cproject
 .project
 core
 vgcore.*
+*.ldb
+CURRENT
+LOCK
+LOG
+LOG.old
+MANIFEST*
