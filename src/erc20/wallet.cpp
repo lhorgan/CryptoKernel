@@ -93,13 +93,26 @@ void Wallet::monitorBlockchain() {
 /**
  * Figure out if a specific block contains money for us
  */
-void Wallet::processBlock() {
+void Wallet::processBlock(CryptoKernel::Blockchain::block& block) {
+    std::set<CryptoKernel::Blockchain::transaction> transactions = block.getTransactions();
+    for(auto transaction : transactions) {
+        processTransaction(transaction);
+    }
+}
 
+/**
+ * Grr
+ */
+void Wallet::processTransaction(CryptoKernel::Blockchain::transaction& transaction) {
+    std::set<CryptoKernel::Blockchain::output> outputs = transaction.getOutputs();
+    for(auto output : outputs) {
+
+    }
 }
 
 /**
  * Hmmmm.... wonder what this does.
- * (okay, okay.  fine.  it mines)
+ * (okay, okay.  fine.  it mines.)
  */
 void Wallet::mine() {
 

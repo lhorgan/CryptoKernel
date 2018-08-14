@@ -13,7 +13,8 @@ public:
     bool transfer(const string& pubKey, uint64_t value);
     std::vector<CryptoKernel::Blockchain::dbOutput> findUtxosToSpend(uint64_t value);
     void monitorBlockchain();
-    void processBlock();
+    void processBlock(CryptoKernel::Blockchain::block& block);
+    void processTransaction(CryptoKernel::Blockchain::transaction& transaction);
     void mine();
 
 private:
@@ -22,4 +23,8 @@ private:
     Log* log;
     string publicKey;
     string privKey;
+
+    uint64_t height;
+    string tipId;
+    set<CryptoKernel::Blockchain::output> utoxs;
 };

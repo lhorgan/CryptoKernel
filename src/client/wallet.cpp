@@ -366,7 +366,7 @@ void CryptoKernel::Wallet::digestTx(const CryptoKernel::Blockchain::transaction&
                 Account acc = getAccountByKey(walletTx, out.getData()["publicKey"].asString());
                 acc.setBalance(acc.getBalance() - out.getValue());
                 accounts->put(walletTx, acc.getName(), acc.toJson());
-            }
+            } 
         }
     }
 
