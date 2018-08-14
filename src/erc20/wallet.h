@@ -11,6 +11,10 @@ class Wallet {
 public:
     Wallet();
     bool transfer(const string& pubKey, uint64_t value);
+    void findUtxosToSpend(uint64_t value);
+    void monitorBlockchain();
+    void processBlock();
+    void mine();
 
 private:
     Blockchain* blockchain;

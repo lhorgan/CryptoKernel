@@ -14,6 +14,9 @@ Wallet::Wallet() {
     network = new Network(log, blockchain, networkPort, networkDir);
 }
 
+/**
+ * Send 'value' to 'pubKey' 
+ */
 bool Wallet::transfer(const std::string& pubKey, uint64_t value) {
     // set up the uniform random distribution
     const time_t t = std::time(0);
@@ -29,4 +32,34 @@ bool Wallet::transfer(const std::string& pubKey, uint64_t value) {
     vector<CryptoKernel::Blockchain::transaction> transactions;
     //transactions.push_back(output);
     network->broadcastTransactions(transactions);
+}
+
+/**
+ * Find a set of (our own personal) UTXOs to spend to cover a transfer 
+*/
+void Wallet::findUtxosToSpend(uint64_t value) {
+
+}
+
+/**
+ *  Top level function for watching the blockchain for blocks that might contain transactions
+ *  with money for us!
+ */
+void Wallet::monitorBlockchain() {
+
+}
+
+/**
+ * Figure out if a specific block contains money for us
+ */
+void Wallet::processBlock() {
+
+}
+
+/**
+ * Hmmmm.... wonder what this does.
+ * (okay, okay.  fine.  it mines)
+ */
+void Wallet::mine() {
+
 }
