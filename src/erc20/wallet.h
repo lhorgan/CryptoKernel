@@ -11,7 +11,7 @@ class Wallet {
 public:
     Wallet();
     bool transfer(const string& pubKey, uint64_t value);
-    void findUtxosToSpend(uint64_t value);
+    std::vector<CryptoKernel::Blockchain::dbOutput> findUtxosToSpend(uint64_t value);
     void monitorBlockchain();
     void processBlock();
     void mine();
@@ -21,4 +21,5 @@ private:
     Network* network;
     Log* log;
     string publicKey;
+    string privKey;
 };

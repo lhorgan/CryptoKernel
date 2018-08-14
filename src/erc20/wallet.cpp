@@ -25,20 +25,61 @@ bool Wallet::transfer(const std::string& pubKey, uint64_t value) {
     uniform_int_distribution<unsigned int> distribution(0, UINT_MAX);
     const uint64_t nonce = distribution(generator);
 
-    Json::Value data;
-    data["publicKey"] = pubKey;
+    vector<CryptoKernel::Blockchain::dbOutput> outputsToSpend = findUtxosToSpend(value);
+    if(outputsToSpend.size() < value) {
+        log->printf(LOG_LEVEL_INFO, "Couldn't complete transfer, insufficient funds!");
+        return false;
+    } 
+    
+    Crypto crypto;
+    crypto.setPublicKey(pubKey);
+    crypto.setPrivateKey(privKey);
 
-    const CryptoKernel::Blockchain::output toThem = CryptoKernel::Blockchain::output(50, distribution(generator), data);
+    set<CryptoKernel::Blockchain::output> outputs;
+    set<CryptoKernel::Blockchain::input> inputs;
+
+    for(int i = 0; i < value; i++) {
+        Json::Value data;
+        data["publicKey"] = pubKey;
+        const CryptoKernel::Blockchain::output toThem = CryptoKernel::Blockchain::output(1, distribution(generator), data);
+        outputs.insert(toThem);
+    }
+    const std::string outputHash = CryptoKernel::Blockchain::transaction::getOutputSetId(outputs).toString();
+
+    for(auto output : outputsToSpend) {
+        string outputPubKey = output.getData()["publicKey"].asString();
+
+        string signature = crypto.sign(output.getId().toString() + outputHash);
+        Json::Value data;
+        data["signature"] = signature;
+
+        CryptoKernel::Blockchain::input input(output.getId(), data);
+        inputs.insert(input);
+    }
+
+    const CryptoKernel::Blockchain::transaction transaction = CryptoKernel::Blockchain::transaction(inputs, outputs, now);
     vector<CryptoKernel::Blockchain::transaction> transactions;
-    //transactions.push_back(output);
+    transactions.push_back(transaction);
     network->broadcastTransactions(transactions);
 }
 
 /**
  * Find a set of (our own personal) UTXOs to spend to cover a transfer 
 */
-void Wallet::findUtxosToSpend(uint64_t value) {
+std::vector<CryptoKernel::Blockchain::dbOutput> Wallet::findUtxosToSpend(uint64_t value) {
+    std::set<CryptoKernel::Blockchain::dbOutput> outputs = blockchain->getUnspentOutputs(publicKey);
 
+    std::vector<CryptoKernel::Blockchain::dbOutput> outputsToSpend;
+    for(auto output : outputs) {
+        if(outputsToSpend.size() < value) {
+            outputsToSpend.push_back(output);
+        }
+        else {
+            break;
+        }
+    }
+
+    return outputsToSpend;
 }
 
 /**
