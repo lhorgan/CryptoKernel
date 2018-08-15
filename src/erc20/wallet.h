@@ -15,8 +15,7 @@ public:
     void monitorBlockchain();
     void processBlock(CryptoKernel::Blockchain::block& block);
     void processTransaction(CryptoKernel::Blockchain::transaction& transaction);
-    void mine();
-
+    
 private:
     Blockchain* blockchain;
     Network* network;

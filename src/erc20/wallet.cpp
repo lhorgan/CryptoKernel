@@ -3,11 +3,17 @@
 #include "crypto.h"
 #include "wallet.h"
 
+#include "consensus/PoW.h"
+
 Wallet::Wallet() {
     log = new Log("erc20.log", true);
 
     const string blockchainDir = "erc20/blockchain";
     blockchain = new Chain(log, blockchainDir);
+    
+    Consensus* consensus = new Consensus::PoW::KGW_LYRA2REV2(5, blockchain, true, publicKey);
+
+    blockchain->loadChain(consensus, "hello");
 
     const string networkDir = "erc20/network";
     const unsigned int networkPort = 9823;
@@ -87,7 +93,10 @@ std::vector<CryptoKernel::Blockchain::dbOutput> Wallet::findUtxosToSpend(uint64_
  *  with money for us!
  */
 void Wallet::monitorBlockchain() {
-
+    for(int i = 2; i < network->getCurrentHeight(); i++) {
+        CryptoKernel::Blockchain::block block = blockchain->getBlockByHeight(i);
+        processBlock(block);
+    }
 }
 
 /**
@@ -106,14 +115,12 @@ void Wallet::processBlock(CryptoKernel::Blockchain::block& block) {
 void Wallet::processTransaction(CryptoKernel::Blockchain::transaction& transaction) {
     std::set<CryptoKernel::Blockchain::output> outputs = transaction.getOutputs();
     for(auto output : outputs) {
-
+        // Check if there is a publicKey that belongs to you
+        if(output.getData()["publicKey"].isString()) {
+            string outputPubKey = output.getData["publicKey"].asString();
+            if(outputPubKey == publicKey) {
+                log->printf(LOG_LEVEL_INFO, "This output belongs to us!");
+            }
+        }
     }
-}
-
-/**
- * Hmmmm.... wonder what this does.
- * (okay, okay.  fine.  it mines.)
- */
-void Wallet::mine() {
-
 }
