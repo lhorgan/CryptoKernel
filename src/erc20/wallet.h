@@ -13,6 +13,7 @@ using namespace std;
 class ERC20Wallet {
 public:
     ERC20Wallet();
+    ~ERC20Wallet();
     bool transfer(const string& pubKey, uint64_t value);
     std::vector<CryptoKernel::Blockchain::dbOutput> findUtxosToSpend(uint64_t value);
     void monitorBlockchain();

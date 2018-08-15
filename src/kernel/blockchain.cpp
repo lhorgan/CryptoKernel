@@ -55,6 +55,7 @@ bool CryptoKernel::Blockchain::loadChain(CryptoKernel::Consensus* consensus,
         emptyDB();
         bool newGenesisBlock = false;
         std::ifstream t(genesisBlockFile);
+        log->printf(LOG_LEVEL_INFO, "Attempting to open gensis block file " + genesisBlockFile);
         if(!t.is_open()) {
             log->printf(LOG_LEVEL_WARN, "blockchain(): Failed to open genesis block file");
             newGenesisBlock = true;
@@ -583,6 +584,9 @@ std::tuple<bool, bool> CryptoKernel::Blockchain::submitBlock(Storage::Transactio
         }
 
         if(outputTotal > fees + getBlockReward(blockHeight)) {
+            log->printf(LOG_LEVEL_INFO, "Output total: " + std::to_string(outputTotal));
+            log->printf(LOG_LEVEL_INFO, "Fees: " + std::to_string(fees));
+            log->printf(LOG_LEVEL_INFO, "Block reward: " + std::to_string(blockHeight));
             log->printf(LOG_LEVEL_INFO,
                         "blockchain::submitBlock(): Coinbase output is not the correct value");
             return std::make_tuple(false, true);

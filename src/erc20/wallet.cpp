@@ -15,7 +15,7 @@ ERC20Wallet::ERC20Wallet() {
     
     Consensus* consensus = new Consensus::PoW::KGW_LYRA2REV2(5, blockchain, true, publicKey);
 
-    blockchain->loadChain(consensus, "hello");
+    blockchain->loadChain(consensus, "alice.json");
 
     const string networkDir = "erc20/network";
     const unsigned int networkPort = 9823;
@@ -25,8 +25,15 @@ ERC20Wallet::ERC20Wallet() {
     sendThread.reset(new thread(&ERC20Wallet::sendFunc, this));
 }
 
+ERC20Wallet::~ERC20Wallet() {
+    log->printf(LOG_LEVEL_INFO, "cleaning up");
+    monitorThread->join();
+    sendThread->join();
+}
+
 void ERC20Wallet::sendFunc() {
     while(true) {
+        log->printf(LOG_LEVEL_INFO, "sending....");
         transfer(G_OTHER_PUB_KEY, 1);
         std::this_thread::sleep_for(std::chrono::milliseconds(10000));
     }
@@ -79,6 +86,8 @@ bool ERC20Wallet::transfer(const std::string& pubKey, uint64_t value) {
     vector<CryptoKernel::Blockchain::transaction> transactions;
     transactions.push_back(transaction);
     network->broadcastTransactions(transactions);
+
+    return true;
 }
 
 /**
@@ -106,6 +115,7 @@ std::vector<CryptoKernel::Blockchain::dbOutput> ERC20Wallet::findUtxosToSpend(ui
  */
 void ERC20Wallet::monitorBlockchain() {
     while(true) {
+        log->printf(LOG_LEVEL_INFO, "monitoring...");
         for(int i = 2; i < network->getCurrentHeight(); i++) {
             CryptoKernel::Blockchain::block block = blockchain->getBlockByHeight(i);
             processBlock(block);

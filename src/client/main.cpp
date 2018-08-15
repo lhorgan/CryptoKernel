@@ -32,5 +32,5 @@
 bool running;
 
 int main(int argc, char* argv[]) {
-    ERC20Wallet* wallet = new ERC20Wallet;
+    std::unique_ptr<ERC20Wallet> wallet(new ERC20Wallet());
 }
