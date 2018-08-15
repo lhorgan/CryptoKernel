@@ -33,7 +33,7 @@ ERC20Wallet::~ERC20Wallet() {
 
 void ERC20Wallet::sendFunc() {
     while(true) {
-        log->printf(LOG_LEVEL_INFO, "sending....");
+        //log->printf(LOG_LEVEL_INFO, "sending....");
         transfer(G_OTHER_PUB_KEY, 1);
         std::this_thread::sleep_for(std::chrono::milliseconds(10000));
     }
@@ -115,7 +115,7 @@ std::vector<CryptoKernel::Blockchain::dbOutput> ERC20Wallet::findUtxosToSpend(ui
  */
 void ERC20Wallet::monitorBlockchain() {
     while(true) {
-        log->printf(LOG_LEVEL_INFO, "monitoring...");
+        //log->printf(LOG_LEVEL_INFO, "monitoring...");
         for(int i = 2; i < network->getCurrentHeight(); i++) {
             CryptoKernel::Blockchain::block block = blockchain->getBlockByHeight(i);
             processBlock(block);
