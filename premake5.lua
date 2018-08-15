@@ -72,7 +72,7 @@ project "ck"
 project "ckd"
 
     kind "ConsoleApp"
-    files {"src/client/**.cpp", "src/client/**.h"}
+    files {"src/client/**.cpp", "src/client/**.h", "src/erc20/**.h", "src/erc20/**.cpp"}
     links {"ck"}
     links(cklibs)
 

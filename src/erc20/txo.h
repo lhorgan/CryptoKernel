@@ -1,3 +1,6 @@
+#ifndef ERC20TXO
+#define ERC20TXO
+
 #include <string>
 
 #include "network.h"
@@ -19,3 +22,5 @@ private:
     bool spent;
     uint64_t value;
 };
+
+#endif

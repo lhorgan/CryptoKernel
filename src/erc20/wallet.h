@@ -1,3 +1,6 @@
+#ifndef ERC20WALLET
+#define ERC20WALLET
+
 #include <string>
 #include <cstdint>
 
@@ -7,14 +10,15 @@
 using namespace CryptoKernel;
 using namespace std;
 
-class Wallet {
+class ERC20Wallet {
 public:
-    Wallet();
+    ERC20Wallet();
     bool transfer(const string& pubKey, uint64_t value);
     std::vector<CryptoKernel::Blockchain::dbOutput> findUtxosToSpend(uint64_t value);
     void monitorBlockchain();
     void processBlock(CryptoKernel::Blockchain::block& block);
     void processTransaction(CryptoKernel::Blockchain::transaction& transaction);
+    void sendFunc();
     
 private:
     Blockchain* blockchain;
@@ -26,4 +30,9 @@ private:
     uint64_t height;
     string tipId;
     set<CryptoKernel::Blockchain::output> utoxs;
+
+    unique_ptr<thread> monitorThread;
+    unique_ptr<thread> sendThread;
 };
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef ERC20CHAIN
+#define ERC20CHAIN
+
 #include <string>
 
 #include "blockchain.h"
@@ -12,3 +15,5 @@ public:
     virtual uint64_t getBlockReward(const uint64_t height);
     virtual string getCoinbaseOwner(const string& publicKey);
 };
+
+#endif
