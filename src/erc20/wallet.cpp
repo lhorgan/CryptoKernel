@@ -42,7 +42,7 @@ void ERC20Wallet::sendFunc() {
 }
 
 /**
- * Send 'value' to 'pubKey' 
+ * Send 'value' to 'pubKey'
  */
 bool ERC20Wallet::transfer(const std::string& pubKey, uint64_t value) {
     // set up the uniform random distribution
