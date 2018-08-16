@@ -9,6 +9,9 @@ CryptoKernel::Consensus::PoW::PoW(const uint64_t blockTarget,
                                   CryptoKernel::Blockchain* blockchain,
                                   const bool miner,
                                   const std::string& pubKey) {
+    log.reset(new CryptoKernel::Log("erc20/miner.log", true));     
+    log->printf(LOG_LEVEL_INFO, "In consensus constructor");                             
+                                      
     this->blockTarget = blockTarget;
     this->blockchain = blockchain;
     running = miner;
@@ -25,10 +28,14 @@ void CryptoKernel::Consensus::PoW::start() {
 }
 
 void CryptoKernel::Consensus::PoW::miner() {
+    log->printf(LOG_LEVEL_INFO, "Miner starting....");
+
     time_t t = std::time(0);
     uint64_t now = static_cast<uint64_t> (t);
 
     while(running) {
+        log->printf(LOG_LEVEL_INFO, "MINER RUNNING....");
+
         CryptoKernel::Blockchain::block Block = blockchain->generateVerifyingBlock(pubKey);
         uint64_t nonce = 0;
 

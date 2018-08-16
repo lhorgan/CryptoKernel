@@ -30,6 +30,7 @@ Default/*
 core
 vgcore.*
 *.ldb
+core*
 
 CURRENT
 LOCK

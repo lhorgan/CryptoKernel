@@ -107,6 +107,9 @@ protected:
     consensusData getConsensusData(const CryptoKernel::Blockchain::dbBlock& block);
     Json::Value consensusDataToJson(const consensusData& data);
 
+public:
+    std::unique_ptr<CryptoKernel::Log> log;
+
 private:
     bool running;
     void miner();

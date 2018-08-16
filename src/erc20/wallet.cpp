@@ -23,6 +23,8 @@ ERC20Wallet::ERC20Wallet() {
 
     monitorThread.reset(new thread(&ERC20Wallet::monitorBlockchain, this));
     sendThread.reset(new thread(&ERC20Wallet::sendFunc, this));
+
+    consensus->start();
 }
 
 ERC20Wallet::~ERC20Wallet() {
@@ -95,6 +97,8 @@ bool ERC20Wallet::transfer(const std::string& pubKey, uint64_t value) {
 */
 std::vector<CryptoKernel::Blockchain::dbOutput> ERC20Wallet::findUtxosToSpend(uint64_t value) {
     std::set<CryptoKernel::Blockchain::dbOutput> outputs = blockchain->getUnspentOutputs(publicKey);
+    log->printf(LOG_LEVEL_INFO, "Unspent outputs: " + std::to_string(outputs.size()));
+    log->printf(LOG_LEVEL_INFO, "Unconfirmed: " + std::to_string(blockchain->getUnconfirmedTransactions().size()));
 
     std::vector<CryptoKernel::Blockchain::dbOutput> outputsToSpend;
     for(auto output : outputs) {
