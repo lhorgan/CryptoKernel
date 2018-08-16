@@ -3,9 +3,9 @@
 Chain::Chain(Log* log, string blockchainDir) : Blockchain(log, blockchainDir) {};
 
 uint64_t Chain::getBlockReward(const uint64_t height) {
-    return 100;
+    return 1;
 }
 
 string Chain::getCoinbaseOwner(const string& publicKey) {
-    return "033c74108bd7a1395c362ee8cf9829bef26c616b2a3bcb5e7b0fb351f5dc22f071";
+    return "BNEOpZ81Oo42ISQEhwid8hvQogv42vTTP7BonJMaEG00dPPO7qjz6HpcKO7d9dM4UkvpvsSI0SbCk+c73hGjDjs=";
 }

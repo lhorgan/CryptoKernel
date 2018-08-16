@@ -9,12 +9,9 @@ using namespace std;
 
 // https://bitcore.io/playground/#/address
 string G_PUBLIC_KEY = "BNEOpZ81Oo42ISQEhwid8hvQogv42vTTP7BonJMaEG00dPPO7qjz6HpcKO7d9dM4UkvpvsSI0SbCk+c73hGjDjs=";
+string G_PRIVATE_KEY = "gTX4tAO0lpeEVZ6l4xRMQNJG/nOiTwn7CiuhwY7XWHQ=";
 
-Json::Value PRIV_KEY;
-PRIV_KEY["iv"] = "8CRCc182Zfuc1zJw8hJz5Q==";
-PRIV_KEY["salt"] = "C+CSus2dnpS/lsV9w6gxJuR7Zc+pOvVJlRBii1zfZrA=";
-PRIV_KEY["cipherText"] = "zjt4YZ88FqqTNEjmCNmOsUbqn8Yrf5CM5nEF5RIPia0wAfywcHVupFZ1hPj2/zGJ";
-
-CryptoKernel::AES256 G_PRIVATE_KEY(PRIV_KEY);
+string G_OTHER_PUBLIC_KEY = "BMoJcL8QlK0GOx2wjjaaXSei15sgAQUG1jMZXXjW7+XetqAzTp25LVTdMdi6hzYBhyottUNm50Z1HrrcCB/XCKM=";
+string G_OTHER_PRIVATE_KEY = "XG2pko7RYoOvrD7XgU8PTAk45ebKTBNekYqrB3eIm1c=";
 
 #endif
