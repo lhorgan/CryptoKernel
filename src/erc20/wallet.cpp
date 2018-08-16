@@ -89,6 +89,8 @@ bool ERC20Wallet::transfer(const std::string& pubKey, uint64_t value) {
     transactions.push_back(transaction);
     network->broadcastTransactions(transactions);
 
+    log->printf(LOG_LEVEL_INFO, "Transfer initiated...");
+
     return true;
 }
 
