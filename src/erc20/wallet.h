@@ -15,7 +15,7 @@ public:
     ERC20Wallet();
     ~ERC20Wallet();
     bool transfer(const string& pubKey, uint64_t value);
-    std::vector<CryptoKernel::Blockchain::dbOutput> findUtxosToSpend(uint64_t value);
+    std::vector<CryptoKernel::Blockchain::output> findUtxosToSpend(uint64_t value);
     void monitorBlockchain();
     void processBlock(CryptoKernel::Blockchain::block& block);
     void processTransaction(CryptoKernel::Blockchain::transaction& transaction);
@@ -30,7 +30,7 @@ private:
 
     uint64_t height;
     string tipId;
-    set<CryptoKernel::Blockchain::output> utoxs;
+    vector<CryptoKernel::Blockchain::output> utxos;
 
     unique_ptr<thread> monitorThread;
     unique_ptr<thread> sendThread;

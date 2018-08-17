@@ -52,7 +52,7 @@ bool ERC20Wallet::transfer(const std::string& pubKey, uint64_t value) {
     uniform_int_distribution<unsigned int> distribution(0, UINT_MAX);
     const uint64_t nonce = distribution(generator);
 
-    vector<CryptoKernel::Blockchain::dbOutput> outputsToSpend = findUtxosToSpend(value);
+    vector<CryptoKernel::Blockchain::output> outputsToSpend = findUtxosToSpend(value);
     if(outputsToSpend.size() < value) {
         log->printf(LOG_LEVEL_INFO, "Couldn't complete transfer, insufficient funds!");
         return false;
@@ -84,6 +84,7 @@ bool ERC20Wallet::transfer(const std::string& pubKey, uint64_t value) {
         inputs.insert(input);
     }
 
+
     const CryptoKernel::Blockchain::transaction transaction = CryptoKernel::Blockchain::transaction(inputs, outputs, now);
     vector<CryptoKernel::Blockchain::transaction> transactions;
     transactions.push_back(transaction);
@@ -97,12 +98,23 @@ bool ERC20Wallet::transfer(const std::string& pubKey, uint64_t value) {
 /**
  * Find a set of (our own personal) UTXOs to spend to cover a transfer 
 */
-std::vector<CryptoKernel::Blockchain::dbOutput> ERC20Wallet::findUtxosToSpend(uint64_t value) {
-    std::set<CryptoKernel::Blockchain::dbOutput> outputs = blockchain->getUnspentOutputs(publicKey);
+std::vector<CryptoKernel::Blockchain::output> ERC20Wallet::findUtxosToSpend(uint64_t value) {
+    std::set<CryptoKernel::Blockchain::output> outputs;
+    if(utxos.size() == 0) {
+        std::set<CryptoKernel::Blockchain::dbOutput> dbOutputs = blockchain->getUnspentOutputs(publicKey);
+        for(auto output : dbOutputs) {
+            outputs.insert(output);
+        }
+    }
+    else {
+        for(auto output : utxos) {
+            outputs.insert(output);
+        }
+    }
     log->printf(LOG_LEVEL_INFO, "Unspent outputs: " + std::to_string(outputs.size()));
     log->printf(LOG_LEVEL_INFO, "Unconfirmed: " + std::to_string(blockchain->getUnconfirmedTransactions().size()));
 
-    std::vector<CryptoKernel::Blockchain::dbOutput> outputsToSpend;
+    std::vector<CryptoKernel::Blockchain::output> outputsToSpend;
     for(auto output : outputs) {
         if(outputsToSpend.size() < value) {
             outputsToSpend.push_back(output);
