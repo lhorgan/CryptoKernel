@@ -163,8 +163,8 @@ void ERC20Wallet::monitorBlockchain() {
             }
         }
 
-        log->printf(LOG_LEVEL_INFO, "Syncing from block " + std::to_string(tipHeight) + " to " + std::to_string(network->getCurrentHeight()));
-        for(int i = tipHeight; i <= network->getCurrentHeight(); i++) {
+        //log->printf(LOG_LEVEL_INFO, "Syncing from block " + std::to_string(tipHeight) + " to " + std::to_string(network->getCurrentHeight()));
+        for(int i = tipHeight + 1; i <= network->getCurrentHeight(); i++) {
             CryptoKernel::Blockchain::block block = blockchain->getBlockByHeight(i);
             processBlock(block);
             tipHeight = i;
