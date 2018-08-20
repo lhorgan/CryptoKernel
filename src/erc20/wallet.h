@@ -28,12 +28,14 @@ private:
     string publicKey;
     string privKey;
 
-    uint64_t height;
+    uint64_t tipHeight;
     string tipId;
-    vector<CryptoKernel::Blockchain::output> utxos;
+    ConcurrentMap<string, CryptoKernel::Blockchain::output> utxos;
 
     unique_ptr<thread> monitorThread;
     unique_ptr<thread> sendThread;
+
+    leveldb::DB* walletDB;
 };
 
 #endif

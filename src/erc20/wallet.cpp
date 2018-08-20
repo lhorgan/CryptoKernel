@@ -21,6 +21,13 @@ ERC20Wallet::ERC20Wallet() {
     const unsigned int networkPort = 9823;
     network = new Network(log, blockchain, networkPort, networkDir);
 
+    // open the wallet database
+    const string walletDir = "erc20/wallet";
+    leveldb::Options options;
+    options.create_if_missing = true;
+    leveldb::Status status = leveldb::DB::Open(options, walletDir, &walletDB);
+    assert(status.ok);
+
     monitorThread.reset(new thread(&ERC20Wallet::monitorBlockchain, this));
     sendThread.reset(new thread(&ERC20Wallet::sendFunc, this));
 
@@ -31,6 +38,8 @@ ERC20Wallet::~ERC20Wallet() {
     log->printf(LOG_LEVEL_INFO, "cleaning up");
     monitorThread->join();
     sendThread->join();
+
+    delete walletDB;
 }
 
 void ERC20Wallet::sendFunc() {
@@ -84,7 +93,6 @@ bool ERC20Wallet::transfer(const std::string& pubKey, uint64_t value) {
         inputs.insert(input);
     }
 
-
     const CryptoKernel::Blockchain::transaction transaction = CryptoKernel::Blockchain::transaction(inputs, outputs, now);
     vector<CryptoKernel::Blockchain::transaction> transactions;
     transactions.push_back(transaction);
@@ -99,7 +107,7 @@ bool ERC20Wallet::transfer(const std::string& pubKey, uint64_t value) {
  * Find a set of (our own personal) UTXOs to spend to cover a transfer 
 */
 std::vector<CryptoKernel::Blockchain::output> ERC20Wallet::findUtxosToSpend(uint64_t value) {
-    std::set<CryptoKernel::Blockchain::output> outputs;
+    /*std::set<CryptoKernel::Blockchain::output> outputs;
     if(utxos.size() == 0) {
         std::set<CryptoKernel::Blockchain::dbOutput> dbOutputs = blockchain->getUnspentOutputs(publicKey);
         for(auto output : dbOutputs) {
@@ -124,7 +132,11 @@ std::vector<CryptoKernel::Blockchain::output> ERC20Wallet::findUtxosToSpend(uint
         }
     }
 
-    return outputsToSpend;
+    return outputsToSpend;*/
+
+    /*if(utxos.size() == 0) {
+
+    }*/
 }
 
 /**
@@ -132,6 +144,11 @@ std::vector<CryptoKernel::Blockchain::output> ERC20Wallet::findUtxosToSpend(uint
  *  with money for us!
  */
 void ERC20Wallet::monitorBlockchain() {
+    // well now, first thing's first, has the chain split?
+    if(blockchain->getBlockByHeight(tipHeight).getId() != tipId) {
+        log->printf(LOG_LEVEL_INFO, "Woops, looks like there's been a fork.");
+    }
+
     while(true) {
         //log->printf(LOG_LEVEL_INFO, "monitoring...");
         for(int i = 2; i < network->getCurrentHeight(); i++) {
