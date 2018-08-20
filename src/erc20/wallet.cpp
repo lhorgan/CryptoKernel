@@ -52,7 +52,7 @@ void ERC20Wallet::sendFunc() {
     while(true) {
         //log->printf(LOG_LEVEL_INFO, "sending....");
         //transfer(G_OTHER_PUBLIC_KEY, 1);
-        std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(30000));
     }
 }
 
@@ -61,7 +61,7 @@ void ERC20Wallet::sendFunc() {
  */
 bool ERC20Wallet::transfer(const std::string& pubKey, uint64_t value) {
     // set up the uniform random distribution
-    const time_t t = std::time(0);
+    /*const time_t t = std::time(0);
     const uint64_t now = static_cast<uint64_t> (t);;
     default_random_engine generator(now);
     uniform_int_distribution<unsigned int> distribution(0, UINT_MAX);
@@ -102,47 +102,11 @@ bool ERC20Wallet::transfer(const std::string& pubKey, uint64_t value) {
     const CryptoKernel::Blockchain::transaction transaction = CryptoKernel::Blockchain::transaction(inputs, outputs, now);
     vector<CryptoKernel::Blockchain::transaction> transactions;
     transactions.push_back(transaction);
-    //network->broadcastTransactions(transactions);
+    network->broadcastTransactions(transactions);
 
-    //log->printf(LOG_LEVEL_INFO, "Transfer initiated...");
+    //log->printf(LOG_LEVEL_INFO, "Transfer initiated...");*/
 
     return true;
-}
-
-/**
- * Find a set of (our own personal) UTXOs to spend to cover a transfer 
-*/
-std::vector<CryptoKernel::Blockchain::output> ERC20Wallet::findUtxosToSpend(uint64_t value) {
-    /*std::set<CryptoKernel::Blockchain::output> outputs;
-    if(utxos.size() == 0) {
-        std::set<CryptoKernel::Blockchain::dbOutput> dbOutputs = blockchain->getUnspentOutputs(publicKey);
-        for(auto output : dbOutputs) {
-            outputs.insert(output);
-        }
-    }
-    else {
-        for(auto output : utxos) {
-            outputs.insert(output);
-        }
-    }
-    log->printf(LOG_LEVEL_INFO, "Unspent outputs: " + std::to_string(outputs.size()));
-    log->printf(LOG_LEVEL_INFO, "Unconfirmed: " + std::to_string(blockchain->getUnconfirmedTransactions().size()));
-
-    std::vector<CryptoKernel::Blockchain::output> outputsToSpend;
-    for(auto output : outputs) {
-        if(outputsToSpend.size() < value) {
-            outputsToSpend.push_back(output);
-        }
-        else {
-            break;
-        }
-    }
-
-    return outputsToSpend;*/
-
-    /*if(utxos.size() == 0) {
-
-    }*/
 }
 
 /**
@@ -158,7 +122,7 @@ void ERC20Wallet::monitorBlockchain() {
             tipId = blockchain->getBlockByHeight(1).getId();
             
             leveldb::Iterator* it = utxoDB->NewIterator(leveldb::ReadOptions());
-            for (it->SeekToFirst(); it->Valid(); it->Next()) {
+            for(it->SeekToFirst(); it->Valid(); it->Next()) {
                 utxoDB->Delete(leveldb::WriteOptions(), it->key().ToString());
             }
         }
