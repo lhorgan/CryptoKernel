@@ -25,8 +25,10 @@ ERC20Wallet::ERC20Wallet() {
     const string walletDir = "erc20/wallet";
     leveldb::Options options;
     options.create_if_missing = true;
-    leveldb::Status status = leveldb::DB::Open(options, walletDir, &walletDB);
-    assert(status.ok);
+    leveldb::Status status = leveldb::DB::Open(options, walletDir + "/stats", &statsDB);
+    assert(status.ok());
+    status = leveldb::DB::Open(options, walletDir + "/utxos", &utxoDB);
+    assert(status.ok());
 
     monitorThread.reset(new thread(&ERC20Wallet::monitorBlockchain, this));
     sendThread.reset(new thread(&ERC20Wallet::sendFunc, this));
@@ -39,13 +41,14 @@ ERC20Wallet::~ERC20Wallet() {
     monitorThread->join();
     sendThread->join();
 
-    delete walletDB;
+    delete statsDB;
+    delete utxoDB;
 }
 
 void ERC20Wallet::sendFunc() {
     while(true) {
         //log->printf(LOG_LEVEL_INFO, "sending....");
-        transfer(G_OTHER_PUBLIC_KEY, 1);
+        //transfer(G_OTHER_PUBLIC_KEY, 1);
         std::this_thread::sleep_for(std::chrono::milliseconds(10000));
     }
 }
@@ -144,16 +147,25 @@ std::vector<CryptoKernel::Blockchain::output> ERC20Wallet::findUtxosToSpend(uint
  *  with money for us!
  */
 void ERC20Wallet::monitorBlockchain() {
-    // well now, first thing's first, has the chain split?
-    if(blockchain->getBlockByHeight(tipHeight).getId() != tipId) {
-        log->printf(LOG_LEVEL_INFO, "Woops, looks like there's been a fork.");
-    }
-
     while(true) {
-        //log->printf(LOG_LEVEL_INFO, "monitoring...");
-        for(int i = 2; i < network->getCurrentHeight(); i++) {
+        // well now, first thing's first, has the chain split?
+        if(blockchain->getBlockByHeight(tipHeight).getId() != tipId) {
+            log->printf(LOG_LEVEL_INFO, "Woops, looks like there's been a fork.");
+            tipHeight = 1;
+            tipId = blockchain->getBlockByHeight(1).getId();
+            
+            leveldb::Iterator* it = utxoDB->NewIterator(leveldb::ReadOptions());
+            for (it->SeekToFirst(); it->Valid(); it->Next()) {
+                utxoDB->Delete(leveldb::WriteOptions(), it->key().ToString());
+            }
+        }
+
+        log->printf(LOG_LEVEL_INFO, "Syncing from block " + std::to_string(tipHeight) + " to " + std::to_string(network->getCurrentHeight()));
+        for(int i = tipHeight; i < network->getCurrentHeight(); i++) {
             CryptoKernel::Blockchain::block block = blockchain->getBlockByHeight(i);
             processBlock(block);
+            tipHeight = i;
+            tipId = block.getId();
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
@@ -174,12 +186,23 @@ void ERC20Wallet::processBlock(CryptoKernel::Blockchain::block& block) {
  */
 void ERC20Wallet::processTransaction(CryptoKernel::Blockchain::transaction& transaction) {
     std::set<CryptoKernel::Blockchain::output> outputs = transaction.getOutputs();
+    std::set<CryptoKernel::Blockchain::input> inputs = transaction.getInputs();
+
+    for(auto input : inputs) {
+        string inputStr;
+        leveldb::Status status = utxoDB->Get(leveldb::ReadOptions(), input.getOutputId().toString(), &inputStr);
+        if(status.ok()) {
+            utxoDB->Delete(leveldb::WriteOptions(), input.getOutputId().toString());
+        } 
+    }
+
     for(auto output : outputs) {
         // Check if there is a publicKey that belongs to you
         if(output.getData()["publicKey"].isString()) {
             string outputPubKey = output.getData()["publicKey"].asString();
             if(outputPubKey == publicKey) {
                 log->printf(LOG_LEVEL_INFO, "This output belongs to us!");
+                utxoDB->Put(leveldb::WriteOptions(), output.getId().toString(), output.toJson().asString());
             }
         }
     }
