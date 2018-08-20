@@ -30,6 +30,9 @@ ERC20Wallet::ERC20Wallet() {
     status = leveldb::DB::Open(options, walletDir + "/utxos", &utxoDB);
     assert(status.ok());
 
+    tipHeight = 1;
+    tipId = blockchain->getBlockByHeight(1).getId();
+
     monitorThread.reset(new thread(&ERC20Wallet::monitorBlockchain, this));
     sendThread.reset(new thread(&ERC20Wallet::sendFunc, this));
 
@@ -161,7 +164,7 @@ void ERC20Wallet::monitorBlockchain() {
         }
 
         log->printf(LOG_LEVEL_INFO, "Syncing from block " + std::to_string(tipHeight) + " to " + std::to_string(network->getCurrentHeight()));
-        for(int i = tipHeight; i < network->getCurrentHeight(); i++) {
+        for(int i = tipHeight; i <= network->getCurrentHeight(); i++) {
             CryptoKernel::Blockchain::block block = blockchain->getBlockByHeight(i);
             processBlock(block);
             tipHeight = i;
@@ -176,6 +179,7 @@ void ERC20Wallet::monitorBlockchain() {
  */
 void ERC20Wallet::processBlock(CryptoKernel::Blockchain::block& block) {
     std::set<CryptoKernel::Blockchain::transaction> transactions = block.getTransactions();
+    transactions.insert(block.getCoinbaseTx());
     for(auto transaction : transactions) {
         processTransaction(transaction);
     }
@@ -185,6 +189,8 @@ void ERC20Wallet::processBlock(CryptoKernel::Blockchain::block& block) {
  * Grr
  */
 void ERC20Wallet::processTransaction(CryptoKernel::Blockchain::transaction& transaction) {
+    log->printf(LOG_LEVEL_INFO, "Processing transaction...");
+
     std::set<CryptoKernel::Blockchain::output> outputs = transaction.getOutputs();
     std::set<CryptoKernel::Blockchain::input> inputs = transaction.getInputs();
 
@@ -202,8 +208,11 @@ void ERC20Wallet::processTransaction(CryptoKernel::Blockchain::transaction& tran
             string outputPubKey = output.getData()["publicKey"].asString();
             if(outputPubKey == publicKey) {
                 log->printf(LOG_LEVEL_INFO, "This output belongs to us!");
-                utxoDB->Put(leveldb::WriteOptions(), output.getId().toString(), output.toJson().asString());
+                utxoDB->Put(leveldb::WriteOptions(), output.getId().toString(), output.toJson().toStyledString());
             }
+        }
+        else {
+            log->printf(LOG_LEVEL_INFO, "nope, not ours (" + output.getData()["publicKey"].asString() + " != " + publicKey + ")");
         }
     }
 }
