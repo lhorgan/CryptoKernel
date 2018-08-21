@@ -123,7 +123,7 @@ bool ERC20Wallet::transfer(const std::string& pubKey, uint64_t value) {
         vector<CryptoKernel::Blockchain::transaction> transactions;
         transactions.push_back(transaction);
         log->printf(LOG_LEVEL_INFO, "Broadcasting transaction...");
-        network->broadcastTransactions(transactions);
+        //network->broadcastTransactions(transactions);
 
         return true;
     }
