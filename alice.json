@@ -9,8 +9,8 @@
 					"contract" : null,
 					"publicKey" : "BDgkCUSogr3PrCJtY5P0wNsxfMF47I4ZGnJp/nn/CT4SerSibE0MKptXciR4zZCrpNB85xychJB4EURSR2TpYUs="
 				},
-				"nonce" : 2750896601,
-				"value" : 1
+				"nonce" : 2750896602,
+				"value" : 10000
 			}
 		],
 		"timestamp" : 1534368763

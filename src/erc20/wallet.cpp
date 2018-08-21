@@ -72,7 +72,16 @@ bool ERC20Wallet::transfer(const std::string& pubKey, uint64_t value) {
     leveldb::Iterator* it = utxoDB->NewIterator(leveldb::ReadOptions());
     for (it->SeekToFirst(); it->Valid(); it->Next()) {
         if(acc < value) {
-            CryptoKernel::Blockchain::output output(Json::Value(it->value().ToString()));
+            /*og->printf(LOG_LEVEL_INFO, it->value().ToString());
+            Json::Value jsonOutput(it->value().ToString());
+            log->printf(LOG_LEVEL_INFO, "Grr");
+            log->printf(LOG_LEVEL_INFO, jsonOutput["nonce"].asString());*/
+
+            Json::Reader reader;
+            Json::Value jsonOutput;
+            reader.parse(it->value().ToString().c_str(), jsonOutput);
+
+            CryptoKernel::Blockchain::output output(jsonOutput);
             acc +=output.getValue();
             outputsToSpend.insert(output);
         }
@@ -186,7 +195,10 @@ void ERC20Wallet::processTransaction(CryptoKernel::Blockchain::transaction& tran
             string outputPubKey = output.getData()["publicKey"].asString();
             if(outputPubKey == publicKey) {
                 log->printf(LOG_LEVEL_INFO, "This output belongs to us!");
-                utxoDB->Put(leveldb::WriteOptions(), output.getId().toString(), output.toJson().toStyledString());
+                Json::StreamWriterBuilder builder;
+                builder["indentation"] = ""; // If you want whitespace-less output
+                const std::string res = Json::writeString(builder, output.toJson());
+                utxoDB->Put(leveldb::WriteOptions(), output.getId().toString(), res);
             }
         }
         else {
