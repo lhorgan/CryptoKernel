@@ -50,8 +50,8 @@ ERC20Wallet::~ERC20Wallet() {
 
 void ERC20Wallet::sendFunc() {
     while(true) {
-        //log->printf(LOG_LEVEL_INFO, "sending....");
-        //transfer(G_OTHER_PUBLIC_KEY, 1);
+        log->printf(LOG_LEVEL_INFO, "sending....");
+        transfer(G_OTHER_PUBLIC_KEY, 1000);
         std::this_thread::sleep_for(std::chrono::milliseconds(30000));
     }
 }
@@ -60,53 +60,67 @@ void ERC20Wallet::sendFunc() {
  * Send 'value' to 'pubKey'
  */
 bool ERC20Wallet::transfer(const std::string& pubKey, uint64_t value) {
-    // set up the uniform random distribution
-    /*const time_t t = std::time(0);
+    const time_t t = std::time(0);
     const uint64_t now = static_cast<uint64_t> (t);;
     default_random_engine generator(now);
     uniform_int_distribution<unsigned int> distribution(0, UINT_MAX);
     const uint64_t nonce = distribution(generator);
-
-    vector<CryptoKernel::Blockchain::output> outputsToSpend = findUtxosToSpend(value);
-    if(outputsToSpend.size() < value) {
-        log->printf(LOG_LEVEL_INFO, "Couldn't complete transfer, insufficient funds!");
-        return false;
-    } 
     
-    Crypto crypto;
-    crypto.setPublicKey(pubKey);
-    crypto.setPrivateKey(privKey);
+    std::set<CryptoKernel::Blockchain::output> outputsToSpend;
+    uint64_t acc = 0;
 
-    set<CryptoKernel::Blockchain::output> outputs;
-    set<CryptoKernel::Blockchain::input> inputs;
+    leveldb::Iterator* it = utxoDB->NewIterator(leveldb::ReadOptions());
+    for (it->SeekToFirst(); it->Valid(); it->Next()) {
+        if(acc < value) {
+            CryptoKernel::Blockchain::output output(Json::Value(it->value().ToString()));
+            acc +=output.getValue();
+            outputsToSpend.insert(output);
+        }
+    }
+    assert(it->status().ok());  // Check for any errors found during the scan
+    delete it;
 
-    for(int i = 0; i < value; i++) {
+    if(acc >= value) {
+        Crypto crypto;
+        crypto.setPublicKey(pubKey);
+        crypto.setPrivateKey(privKey);
+
+        set<CryptoKernel::Blockchain::output> outputs;
+        set<CryptoKernel::Blockchain::input> inputs;
+        
         Json::Value data;
         data["publicKey"] = pubKey;
-        const CryptoKernel::Blockchain::output toThem = CryptoKernel::Blockchain::output(1, distribution(generator), data);
+        const CryptoKernel::Blockchain::output toThem = CryptoKernel::Blockchain::output(value, distribution(generator), data);
+        data.clear();
+        data["publicKey"] = this->publicKey;
+        const CryptoKernel::Blockchain::output change = CryptoKernel::Blockchain::output(acc - value, distribution(generator), data);
         outputs.insert(toThem);
+        outputs.insert(change);
+
+        const std::string outputHash = CryptoKernel::Blockchain::transaction::getOutputSetId(outputs).toString();
+
+        for(auto output : outputsToSpend) {
+            string outputPubKey = output.getData()["publicKey"].asString();
+
+            string signature = crypto.sign(output.getId().toString() + outputHash);
+            Json::Value data;
+            data["signature"] = signature;
+
+            CryptoKernel::Blockchain::input input(output.getId(), data);
+            inputs.insert(input);
+        }
+
+        const CryptoKernel::Blockchain::transaction transaction = CryptoKernel::Blockchain::transaction(inputs, outputs, now);
+        vector<CryptoKernel::Blockchain::transaction> transactions;
+        transactions.push_back(transaction);
+        log->printf(LOG_LEVEL_INFO, "Broadcasting transaction...");
+        network->broadcastTransactions(transactions);
+
+        return true;
     }
-    const std::string outputHash = CryptoKernel::Blockchain::transaction::getOutputSetId(outputs).toString();
 
-    for(auto output : outputsToSpend) {
-        string outputPubKey = output.getData()["publicKey"].asString();
-
-        string signature = crypto.sign(output.getId().toString() + outputHash);
-        Json::Value data;
-        data["signature"] = signature;
-
-        CryptoKernel::Blockchain::input input(output.getId(), data);
-        inputs.insert(input);
-    }
-
-    const CryptoKernel::Blockchain::transaction transaction = CryptoKernel::Blockchain::transaction(inputs, outputs, now);
-    vector<CryptoKernel::Blockchain::transaction> transactions;
-    transactions.push_back(transaction);
-    network->broadcastTransactions(transactions);
-
-    //log->printf(LOG_LEVEL_INFO, "Transfer initiated...");*/
-
-    return true;
+    log->printf(LOG_LEVEL_INFO, "Insufficient funds for transaction.");
+    return false;
 }
 
 /**
