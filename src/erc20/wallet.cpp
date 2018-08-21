@@ -52,7 +52,7 @@ void ERC20Wallet::sendFunc() {
     while(true) {
         log->printf(LOG_LEVEL_INFO, "sending....");
         transfer(G_OTHER_PUBLIC_KEY, 1000);
-        std::this_thread::sleep_for(std::chrono::milliseconds(30000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(300000));
     }
 }
 
