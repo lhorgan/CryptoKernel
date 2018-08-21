@@ -404,7 +404,7 @@ std::tuple<bool, bool> CryptoKernel::Blockchain::verifyTransaction(Storage::Tran
         uint64_t fee = inputTotal - outputTotal;
         if(fee < getTransactionFee(tx) * 0.5) {
             log->printf(LOG_LEVEL_INFO, "blockchain::verifyTransaction(): tx fee is too low");
-            return std::make_tuple(false, true);
+            //return std::make_tuple(false, true);
         }
     }
 
