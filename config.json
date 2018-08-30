@@ -7,12 +7,12 @@
 			{
 				"params" : 
 				{
-					"blocktime" : 150
+					"blocktime" : 15
 				},
 				"type" : "kgw_lyra2rev2"
 			},
 			"genesisblock" : "genesisblock.json",
-			"name" : "K320",
+			"name" : "alicecoin",
 			"peerdb" : "./peers",
 			"port" : 49000,
 			"rpcport" : 8383,
@@ -20,9 +20,9 @@
 			"walletdb" : "./addressesdb"
 		}
 	],
-	"rpcpassword" : "password",
+	"miner" : true,
+	"pubKey" : "BLD6fw7+X/a2BBwYBEUOpwjNaSmpnnv9Jpj59iv4f7TIAQLOFR40Zg4Kh0fnoXRXqhYQGePJDSnWgaMl8uV8uCQ=",
+	"rpcpassword" : "jxjQ9TgRqIyIlatz7a1TNjEJ2TNQ46M8K9WFEM9VXFQ=",
 	"rpcuser" : "ckrpc",
-	"verbose" : false,
-	"pubKey": "BGOjpbmxzX26d7zHmNxy3RWb94MzTciGhF7y8ehF2EH2BlTDStCrAhSmmfmbaWDuRYqagRViAhVj6QhOsfp4oT4=",
-	"miner": false
+	"verbose" : true
 }

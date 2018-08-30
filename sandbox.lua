@@ -45,6 +45,9 @@ sandbox_env = {Crypto = {new = Crypto.new, getPublicKey = Crypto.getPublicKey, g
                pairs = pairs,
                pcall = pcall,
                select = select,
+               print = print,
+               require = require,
+               setmetatable = setmetatable,
                tonumber = tonumber,
                tostring = tostring,
                type = type,
@@ -54,7 +57,9 @@ sandbox_env = {Crypto = {new = Crypto.new, getPublicKey = Crypto.getPublicKey, g
                          packsize = string.packsize,
                          reverse = string.reverse,
                          sub = string.sub,
-                         unpack = string.unpack,},
+                         unpack = string.unpack,
+                         char = string.char,
+                         format = string.format},
                utf8 = {char = utf8.char,
                        charpattern = utf8.charpattern,
                        codes = utf8.codes,
@@ -149,4 +154,3 @@ function verifyTransaction(bytecode)
         return false, "Failed to load lz4"
     end
 end
-

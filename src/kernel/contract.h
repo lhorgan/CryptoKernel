@@ -22,7 +22,7 @@ public:
     * @param instructionLimit specify the maximum number of instructions a contract can execute, defaults to 35000
     */
     ContractRunner(CryptoKernel::Blockchain* blockchain,
-                   const uint64_t memoryLimit = 10485760, const uint64_t instructionLimit = 100000000);
+                   const uint64_t memoryLimit = 1048576000, const uint64_t instructionLimit = 100000000);
 
     /**
     * Default destructor
