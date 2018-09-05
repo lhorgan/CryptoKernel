@@ -67,7 +67,7 @@ Json::Value CryptoKernel::Network::Peer::sendRecv(const Json::Value& request) {
     }
 
     clientMutex.lock();
-    stats.transferUp += 5;//packet.getDataSize(); todo fix this!!!!
+    stats.transferUp += packet.getDataSize();
     clientMutex.unlock();
 
     {
@@ -105,7 +105,7 @@ void CryptoKernel::Network::Peer::send(const Json::Value& response) {
     }
 
     clientMutex.lock();
-    stats.transferUp += 5;//packet.getDataSize(); todo fix this too!!
+    stats.transferUp += packet.getDataSize();
     clientMutex.unlock();
 }
 

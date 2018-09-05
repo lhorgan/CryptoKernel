@@ -228,7 +228,7 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 	            {
 	            	log->printf(LOG_LEVEL_INFO, "Network(): Connection accepted from " + client->getRemoteAddress().toString());
 	            	if(connected.contains(client->getRemoteAddress().toString())) {
-	            		log->printf(LOG_LEVEL_INFO, "Network(): We are already conected to " + client->getRemoteAddress().toString());
+	            		log->printf(LOG_LEVEL_INFO, "Network(): We are already connected to " + client->getRemoteAddress().toString());
 	            		continue;
 	            	}
 
@@ -554,6 +554,7 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 		if(it != connected.end() && it->second->acquire()) {
 			try {
 				const Json::Value info = it->second->getInfo();
+				it->second->setInfo(info);
 				try {
 					const std::string peerVersion = info["version"].asString();
 					if(peerVersion.substr(0, peerVersion.find(".")) != version.substr(0, version.find("."))) {
@@ -725,7 +726,7 @@ void CryptoKernel::Network::networkFunc() {
 										"Network(): Downloading blocks " + std::to_string(currentHeight + 1) + " to " +
 										std::to_string(currentHeight + 6));
 
-							auto nBlocks = 0;
+							auto nBlocks = 0; // 
 							try {
 								const auto newBlocks = it->second->getBlocks(currentHeight + 1, currentHeight + 6);
 								nBlocks = newBlocks.size();
