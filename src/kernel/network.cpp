@@ -286,6 +286,9 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 							else if(grr == sf::Socket::Disconnected) {
 								log->printf(LOG_LEVEL_INFO, "grr disconnected");
 							}
+							else {
+								log->printf(LOG_LEVEL_INFO, "grr something else");
+							}
 	                    	selectorMutex.lock();
 	                    	selector.remove(*it->second->client.get());
 	                    	selectorMutex.unlock();
@@ -301,12 +304,25 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 	        		if(selector.isReady(*it->second->server.get())) {
 	        			log->printf(LOG_LEVEL_INFO, "Network(): " + key + " is ready with data.");
 	        			sf::Packet packet;
-	        			if(it->second->server->receive(packet) == sf::Socket::Done) {
+						sf::Socket::Status grr = it->second->server->receive(packet);
+	        			if(grr == sf::Socket::Done) {
 	        				it->second->receivePacket(packet);
 	        			}
 	        			else {
 	        				log->printf(LOG_LEVEL_INFO, "Network(): Something went wrong receiving packet from hs client "
 	        						+ it->first + ", disconnecting it.");
+							if(grr == sf::Socket::Error) {
+								log->printf(LOG_LEVEL_INFO, "grr error");
+							}
+							else if(grr == sf::Socket::Partial) {
+								log->printf(LOG_LEVEL_INFO, "grr partial");
+							}
+							else if(grr == sf::Socket::Disconnected) {
+								log->printf(LOG_LEVEL_INFO, "grr disconnected");
+							}
+							else {
+								log->printf(LOG_LEVEL_INFO, "grr something else");
+							}
 	        				selectorMutex.lock();
 							selector.remove(*it->second->server.get());
 							selectorMutex.unlock();
