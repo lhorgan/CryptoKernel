@@ -207,7 +207,7 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 	if(ls.listen(port + 1) != sf::Socket::Done) {
 		log->printf(LOG_LEVEL_ERR, "Network(): Could not bind to port " + std::to_string(port + 1));
 	}
-	ls.setBlocking(false);
+	//ls.setBlocking(false);
 
 	selectorMutex.lock();
 	selector.add(ls);
