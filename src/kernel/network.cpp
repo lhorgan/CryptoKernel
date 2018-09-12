@@ -370,6 +370,7 @@ void CryptoKernel::Network::outgoingEncryptionHandshakeFunc() {
 				continue;
 			}*/
 			//client->setBlocking(false); xyz
+			continue;
 			log->printf(LOG_LEVEL_INFO, "Network(): Connection attempt to " + addr + " complete!");
 			pendingConnections.insert(std::make_pair(addr, client));
 			peersToQuery.erase(addr);
