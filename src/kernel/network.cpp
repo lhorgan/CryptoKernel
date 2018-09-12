@@ -207,6 +207,7 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 	if(ls.listen(port + 1) != sf::Socket::Done) {
 		log->printf(LOG_LEVEL_ERR, "Network(): Could not bind to port " + std::to_string(port + 1));
 	}
+	ls.setBlocking(false);
 
 	selectorMutex.lock();
 	selector.add(ls);
@@ -223,7 +224,7 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 	        {
 	            // The listener is ready: there is a pending connection
 	            std::shared_ptr<sf::TcpSocket> client(new sf::TcpSocket);
-	            client->setBlocking(false);
+	            //client->setBlocking(false); xyz
 	            if(ls.accept(*client.get()) == sf::Socket::Done)
 	            {
 	            	log->printf(LOG_LEVEL_INFO, "Network(): Connection accepted from " + client->getRemoteAddress().toString());
@@ -362,7 +363,7 @@ void CryptoKernel::Network::outgoingEncryptionHandshakeFunc() {
 				plaintextHosts.insert(addr, true);
 				continue;
 			}
-			client->setBlocking(false);
+			//client->setBlocking(false); xyz
 			log->printf(LOG_LEVEL_INFO, "Network(): Connection attempt to " + addr + " complete!");
 			pendingConnections.insert(std::make_pair(addr, client));
 			peersToQuery.erase(addr);
