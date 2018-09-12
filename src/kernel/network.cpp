@@ -256,6 +256,12 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 	            	}
 	            	else {
 	            		log->printf(LOG_LEVEL_INFO, "Network(): We are fielding another request from " + client->getRemoteAddress().toString() + ".");
+						if(handshakeClients.contains(client->getRemoteAddress().toString())) {
+							handshakeClients.find(client->getRemoteAddress().toString())->second->server = client;
+						}
+						if(handshakeServers.contains(client->getRemoteAddress().toString())) {
+							handshakeServers.find(client->getRemoteAddress().toString())->second->client = client;
+						}
 	            	}
 	            }
 	        }
