@@ -405,6 +405,7 @@ void CryptoKernel::Network::addConnection(sf::TcpSocket* socket, Json::Value& pe
 		tempConnected.erase(socket->getRemoteAddress().toString());
 	}
 	else {
+		log->printf(LOG_LEVEL_INFO, "Adding a temporary connection to " + socket->getRemoteAddress().toString());
 		tempConnected.at(socket->getRemoteAddress().toString()).reset(connection);
 	}
 }
@@ -864,7 +865,7 @@ void CryptoKernel::Network::connectionFunc() {
 				peers->put(dbTx.get(), client->getRemoteAddress().toString(), newSeed);
 				dbTx->commit();
 
-				addConnection(client, newSeed);
+				addConnection(client, newSeed, 0, 0, true);
 			}
             else {
             	// todo... something
