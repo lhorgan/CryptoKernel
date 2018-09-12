@@ -388,7 +388,7 @@ void CryptoKernel::Network::infoOutgoingConnectionsWrapper() {
 	}
 }
 
-void CryptoKernel::Network::addConnection(sf::TcpSocket* socket, Json::Value& peerInfo, NoiseCipherState* send_cipher, NoiseCipherState* recv_cipher) {
+void CryptoKernel::Network::addConnection(sf::TcpSocket* socket, Json::Value& peerInfo, NoiseCipherState* send_cipher, NoiseCipherState* recv_cipher, bool temp) {
 	Connection* connection = new Connection;
 	connection->setPeer(new Peer(socket, blockchain, this, false, log));
 
@@ -400,7 +400,13 @@ void CryptoKernel::Network::addConnection(sf::TcpSocket* socket, Json::Value& pe
 	connection->setSendCipher(send_cipher);
 	connection->setRecvCipher(recv_cipher);
 
-	connected.at(socket->getRemoteAddress().toString()).reset(connection);
+	if(!temp) {
+		connected.at(socket->getRemoteAddress().toString()).reset(connection);
+		tempConnected.erase(socket->getRemoteAddress().toString());
+	}
+	else {
+		tempConnected.at(socket->getRemoteAddress().toString()).reset(connection);
+	}
 }
 
 void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
@@ -857,6 +863,8 @@ void CryptoKernel::Network::connectionFunc() {
 				newSeed["score"] = 0;
 				peers->put(dbTx.get(), client->getRemoteAddress().toString(), newSeed);
 				dbTx->commit();
+
+				addConnection(client, newSeed);
 			}
             else {
             	// todo... something

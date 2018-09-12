@@ -78,7 +78,7 @@ public:
     */
     uint64_t getCurrentHeight();
 
-    void addConnection(sf::TcpSocket* socket, Json::Value& peerInfo, NoiseCipherState* send_cipher=0, NoiseCipherState* recv_cipher=0);
+    void addConnection(sf::TcpSocket* socket, Json::Value& peerInfo, NoiseCipherState* send_cipher=0, NoiseCipherState* recv_cipher=0, bool temp=false);
 
     struct peerStats {
         unsigned int ping;
@@ -148,6 +148,7 @@ private:
 	};
 
     ConcurrentMap<std::string, std::unique_ptr<Connection>> connected;
+    ConcurrentMap<std::string, std::unique_ptr<Connection>> tempConnected;
     std::recursive_mutex connectedMutex;
 
     ConcurrentMap<std::string, peerStats> connectedStats;
