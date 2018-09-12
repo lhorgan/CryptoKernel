@@ -289,6 +289,7 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 							else {
 								log->printf(LOG_LEVEL_INFO, "grr something else");
 							}
+							it->second->client->disconnect();
 	                    	selectorMutex.lock();
 	                    	selector.remove(*it->second->client.get());
 	                    	selectorMutex.unlock();
@@ -323,6 +324,7 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 							else {
 								log->printf(LOG_LEVEL_INFO, "grr something else");
 							}
+							it->second->server->disconnect();
 	        				selectorMutex.lock();
 							selector.remove(*it->second->server.get());
 							selectorMutex.unlock();
