@@ -253,7 +253,6 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 							selectorMutex.unlock();
 	            		}
 	            	}
-
 	            	else {
 	            		log->printf(LOG_LEVEL_INFO, "Network(): We are fielding another request from " + client->getRemoteAddress().toString() + ".");
 	            	}
@@ -401,6 +400,7 @@ void CryptoKernel::Network::addConnection(sf::TcpSocket* socket, Json::Value& pe
 	connection->setRecvCipher(recv_cipher);
 
 	if(!temp) {
+		log->printf(LOG_LEVEL_INFO, "Adding a legitimate connection to " + socket->getRemoteAddress().toString());
 		connected.at(socket->getRemoteAddress().toString()).reset(connection);
 		tempConnected.erase(socket->getRemoteAddress().toString());
 	}
