@@ -224,7 +224,7 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 	        {
 	            // The listener is ready: there is a pending connection
 	            std::shared_ptr<sf::TcpSocket> client(new sf::TcpSocket);
-	            //client->setBlocking(false); xyz
+	            client->setBlocking(false);
 	            if(ls.accept(*client.get()) == sf::Socket::Done)
 	            {
 	            	log->printf(LOG_LEVEL_INFO, "Network(): Connection accepted from " + client->getRemoteAddress().toString());
@@ -363,14 +363,14 @@ void CryptoKernel::Network::outgoingEncryptionHandshakeFunc() {
 			std::shared_ptr<sf::TcpSocket> client(new sf::TcpSocket());
 			//client->setBlocking(false); // Ultimately, it would be better to do this HERE instead of below, but it makes things more complicated
 			log->printf(LOG_LEVEL_INFO, "Network(): Attempting to connect to " + addr + " to query encryption preference.");
-			/*if(client->connect(addr, port + 1, sf::seconds(3)) != sf::Socket::Done) {
+			if(client->connect(addr, port + 1, sf::seconds(3)) != sf::Socket::Done) {
 				log->printf(LOG_LEVEL_INFO, "Network(): Couldn't query " + addr + " for encryption preference (it likely doesn't support encryption).");
 				peersToQuery.erase(addr);
 				plaintextHosts.insert(addr, true);
 				continue;
-			}*/
-			//client->setBlocking(false); xyz
-			continue;
+			}
+			client->setBlocking(false);
+			//continue;
 			log->printf(LOG_LEVEL_INFO, "Network(): Connection attempt to " + addr + " complete!");
 			pendingConnections.insert(std::make_pair(addr, client));
 			peersToQuery.erase(addr);

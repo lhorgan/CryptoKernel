@@ -117,7 +117,9 @@ void NoiseClient::writeInfo() {
 
 			pubKeyPacket.append(clientKey25519, sizeof(clientKey25519));
 
+			log->printf(LOG_LEVEL_INFO, "NoiseClient(): sending pub key to server....");
 			if(server->send(pubKeyPacket) != sf::Socket::Done) {
+				log->printf(LOG_LEVEL_INFO, "NoiseClient(): sending pub key heh........");
 				continue; // keep sending the public key until it goes through
 			}
 

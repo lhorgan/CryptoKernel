@@ -94,6 +94,7 @@ void NoiseServer::writeInfo() {
 			sf::Packet packet;
 			packet.append(message, mbuf.size + 2);
 
+			log->printf(LOG_LEVEL_INFO, "NoiseServer(): Sending packet to client......");
 			if(client->send(packet) != sf::Socket::Done) {
 				log->printf(LOG_LEVEL_WARN, "Noise(): Server, something went wrong sending packet to client.");
 				setHandshakeComplete(true, false);
