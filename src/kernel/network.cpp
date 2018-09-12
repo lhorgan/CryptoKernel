@@ -256,12 +256,12 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 	            	}
 	            	else {
 	            		log->printf(LOG_LEVEL_INFO, "Network(): We are fielding another request from " + client->getRemoteAddress().toString() + ".");
-						if(handshakeClients.contains(client->getRemoteAddress().toString())) {
+						/*if(handshakeClients.contains(client->getRemoteAddress().toString())) {
 							handshakeClients.find(client->getRemoteAddress().toString())->second->server = client;
 						}
 						if(handshakeServers.contains(client->getRemoteAddress().toString())) {
 							handshakeServers.find(client->getRemoteAddress().toString())->second->client = client;
-						}
+						}*/
 	            	}
 	            }
 	        }
@@ -363,12 +363,12 @@ void CryptoKernel::Network::outgoingEncryptionHandshakeFunc() {
 			std::shared_ptr<sf::TcpSocket> client(new sf::TcpSocket());
 			//client->setBlocking(false); // Ultimately, it would be better to do this HERE instead of below, but it makes things more complicated
 			log->printf(LOG_LEVEL_INFO, "Network(): Attempting to connect to " + addr + " to query encryption preference.");
-			if(client->connect(addr, port + 1, sf::seconds(3)) != sf::Socket::Done) {
+			/*if(client->connect(addr, port + 1, sf::seconds(3)) != sf::Socket::Done) {
 				log->printf(LOG_LEVEL_INFO, "Network(): Couldn't query " + addr + " for encryption preference (it likely doesn't support encryption).");
 				peersToQuery.erase(addr);
 				plaintextHosts.insert(addr, true);
 				continue;
-			}
+			}*/
 			//client->setBlocking(false); xyz
 			log->printf(LOG_LEVEL_INFO, "Network(): Connection attempt to " + addr + " complete!");
 			pendingConnections.insert(std::make_pair(addr, client));
