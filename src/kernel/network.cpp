@@ -223,7 +223,7 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 	        {
 	            // The listener is ready: there is a pending connection
 	            std::shared_ptr<sf::TcpSocket> client(new sf::TcpSocket);
-	            //client->setBlocking(false); xyz
+	            client->setBlocking(false);
 	            if(ls.accept(*client.get()) == sf::Socket::Done)
 	            {
 	            	log->printf(LOG_LEVEL_INFO, "Network(): Connection accepted from " + client->getRemoteAddress().toString());
@@ -269,12 +269,23 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 	                	log->printf(LOG_LEVEL_INFO, "Network(): " + it->second->client->getRemoteAddress().toString() + " is ready with data.");
 	                    // The client has sent some data, we can receive it
 	                    sf::Packet packet;
-	                    if(it->second->client->receive(packet) == sf::Socket::Done) {
+						sf::Socket::Status grr = it->second->client->receive(packet);
+	                    if(grr == sf::Socket::Done) {
 	                    	it->second->receivePacket(packet);
 	                    }
 	                    else {
 	                    	log->printf(LOG_LEVEL_INFO, "Network(): Something went wrong receiving packet from hs server "
 	                    			+ it->first + ", disconnecting it.");
+
+							if(grr == sf::Socket::Error) {
+								log->printf(LOG_LEVEL_INFO, "grr error");
+							}
+							else if(grr == sf::Socket::Partial) {
+								log->printf(LOG_LEVEL_INFO, "grr partial");
+							}
+							else if(grr == sf::Socket::Disconnected) {
+								log->printf(LOG_LEVEL_INFO, "grr disconnected");
+							}
 	                    	selectorMutex.lock();
 	                    	selector.remove(*it->second->client.get());
 	                    	selectorMutex.unlock();
@@ -333,7 +344,7 @@ void CryptoKernel::Network::outgoingEncryptionHandshakeFunc() {
 				plaintextHosts.insert(addr, true);
 				continue;
 			}
-			//client->setBlocking(false); xyz
+			client->setBlocking(false);
 			log->printf(LOG_LEVEL_INFO, "Network(): Connection attempt to " + addr + " complete!");
 			pendingConnections.insert(std::make_pair(addr, client));
 			peersToQuery.erase(addr);
