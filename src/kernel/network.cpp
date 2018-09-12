@@ -320,6 +320,13 @@ void CryptoKernel::Network::outgoingEncryptionHandshakeFunc() {
 
 	std::map<std::string, std::shared_ptr<sf::TcpSocket>> pendingConnections;
 
+	std::unique_ptr<Storage::Transaction> dbTx(networkdb->beginReadOnly());
+	std::unique_ptr<Storage::Table::Iterator> it(new Storage::Table::Iterator(peers.get(), networkdb.get(), dbTx->snapshot));
+	
+	for(it->SeekToFirst(); it->Valid(); it->Next()) {
+		peersToQuery.insert(it->key(), true);
+	}
+
 	while(running) {
 		// let all of the encryption check ips know that I want to perform a handshake
 		std::vector<std::string> addresses = peersToQuery.keys();
@@ -408,7 +415,6 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 	std::vector<std::string> peerIps;
 
 	std::unique_ptr<Storage::Transaction> dbTx(networkdb->beginReadOnly());
-
 	std::unique_ptr<Storage::Table::Iterator> it(new Storage::Table::Iterator(peers.get(), networkdb.get(), dbTx->snapshot));
 
 	for(it->SeekToFirst(); it->Valid(); it->Next()) {
@@ -453,7 +459,7 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 			auto entry = handshakeClients.find(it->key());
 			if(entry->second->getHandshakeSuccess()) {
 				log->printf(LOG_LEVEL_INFO, "Network(): Client handshake complete, " + entry->first);
-				if(sockets.contains(it->key())) {
+				/*if(sockets.contains(it->key())) {
 					sf::TcpSocket* socket = sockets.find(it->key())->second;
 					if(socket) {
 						addConnection(socket, peerInfo, entry->second->send_cipher, entry->second->recv_cipher);
@@ -463,7 +469,9 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 					else {
 						log->printf(LOG_LEVEL_INFO, "Network(): Socket for " + it->key() + " not found.");
 					}
-				}
+				}*/
+				peersToTry.insert(std::pair<std::string, Json::Value>(it->key(), peerInfo));
+				peerIps.push_back(it->key());
 			}
 			else if(entry->second->getHandshakeComplete() && !entry->second->getHandshakeSuccess()) {
 				log->printf(LOG_LEVEL_INFO, "Network(): Client, the noise handshake for " + it->key() + " failed.");
@@ -478,7 +486,7 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 		else if(handshakeServers.contains(it->key())) {
 			auto entry = handshakeServers.find(it->key());
 			if(entry->second->getHandshakeSuccess()) {
-				if(sockets.contains(it->key())) {
+				/*if(sockets.contains(it->key())) {
 					log->printf(LOG_LEVEL_INFO, "Network(): Server handshake complete, " + entry->first);
 					sf::TcpSocket* socket = sockets.find(it->key())->second;
 					if(socket) {
@@ -489,7 +497,9 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 					else {
 						log->printf(LOG_LEVEL_INFO, "Network(): Socket for " + it->key() + " not found.");
 					}
-				}
+				}*/
+				peersToTry.insert(std::pair<std::string, Json::Value>(it->key(), peerInfo));
+				peerIps.push_back(it->key());
 			}
 			else if(entry->second->getHandshakeComplete() && !entry->second->getHandshakeSuccess()) {
 				log->printf(LOG_LEVEL_INFO, "SERVER The handshake for " + it->key() + " failed.");
@@ -501,7 +511,7 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 			continue;
 		}
 		else if(plaintextHosts.contains(it->key())) { // connect over plaintext
-			if(sockets.contains(it->key())) {
+			/*if(sockets.contains(it->key())) {
 				log->printf(LOG_LEVEL_INFO, "Network(): Making an unecrypted connection to " + it->key());
 				sf::TcpSocket* socket = sockets.find(it->key())->second;
 				if(socket) {
@@ -510,11 +520,10 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 				else {
 					log->printf(LOG_LEVEL_INFO, "Network(): Socket for " + it->key() + " not found.");
 				}
-			}
+			}*/
+			peersToTry.insert(std::pair<std::string, Json::Value>(it->key(), peerInfo));
+			peerIps.push_back(it->key());
 		}
-
-		peersToTry.insert(std::pair<std::string, Json::Value>(it->key(), peerInfo));
-		peerIps.push_back(it->key());
 	}
 	it.reset();
 
@@ -531,9 +540,9 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 
 		if(socket->connect(peerIp, port, sf::seconds(3)) == sf::Socket::Done) {
 			log->printf(LOG_LEVEL_INFO, "Network(): Successfully connected to " + peerIp);
-
-			peersToQuery.insert(peerIp, true); // really, we just need a set here, not a map
-			sockets.insert(peerIp, socket);
+			//peersToQuery.insert(peerIp, true); // really, we just need a set here, not a map
+			//sockets.insert(peerIp, socket);
+			addConnection(socket, peerData);
 		}
 		else {
 			log->printf(LOG_LEVEL_WARN, "Network(): Failed to connect to " + peerIp);
@@ -857,6 +866,11 @@ void CryptoKernel::Network::connectionFunc() {
 				newSeed["score"] = 0;
 				peers->put(dbTx.get(), client->getRemoteAddress().toString(), newSeed);
 				dbTx->commit();
+
+				std::string currAddr = client->getRemoteAddress().toString();
+				if(!handshakeClients.contains(currAddr) && !handshakeServers.contains(currAddr)) {
+					plaintextHosts.insert(currAddr, true);
+				}
 			}
             else {
             	// todo... something
