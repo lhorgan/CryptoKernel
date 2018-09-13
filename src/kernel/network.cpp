@@ -280,6 +280,9 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 	                    if(grr == sf::Socket::Done) {
 	                    	it->second->receivePacket(packet);
 	                    }
+						else if(grr == sf::Socket::Disconnected) {
+							log->printf(LOG_LEVEL_INFO, "Grr this happens for some reason, not a problem");
+						}
 	                    else {
 	                    	log->printf(LOG_LEVEL_INFO, "Network(): Something went wrong receiving packet from hs server "
 	                    			+ it->first + ", disconnecting it.");
@@ -316,6 +319,9 @@ void CryptoKernel::Network::incomingEncryptionHandshakeFunc() {
 	        			if(grr == sf::Socket::Done) {
 	        				it->second->receivePacket(packet);
 	        			}
+						else if(grr == sf::Socket::Disconnected) {
+							log->printf(LOG_LEVEL_INFO, "This happens for some reason, but it's not a problem.");
+						}
 	        			else {
 	        				log->printf(LOG_LEVEL_INFO, "Network(): Something went wrong receiving packet from hs client "
 	        						+ it->first + ", disconnecting it.");
