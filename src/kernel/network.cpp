@@ -180,7 +180,7 @@ CryptoKernel::Network::Network(CryptoKernel::Log* log,
 	incomingEncryptionHandshakeThread.reset(new std::thread(&CryptoKernel::Network::incomingEncryptionHandshakeWrapper, this));
 	outgoingEncryptionHandshakeThread.reset(new std::thread(&CryptoKernel::Network::outgoingEncryptionHandshakeWrapper, this));
 
-	//postHandshakeConnectThread.reset(new std::thread(&CryptoKernel::Network::postHandshakeConnect, this));
+	postHandshakeConnectThread.reset(new std::thread(&CryptoKernel::Network::postHandshakeConnect, this));
 }
 
 CryptoKernel::Network::~Network() {
@@ -192,7 +192,7 @@ CryptoKernel::Network::~Network() {
 
 	incomingEncryptionHandshakeThread->join();
 	outgoingEncryptionHandshakeThread->join();
-	//postHandshakeConnectThread->join();
+	postHandshakeConnectThread->join();
 
     listener.close();
 }
@@ -315,7 +315,7 @@ void CryptoKernel::Network::postHandshakeConnect() {
 				if(it->second->getHandshakeSuccess()) {
 					log->printf(LOG_LEVEL_INFO, "Connection to " + key + " succeeded (client)");
 					//transferConnection(key, it->second->send_cipher, it->second->recv_cipher);
-					handshakeClients.erase(it);
+					//handshakeClients.erase(it);
 				}
 			}
 		}
@@ -327,8 +327,8 @@ void CryptoKernel::Network::postHandshakeConnect() {
 			if(it != handshakeServers.end()) {
 				if(it->second->getHandshakeSuccess()) {
 					log->printf(LOG_LEVEL_INFO, "Connection to " + key + " succeeded (server)");
-					transferConnection(key, it->second->sendCipher, it->second->recvCipher);
-					handshakeServers.erase(it);
+					//transferConnection(key, it->second->sendCipher, it->second->recvCipher);
+					//handshakeServers.erase(it);
 				}
 			}
 		}
@@ -340,7 +340,7 @@ void CryptoKernel::Network::postHandshakeConnect() {
 			plaintextHosts.erase(key);
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(200)); // arbitrary
+		std::this_thread::sleep_for(std::chrono::milliseconds(2000)); // arbitrary
 	}
 }
 
