@@ -314,7 +314,7 @@ void CryptoKernel::Network::postHandshakeConnect() {
 			if(it != handshakeClients.end()) {
 				if(it->second->getHandshakeSuccess()) {
 					log->printf(LOG_LEVEL_INFO, "Connection to " + key + " succeeded (client)");
-					transferConnection(key, it->second->send_cipher, it->second->recv_cipher);
+					//transferConnection(key, it->second->send_cipher, it->second->recv_cipher);
 					handshakeClients.erase(it);
 				}
 			}
@@ -352,7 +352,7 @@ void CryptoKernel::Network::transferConnection(std::string addr, NoiseCipherStat
 		connection->setSendCipher(send_cipher);
 		connection->setRecvCipher(recv_cipher);
 		it->second.release();
-		connected.at(addr).reset(connection);
+		//connected.at(addr).reset(connection);
 		connectedPending.erase(addr);
 		connection->release();
 
