@@ -315,7 +315,7 @@ void CryptoKernel::Network::postHandshakeConnect() {
 				if(it->second->getHandshakeSuccess()) {
 					log->printf(LOG_LEVEL_INFO, "Connection to " + key + " succeeded (client)");
 					transferConnection(key, it->second->send_cipher, it->second->recv_cipher);
-					handshakeClients.erase(key);
+					handshakeClients.erase(it);
 				}
 			}
 		}
@@ -328,7 +328,7 @@ void CryptoKernel::Network::postHandshakeConnect() {
 				if(it->second->getHandshakeSuccess()) {
 					log->printf(LOG_LEVEL_INFO, "Connection to " + key + " succeeded (server)");
 					transferConnection(key, it->second->sendCipher, it->second->recvCipher);
-					handshakeServers.erase(key);
+					handshakeServers.erase(it);
 				}
 			}
 		}
