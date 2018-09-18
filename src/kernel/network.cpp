@@ -312,8 +312,8 @@ void CryptoKernel::Network::postHandshakeConnect() {
 		for(std::string key: keys) {
 			auto it = handshakeClients.find(key);
 			if(it != handshakeClients.end()) {
-				if(it->second->getHandshakeSuccess()) {
-					log->printf(LOG_LEVEL_INFO, "Connection to " + key + " succeeded (client)");
+				if(it->second->getHandshakeComplete()) {
+					log->printf(LOG_LEVEL_INFO, "Connection to " + key + " completed (client)");
 					connectedPending.erase(key);
 					handshakeServers.erase(key);
 					//transferConnection(key, it->second->send_cipher, it->second->recv_cipher);
@@ -327,8 +327,8 @@ void CryptoKernel::Network::postHandshakeConnect() {
 		for(std::string key: keys) {
 			auto it = handshakeServers.find(key);
 			if(it != handshakeServers.end()) {
-				if(it->second->getHandshakeSuccess()) {
-					log->printf(LOG_LEVEL_INFO, "Connection to " + key + " succeeded (server)");
+				if(it->second->getHandshakeComplete()) {
+					log->printf(LOG_LEVEL_INFO, "Connection to " + key + " completed (server)");
 					connectedPending.erase(key);
 					handshakeServers.erase(key);
 					//transferConnection(key, it->second->sendCipher, it->second->recvCipher);
