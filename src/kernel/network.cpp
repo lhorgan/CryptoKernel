@@ -315,6 +315,9 @@ void CryptoKernel::Network::postHandshakeConnect() {
 				if(it->second->getHandshakeComplete()) {
 					log->printf(LOG_LEVEL_INFO, "Connection to " + key + " completed (client)");
 					handshakeClients.erase(key);
+					if(handshakeClients.contains(key)) {
+						log->printf(LOG_LEVEL_INFO, "We just deleted " + key + " and yet... (client)");
+					}
 					connectedPending.erase(key);
 					//transferConnection(key, it->second->send_cipher, it->second->recv_cipher);
 					//handshakeClients.erase(it);
@@ -330,6 +333,9 @@ void CryptoKernel::Network::postHandshakeConnect() {
 				if(it->second->getHandshakeComplete()) {
 					log->printf(LOG_LEVEL_INFO, "Connection to " + key + " completed (server)");
 					handshakeServers.erase(key);
+					if(handshakeServers.contains(key)) {
+						log->printf(LOG_LEVEL_INFO, "We just deleted " + key + " and yet... (server)");
+					}
 					connectedPending.erase(key);
 					//transferConnection(key, it->second->sendCipher, it->second->recvCipher);
 					//handshakeServers.erase(it);
