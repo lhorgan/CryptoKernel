@@ -314,8 +314,8 @@ void CryptoKernel::Network::postHandshakeConnect() {
 			if(it != handshakeClients.end()) {
 				if(it->second->getHandshakeComplete()) {
 					log->printf(LOG_LEVEL_INFO, "Connection to " + key + " completed (client)");
-					connectedPending.erase(key);
 					handshakeClients.erase(key);
+					connectedPending.erase(key);
 					//transferConnection(key, it->second->send_cipher, it->second->recv_cipher);
 					//handshakeClients.erase(it);
 				}
@@ -329,8 +329,8 @@ void CryptoKernel::Network::postHandshakeConnect() {
 			if(it != handshakeServers.end()) {
 				if(it->second->getHandshakeComplete()) {
 					log->printf(LOG_LEVEL_INFO, "Connection to " + key + " completed (server)");
-					connectedPending.erase(key);
 					handshakeServers.erase(key);
+					connectedPending.erase(key);
 					//transferConnection(key, it->second->sendCipher, it->second->recvCipher);
 					//handshakeServers.erase(it);
 				}
