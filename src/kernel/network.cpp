@@ -670,6 +670,7 @@ void CryptoKernel::Network::outgoingEncryptionHandshakeFunc() {
 			plaintextHosts.insert(addr, true);
 			continue;
 		}
+		log->printf(LOG_LEVEL_INFO, "Completed connection attempt to " + addr);
 		client->setBlocking(false);
 		addToNoisePool(client);
 		peersToQuery.erase(addr);
