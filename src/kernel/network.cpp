@@ -692,6 +692,9 @@ void CryptoKernel::Network::addToNoisePool(std::shared_ptr<sf::TcpSocket> socket
 			handshakeClients.at(addr).reset(new NoiseClient(socket, addr, 88, log));
 		}
 	}
+	else {
+		log->printf(LOG_LEVEL_INFO, "err, we've still got " + addr + " in something...");
+	}
 }
 
 void CryptoKernel::Network::connectionFunc() {
