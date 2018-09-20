@@ -706,9 +706,19 @@ void CryptoKernel::Network::addToNoisePool(sf::TcpSocket* socket) {
 		}
 	}
 	else {
+		if(handshakeServers.contains(addr)) {
+			auto it = handshakeServers.find(addr);
+			if(it != handshakeServers.end()) {
+				it->second->replaceSocket(socket);
+			}
+		}
+		else if(handshakeClients.contains(addr)) {
+			auto it = handshakeClients.find(addr);
+			if(it != handshakeClients.end()) {
+				it->second->replaceSocket(socket);
+			}
+		}
 		log->printf(LOG_LEVEL_INFO, "Woops. " + addr + " is already in something.");
-		//socket->disconnect();
-		//delete socket;
 	}
 }
 

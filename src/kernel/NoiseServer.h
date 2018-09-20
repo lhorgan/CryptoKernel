@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <SFML/Network.hpp>
 
+#include "concurrentsocket.h"
 #include "NoiseUtil.h"
 #include "log.h"
 
@@ -19,7 +20,7 @@ public:
 	uint8_t clientKey25519[CURVE25519_KEY_LEN];
 	uint8_t serverKey25519[CURVE25519_KEY_LEN];
 
-	sf::TcpSocket* client;
+	ConcurrentSocket* client;
 	CryptoKernel::Log* log;
 	uint64_t port;
 
@@ -55,6 +56,7 @@ public:
 	int initializeHandshake(NoiseHandshakeState* handshake, size_t prologue_len);
 
 	void receiveWrapper();
+	void replaceSocket(sf::TcpSocket* socket);
 	void receivePacket(sf::Packet packet);
 	std::unique_ptr<std::thread> receiveThread;
 

@@ -25,7 +25,7 @@
 #include <stdlib.h>
 
 NoiseClient::NoiseClient(sf::TcpSocket* server, std::string ipAddress, uint64_t port, CryptoKernel::Log* log) {
-	this->server = server;
+	this->server = new ConcurrentSocket(server);
 	this->log = log;
 	this->ipAddress = ipAddress;
 	this->port = port;
@@ -64,6 +64,10 @@ NoiseClient::NoiseClient(sf::TcpSocket* server, std::string ipAddress, uint64_t 
 	log->printf(LOG_LEVEL_INFO, "Noise(): Client, starting writeInfo. " + server->getRemoteAddress().toString());
 	writeInfoThread.reset(new std::thread(&NoiseClient::writeInfo, this)); // start the write info thread
     receiveThread.reset(new std::thread(&NoiseClient::receiveWrapper, this));
+}
+
+void NoiseClient::replaceSocket(sf::TcpSocket* socket) {
+	server->setSocket(socket);
 }
 
 void NoiseClient::writeInfo() {
@@ -208,10 +212,13 @@ void NoiseClient::receiveWrapper() {
     log->printf(LOG_LEVEL_INFO, "Noise(): Client, receive wrapper starting. " + server->getRemoteAddress().toString());
     bool quitThread = false;
 
-	sf::SocketSelector selector;
-	selector.add(*server);
-
     while(!quitThread && !getHandshakeComplete()) {
+		sf::SocketSelector selector;
+
+		server->acquire();
+		selector.add(*server->getSocket());
+		server->release();
+
 		if(selector.wait(sf::seconds(1))) {
 			sf::Packet packet;
 			const auto status = server->receive(packet);
@@ -224,8 +231,6 @@ void NoiseClient::receiveWrapper() {
 			}
 		}
 	}
-
-	selector.remove(*server);
 }
 
 void NoiseClient::receivePacket(sf::Packet& packet) {

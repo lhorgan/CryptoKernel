@@ -26,7 +26,7 @@ NoiseServer::NoiseServer(sf::TcpSocket* client, uint64_t port, CryptoKernel::Log
 	sendCipher = 0;
 	recvCipher = 0;
 
-	this->client = client;
+	this->client = new ConcurrentSocket(client);
 	this->log = log;
 	this->port = port;
 
@@ -149,17 +149,23 @@ void NoiseServer::writeInfo() {
 	setHandshakeComplete(true, ok);
 }
 
+void NoiseServer::replaceSocket(sf::TcpSocket* socket) {
+	client->setSocket(socket);
+}
+
 void NoiseServer::receiveWrapper() {
     log->printf(LOG_LEVEL_INFO, "Noise(): Server, receive wrapper starting. " + client->getRemoteAddress().toString());
     bool quitThread = false;
 
-	sf::SocketSelector selector;
-	selector.add(*client);
-
     while(!quitThread && !getHandshakeComplete()) {
+		sf::SocketSelector selector;
+		client->acquire();
+		selector.add(*client->getSocket());
+		client->release();
+
 		log->printf(LOG_LEVEL_INFO, "server waiting for packet.... " + client->getRemoteAddress().toString());
 		if(selector.wait(sf::seconds(1))) {
-			if(selector.isReady(*client)) {
+			if(selector.isReady(*client->getSocket())) {
 				sf::Packet packet;
 				const auto status = client->receive(packet);
 				if(status == sf::Socket::Done) {
@@ -176,8 +182,6 @@ void NoiseServer::receiveWrapper() {
 			}
 		}
 	}
-
-	selector.remove(*client);
 }
 
 void NoiseServer::receivePacket(sf::Packet packet) {

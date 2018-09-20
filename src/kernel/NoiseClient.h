@@ -11,12 +11,13 @@
 #include <stdio.h>
 #include <SFML/Network.hpp>
 
+#include "concurrentsocket.h"
 #include "NoiseUtil.h"
 #include "log.h"
 
 class NoiseClient {
 public:
-	sf::TcpSocket* server;
+	ConcurrentSocket* server;
 	CryptoKernel::Log* log;
 	std::string ipAddress;
 	uint64_t port;
@@ -51,6 +52,9 @@ public:
 	bool getHandshakeSuccess();
 
     void receiveWrapper();
+
+	void replaceSocket(sf::TcpSocket* socket);
+
 	void receivePacket(sf::Packet& packet);
     std::unique_ptr<std::thread> receiveThread;
 
