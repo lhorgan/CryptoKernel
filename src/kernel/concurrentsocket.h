@@ -52,8 +52,10 @@ public:
     ~ConcurrentSocket() {
         std::lock_guard<std::mutex> sm(socketMutex);
         for(unsigned int i = 0; i < oldSockets.size(); i++) {
-            oldSockets[i]->disconnect();
-            delete oldSockets[i];
+            if(oldSockets[i]) {
+                oldSockets[i]->disconnect();
+                delete oldSockets[i];
+            }
         }
         delete socket;
     }

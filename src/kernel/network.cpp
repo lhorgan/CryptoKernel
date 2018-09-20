@@ -709,12 +709,14 @@ void CryptoKernel::Network::addToNoisePool(sf::TcpSocket* socket) {
 		if(handshakeServers.contains(addr)) {
 			auto it = handshakeServers.find(addr);
 			if(it != handshakeServers.end()) {
+				log->printf(LOG_LEVEL_INFO, "initiating a server transfer for " + addr);
 				it->second->replaceSocket(socket);
 			}
 		}
 		else if(handshakeClients.contains(addr)) {
 			auto it = handshakeClients.find(addr);
 			if(it != handshakeClients.end()) {
+				log->printf(LOG_LEVEL_INFO, "initiating a client transfer for " + addr);
 				it->second->replaceSocket(socket);
 			}
 		}
