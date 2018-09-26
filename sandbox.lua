@@ -1,3 +1,5 @@
+CK = (loadfile("./sandboxutil.lua"))
+
 Json = (loadfile("./json.lua"))()
 local json = Json.new()
 thisTransaction = json:decode(txJson)
@@ -46,7 +48,7 @@ sandbox_env = {Crypto = {new = Crypto.new, getPublicKey = Crypto.getPublicKey, g
                pcall = pcall,
                select = select,
                tonumber = tonumber,
-               tostring = tostring,
+               tostring = CK.ck_tostring,
                type = type,
                xpcall = xpcall,
                string = {len = string.len,
