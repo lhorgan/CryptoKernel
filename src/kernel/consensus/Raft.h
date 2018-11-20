@@ -2,13 +2,15 @@
 #define RAFT_H_INCLUDED
 
 #include <chrono>
+#include <thread>
 
 #include "../blockchain.h"
 
 namespace CryptoKernel {
-    class Consensus::Raft : public Raft {
+    class Consensus::Raft : public Consensus {
     public:
-        Raft();
+        Raft(CryptoKernel::Blockchain* blockchain, std::string pubKey);
+        ~Raft();
 
         bool isBlockBetter(Storage::Transaction* transaction,
                                const CryptoKernel::Blockchain::block& block,
@@ -40,12 +42,27 @@ namespace CryptoKernel {
         // ha.  get it?  instead of miner.  floater?  ha.
         void floater();
         void start();
+        void requestVotes();
+        void castVote(std::string candidateId);
+        void sendHeartbeat();
+        void resetValues();
+
+        class LifeRaft;
     
     private:
         bool running;
-        bool leader;
         unsigned long long lastPing;
         unsigned long long electionTimeout;
+        CryptoKernel::Blockchain* blockchain;
+        std::string pubKey;
+        CryptoKernel::Log* log;
+        std::unique_ptr<std::thread> floaterThread;
+
+        int networkSize;
+        std::set<std::string> supporters;
+        bool leader;
+        bool candidate;
+        unsigned int term;
     };
 }
 
