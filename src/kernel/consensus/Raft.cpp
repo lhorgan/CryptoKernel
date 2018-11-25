@@ -55,7 +55,7 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
 
     Json::Value data = block.getConsensusData();
     if(data["rpc"]) {
-        if(data["rpc"].asString() == "request_votes" && data.asString["direction"].asString() == "sending") {
+        if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sending") {
             int requesterTerm = data["term"].asInt();
             if(requesterTerm >= term) {
                 // cast a vote for this node
@@ -154,3 +154,46 @@ void CryptoKernel::Consensus::Raft::sendHeartbeat() {
     dummyData["sender"] = pubKey;
     blockchain->submitBlock(dummyBlock);
 }
+
+
+
+
+
+
+
+
+bool CryptoKernel::Consensus::Raft::isBlockBetter(Storage::Transaction* transaction,
+                               const CryptoKernel::Blockchain::block& block,
+                               const CryptoKernel::Blockchain::dbBlock& tip) {
+                                   return true;
+                               }
+
+Json::Value CryptoKernel::Consensus::Raft::generateConsensusData(Storage::Transaction* transaction,
+        const CryptoKernel::BigNum& previousBlockId, const std::string& publicKey) {
+            Json::Value val;
+            return val;
+        }
+
+// probably always returns true
+bool CryptoKernel::Consensus::Raft::verifyTransaction(Storage::Transaction* transaction,
+                            const CryptoKernel::Blockchain::transaction& tx) {
+                                return true;
+                            }
+
+// probably always returns true
+bool CryptoKernel::Consensus::Raft::confirmTransaction(Storage::Transaction* transaction,
+                                const CryptoKernel::Blockchain::transaction& tx) {
+                                    return true;
+                                }
+
+// probably always returns true
+bool CryptoKernel::Consensus::Raft::submitTransaction(Storage::Transaction* transaction,
+                            const CryptoKernel::Blockchain::transaction& tx) {
+                                return true;
+                            }
+
+// probably always returns true
+bool CryptoKernel::Consensus::Raft::submitBlock(Storage::Transaction* transaction,
+                        const CryptoKernel::Blockchain::block& block) {
+                            return true;
+                        }
