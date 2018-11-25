@@ -9,7 +9,7 @@
 namespace CryptoKernel {
     class Consensus::Raft : public Consensus {
     public:
-        Raft(CryptoKernel::Blockchain* blockchain, std::string pubKey);
+        Raft(CryptoKernel::Blockchain* blockchain, std::string pubKey, CryptoKernel::Log* log);
         ~Raft();
 
         bool isBlockBetter(Storage::Transaction* transaction,

@@ -1,8 +1,9 @@
 #include "Raft.h"
 
-CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::string pubKey) {
+CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::string pubKey, CryptoKernel::Log* log) {
     this->blockchain = blockchain;
     this->pubKey = pubKey;
+    this->log = log;
 
     running = true;
     lastPing = 0;

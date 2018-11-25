@@ -114,7 +114,7 @@ std::unique_ptr<CryptoKernel::Consensus> CryptoKernel::MulticoinLoader::getConse
                                                  log));
     }
     else if(name == "raft") {
-        return std::unique_ptr<CryptoKernel::Consensus>(new Consensus::Raft(blockchain, config["pubKey"].asString()));
+        return std::unique_ptr<CryptoKernel::Consensus>(new Consensus::Raft(blockchain, config["pubKey"].asString(), log));
     } 
     else {
         throw std::runtime_error("Unknown consensus algorithm " + name);
