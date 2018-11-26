@@ -5,6 +5,8 @@ CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::s
     this->pubKey = pubKey;
     this->log = log;
 
+    this->network = new Network(this->log, this->blockchain, 3000, "raftnet");
+
     running = true;
     lastPing = 0;
     electionTimeout = 3000 + rand() % 1000;
@@ -92,7 +94,7 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
         }
     }
 
-    return result;
+    return false;
 }
 
 void CryptoKernel::Consensus::Raft::floater() {
@@ -143,7 +145,9 @@ void CryptoKernel::Consensus::Raft::requestVotes() {
     dummyData["sender"] = pubKey;
     dummyData["term"] = term;
     dummyBlock.setConsensusData(dummyData);
-    blockchain->submitBlock(dummyBlock);
+
+    network->broadcastBlock(dummyBlock);
+    //blockchain->submitBlock(dummyBlock);
 }
 
 void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
@@ -157,7 +161,9 @@ void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
     dummyData["term"] = term;
     dummyData["candidate"] = candidateId;
     dummyBlock.setConsensusData(dummyData);
-    blockchain->submitBlock(dummyBlock);
+
+    network->broadcastBlock(dummyBlock);
+    //blockchain->submitBlock(dummyBlock);
 }
 
 void CryptoKernel::Consensus::Raft::sendHeartbeat() {
@@ -166,7 +172,9 @@ void CryptoKernel::Consensus::Raft::sendHeartbeat() {
     Json::Value dummyData;
     dummyData["rpc"] = "heartbeat"; // paper uses an empty append_entries, but this is easier
     dummyData["sender"] = pubKey;
-    blockchain->submitBlock(dummyBlock);
+    
+    network->broadcastBlock(dummyBlock);
+    //blockchain->submitBlock(dummyBlock);
 }
 
 

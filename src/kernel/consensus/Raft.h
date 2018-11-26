@@ -4,6 +4,7 @@
 #include <chrono>
 #include <thread>
 
+#include "network.h"
 #include "../blockchain.h"
 
 namespace CryptoKernel {
@@ -63,6 +64,7 @@ namespace CryptoKernel {
         bool leader;
         bool candidate;
         unsigned int term;
+        CryptoKernel::Network* network;
     };
 }
 
