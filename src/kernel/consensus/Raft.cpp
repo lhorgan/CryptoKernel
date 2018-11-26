@@ -179,8 +179,11 @@ bool CryptoKernel::Consensus::Raft::isBlockBetter(Storage::Transaction* transact
 Json::Value CryptoKernel::Consensus::Raft::generateConsensusData(Storage::Transaction* transaction,
         const CryptoKernel::BigNum& previousBlockId, const std::string& publicKey) {
             log->printf(LOG_LEVEL_INFO, "Uh-oh... generating consensus data");
-            Json::Value val;
-            return val;
+            std::string blockId = previousBlockId.toString();
+            CryptoKernel::Blockchain::block block = blockchain->getBlock(blockId);
+            Json::Value consensusData = block.getConsensusData();
+            log->printf(LOG_LEVEL_INFO, "Consenus data: " + consensusData.toStyledString());
+            return consensusData;
         }
 
 // probably always returns true
