@@ -227,3 +227,4 @@ bool CryptoKernel::Consensus::Raft::submitBlock(Storage::Transaction* transactio
                         const CryptoKernel::Blockchain::block& block) {
                             return true;
                         }
+

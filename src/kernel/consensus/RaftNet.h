@@ -1,0 +1,136 @@
+#include <SFML/Network.hpp>
+
+#include "concurrentmap.h"
+#include "log.h"
+
+class RaftConnection {
+public:
+    RaftConnection(sf::TcpSocket* client) {
+        this->client = client;
+    }
+
+    bool acquire() {
+        return clientMutex.try_lock();
+    }
+
+    void release() {
+        clientMutex.unlock();
+    }
+
+    sf::TcpSocket* get() {
+        return this->client;
+    }
+
+    sf::Socket::Status send(sf::Packet& packet) {
+        std::lock_guard<std::mutex> cml(clientMutex);
+        return client->send(packet);
+    }
+
+    ~RaftConnection() {
+        delete client;
+    }
+
+private:
+    sf::TcpSocket* client;
+    std::mutex clientMutex;
+};
+
+class RaftNet {
+public:
+    RaftNet(CryptoKernel::Log* log) {
+        this->log = log;
+    }
+
+    void send(std::string addr, unsigned short port, std::string message) {
+        sf::Packet packet;
+        packet << message;
+        auto it = clients.find(addr);
+        if(it != clients.end()) {
+            if(it->second->send(packet) != sf::Socket::Done) {
+                log->printf(LOG_LEVEL_INFO, "error sending packet to " + addr);
+                clients.erase(addr);
+            }
+        }
+        else {
+            sf::TcpSocket* socket = new sf::TcpSocket();
+            sf::IpAddress ipAddr(addr);
+            if(socket->connect(ipAddr, port, sf::seconds(3))) {
+                if(clients.find(addr) == clients.end()) {
+                    RaftConnection* connection = new RaftConnection(socket);
+                    clients.insert(addr, connection);
+                }
+                else {
+                    delete socket;
+                }
+            }
+            else {
+                log->printf(LOG_LEVEL_INFO, "Failed to connect to " + addr);
+                delete socket;
+            }
+        }
+    }
+
+    ~RaftNet() {
+        this->clients.clear();
+    }
+
+private:
+    ConcurrentMap <std::string, RaftConnection*> clients;
+    bool running;
+    CryptoKernel::Log* log;
+
+    void listen(unsigned int port=4000) {
+        // Create a socket to listen to new connections
+        sf::TcpListener listener;
+        listener.listen(port);
+        // Create a selector
+        sf::SocketSelector selector;
+        // Add the listener to the selector
+        selector.add(listener);
+        // Endless loop that waits for new connections
+        while(running) {
+            // Make the selector wait for data on any socket
+            if (selector.wait()) {
+                // Test the listener
+                if (selector.isReady(listener)) {
+                    // The listener is ready: there is a pending connection
+                    sf::TcpSocket* client = new sf::TcpSocket;
+                    if (listener.accept(*client) == sf::Socket::Done) {
+                        // Add the new client to the clients list
+                        std::string addr = client->getRemoteAddress().toString();
+                        if(clients.find(addr) == clients.end()) {
+                            clients.insert(client->getRemoteAddress().toString(), new RaftConnection(client));
+                            // Add the new client to the selector so that we will
+                            // be notified when he sends something
+                            selector.add(*client);
+                        }
+                    }
+                    else {
+                        // Error, we won't get a new connection, delete the socket
+                        delete client;
+                    }
+                }
+                else {
+                    // The listener socket is not ready, test all other sockets (the clients)
+                    std::vector<std::string> keys = clients.keys();
+                    std::random_shuffle(keys.begin(), keys.end());
+                    for(std::string key : keys) {
+                        auto it = clients.find(key);
+                        if(it != clients.end() && it->second->acquire()) {
+                            sf::TcpSocket* client = it->second->get();
+                            if(selector.isReady(*client)) {
+                                // The client has sent some data, we can receive it
+                                sf::Packet packet;
+                                if(client->receive(packet) == sf::Socket::Done) {
+                                    std::string message;
+                                    packet >> message;
+                                    log->printf(LOG_LEVEL_INFO, "Received packet: " + message);
+                                }
+                            }   
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
