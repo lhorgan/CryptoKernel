@@ -47,16 +47,19 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
     }
     */
 
-   /*if(this->leader) {
+    /*if(this->leader) {
 
-   }
-   else {
+    }
+    else {
 
-   }*/
-   log->printf(LOG_LEVEL_INFO, "Checking consenus rules");
+    }*/
+    log->printf(LOG_LEVEL_INFO, "Checking consenus rules");
     bool result = true; // this probably should be false sometimes
 
     Json::Value data = block.getConsensusData();
+
+    log->printf(LOG_LEVEL_INFO, data.toStyledString());
+
     if(data["rpc"] && data["sender"].asString() != pubKey) {
         log->printf(LOG_LEVEL_INFO, "Okay, there IS an RPC call being made");
         if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sender") {
@@ -180,11 +183,11 @@ bool CryptoKernel::Consensus::Raft::isBlockBetter(Storage::Transaction* transact
 // hrrrrrm*****
 Json::Value CryptoKernel::Consensus::Raft::generateConsensusData(Storage::Transaction* transaction,
         const CryptoKernel::BigNum& previousBlockId, const std::string& publicKey) {
-            log->printf(LOG_LEVEL_INFO, "Uh-oh... generating consensus data");
+            //log->printf(LOG_LEVEL_INFO, "Uh-oh... generating consensus data");
             std::string blockId = previousBlockId.toString();
             CryptoKernel::Blockchain::block block = blockchain->getBlock(blockId);
             Json::Value consensusData = block.getConsensusData();
-            log->printf(LOG_LEVEL_INFO, "Consenus data: " + consensusData.toStyledString());
+            //log->printf(LOG_LEVEL_INFO, "Consenus data: " + consensusData.toStyledString());
             return consensusData;
         }
 
