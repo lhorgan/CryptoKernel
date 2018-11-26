@@ -1,11 +1,11 @@
 #include "Raft.h"
 
-CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::string pubKey, CryptoKernel::Network* network, CryptoKernel::Log* log) {
+CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::string pubKey, CryptoKernel::Log* log) {
     this->blockchain = blockchain;
     this->pubKey = pubKey;
     this->log = log;
 
-    this->network = network;
+    //this->network = network;
 
     running = true;
     lastPing = 0;
@@ -146,7 +146,7 @@ void CryptoKernel::Consensus::Raft::requestVotes() {
     dummyData["term"] = term;
     dummyBlock.setConsensusData(dummyData);
 
-    network->broadcastBlock(dummyBlock);
+    //network->broadcastBlock(dummyBlock);
     //blockchain->submitBlock(dummyBlock);
 }
 
@@ -162,7 +162,7 @@ void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
     dummyData["candidate"] = candidateId;
     dummyBlock.setConsensusData(dummyData);
 
-    network->broadcastBlock(dummyBlock);
+    //network->broadcastBlock(dummyBlock);
     //blockchain->submitBlock(dummyBlock);
 }
 
@@ -173,7 +173,7 @@ void CryptoKernel::Consensus::Raft::sendHeartbeat() {
     dummyData["rpc"] = "heartbeat"; // paper uses an empty append_entries, but this is easier
     dummyData["sender"] = pubKey;
     
-    network->broadcastBlock(dummyBlock);
+    //network->broadcastBlock(dummyBlock);
     //blockchain->submitBlock(dummyBlock);
 }
 
