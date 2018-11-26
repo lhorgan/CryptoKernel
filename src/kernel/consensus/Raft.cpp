@@ -172,9 +172,9 @@ void CryptoKernel::Consensus::Raft::sendHeartbeat() {
     Json::Value dummyData;
     dummyData["rpc"] = "heartbeat"; // paper uses an empty append_entries, but this is easier
     dummyData["sender"] = pubKey;
-    
-    //network->broadcastBlock(dummyBlock);
-    //blockchain->submitBlock(dummyBlock);
+    dummyBlock.setConsensusData(dummyData);
+
+    blockchain->submitBlock(dummyBlock);
 }
 
 
@@ -187,7 +187,7 @@ void CryptoKernel::Consensus::Raft::sendHeartbeat() {
 bool CryptoKernel::Consensus::Raft::isBlockBetter(Storage::Transaction* transaction,
                                const CryptoKernel::Blockchain::block& block,
                                const CryptoKernel::Blockchain::dbBlock& tip) {
-                                   return false;
+                                   return true;
                                }
 
 
