@@ -39,6 +39,9 @@ class RaftNet {
 public:
     RaftNet(CryptoKernel::Log* log) {
         this->log = log;
+        running = true;
+        listener.listen(1701);
+        listenThread.reset(new std::thread(&RaftNet::listen, this));
     }
 
     void send(std::string addr, unsigned short port, std::string message) {
@@ -71,6 +74,9 @@ public:
     }
 
     ~RaftNet() {
+        running = false;
+        listener.close();
+        listenThread->join();
         this->clients.clear();
     }
 
@@ -78,11 +84,11 @@ private:
     ConcurrentMap <std::string, RaftConnection*> clients;
     bool running;
     CryptoKernel::Log* log;
+    std::unique_ptr<std::thread> listenThread;
+    sf::TcpListener listener;
 
-    void listen(unsigned int port=4000) {
+    void listen() {
         // Create a socket to listen to new connections
-        sf::TcpListener listener;
-        listener.listen(port);
         // Create a selector
         sf::SocketSelector selector;
         // Add the listener to the selector
