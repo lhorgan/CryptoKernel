@@ -53,6 +53,7 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
    else {
 
    }*/
+   log->printf(LOG_LEVEL_INFO, "Checking consenus rules");
     bool result = false;
 
     Json::Value data = block.getConsensusData();
@@ -127,6 +128,7 @@ void CryptoKernel::Consensus::Raft::resetValues() {
 }
 
 void CryptoKernel::Consensus::Raft::requestVotes() {
+    log->printf(LOG_LEVEL_INFO, "Requesting votes...");
     CryptoKernel::Blockchain::block dummyBlock = blockchain->generateVerifyingBlock(pubKey);
     Json::Value dummyData;
     dummyData["rpc"] = "request_votes";
@@ -138,6 +140,7 @@ void CryptoKernel::Consensus::Raft::requestVotes() {
 }
 
 void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
+    log->printf(LOG_LEVEL_INFO, "Casting vote for " + candidateId);
     CryptoKernel::Blockchain::block dummyBlock = blockchain->generateVerifyingBlock(pubKey);
     Json::Value dummyData;
     dummyData["rpc"] = "request_votes";
@@ -150,6 +153,7 @@ void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
 }
 
 void CryptoKernel::Consensus::Raft::sendHeartbeat() {
+    log->printf(LOG_LEVEL_INFO, "Sending heartbeat...");
     CryptoKernel::Blockchain::block dummyBlock = blockchain->generateVerifyingBlock(pubKey);
     Json::Value dummyData;
     dummyData["rpc"] = "heartbeat"; // paper uses an empty append_entries, but this is easier
@@ -172,6 +176,7 @@ bool CryptoKernel::Consensus::Raft::isBlockBetter(Storage::Transaction* transact
 
 Json::Value CryptoKernel::Consensus::Raft::generateConsensusData(Storage::Transaction* transaction,
         const CryptoKernel::BigNum& previousBlockId, const std::string& publicKey) {
+            log->printf(LOG_LEVEL_INFO, "Uh-oh... generating consensus data");
             Json::Value val;
             return val;
         }
