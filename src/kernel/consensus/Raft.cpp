@@ -92,9 +92,11 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
                 lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
             }
         }
+
+        return false;
     }
 
-    return result;
+    return true;
 }
 
 void CryptoKernel::Consensus::Raft::floater() {
