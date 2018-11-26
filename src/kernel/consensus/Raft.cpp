@@ -54,7 +54,7 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
 
    }*/
    log->printf(LOG_LEVEL_INFO, "Checking consenus rules");
-    bool result = false;
+    bool result = true; // this probably should be false sometimes
 
     Json::Value data = block.getConsensusData();
     if(data["rpc"] && data["sender"].asString() != pubKey) {
@@ -173,9 +173,11 @@ void CryptoKernel::Consensus::Raft::sendHeartbeat() {
 bool CryptoKernel::Consensus::Raft::isBlockBetter(Storage::Transaction* transaction,
                                const CryptoKernel::Blockchain::block& block,
                                const CryptoKernel::Blockchain::dbBlock& tip) {
-                                   return true;
+                                   return false;
                                }
 
+
+// hrrrrrm*****
 Json::Value CryptoKernel::Consensus::Raft::generateConsensusData(Storage::Transaction* transaction,
         const CryptoKernel::BigNum& previousBlockId, const std::string& publicKey) {
             log->printf(LOG_LEVEL_INFO, "Uh-oh... generating consensus data");
