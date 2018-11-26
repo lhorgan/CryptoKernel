@@ -57,7 +57,7 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
     bool result = false;
 
     Json::Value data = block.getConsensusData();
-    if(data["rpc"]) {
+    if(data["rpc"] && data["sender"].asString != pubKey) {
         if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sending") {
             int requesterTerm = data["term"].asInt();
             if(requesterTerm >= term) {
