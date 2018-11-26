@@ -35,6 +35,7 @@ CryptoKernel::MulticoinLoader::MulticoinLoader(const std::string& configFile,
         newCoin->consensusAlgo = getConsensusAlgo(coin["consensus"]["type"].asString(),
                                                   coin["consensus"]["params"],
                                                   config,
+                                                  newCoin->network.get(),
                                                   newCoin->blockchain.get());
 
         newCoin->blockchain->loadChain(newCoin->consensusAlgo.get(),
@@ -104,6 +105,7 @@ std::unique_ptr<CryptoKernel::Consensus> CryptoKernel::MulticoinLoader::getConse
                                          const std::string& name,
                                          const Json::Value& params,
                                          const Json::Value& config,
+                                         Network* network,
                                          Blockchain* blockchain) {
     if(name == "kgw_lyra2rev2") {
         return std::unique_ptr<CryptoKernel::Consensus>(
@@ -114,7 +116,7 @@ std::unique_ptr<CryptoKernel::Consensus> CryptoKernel::MulticoinLoader::getConse
                                                  log));
     }
     else if(name == "raft") {
-        return std::unique_ptr<CryptoKernel::Consensus>(new Consensus::Raft(blockchain, config["pubKey"].asString(), log));
+        return std::unique_ptr<CryptoKernel::Consensus>(new Consensus::Raft(blockchain, config["pubKey"].asString(), network, log));
     } 
     else {
         throw std::runtime_error("Unknown consensus algorithm " + name);
