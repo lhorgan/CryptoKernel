@@ -147,7 +147,7 @@ void CryptoKernel::Consensus::Raft::requestVotes() {
     dummyBlock.setConsensusData(dummyData);
 
     //network->broadcastBlock(dummyBlock);
-    //blockchain->submitBlock(dummyBlock);
+    blockchain->submitBlock(dummyBlock);
 }
 
 void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
@@ -163,7 +163,7 @@ void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
     dummyBlock.setConsensusData(dummyData);
 
     //network->broadcastBlock(dummyBlock);
-    //blockchain->submitBlock(dummyBlock);
+    blockchain->submitBlock(dummyBlock);
 }
 
 void CryptoKernel::Consensus::Raft::sendHeartbeat() {
