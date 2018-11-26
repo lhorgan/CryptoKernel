@@ -59,7 +59,7 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
     Json::Value data = block.getConsensusData();
     if(data["rpc"] && data["sender"].asString() != pubKey) {
         log->printf(LOG_LEVEL_INFO, "Okay, there IS an RPC call being made");
-        if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sending") {
+        if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sender") {
             int requesterTerm = data["term"].asInt();
             if(requesterTerm >= term) {
                 // cast a vote for this node
@@ -134,7 +134,7 @@ void CryptoKernel::Consensus::Raft::requestVotes() {
     CryptoKernel::Blockchain::block dummyBlock = blockchain->generateVerifyingBlock(pubKey);
     Json::Value dummyData;
     dummyData["rpc"] = "request_votes";
-    dummyData["direction"] = "sending";
+    dummyData["direction"] = "sender";
     dummyData["sender"] = pubKey;
     dummyData["term"] = ++term;
     dummyBlock.setConsensusData(dummyData);
