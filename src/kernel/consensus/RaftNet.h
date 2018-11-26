@@ -50,7 +50,7 @@ public:
         auto it = clients.find(addr);
         if(it != clients.end()) {
             if(it->second->send(packet) != sf::Socket::Done) {
-                log->printf(LOG_LEVEL_INFO, "error sending packet to " + addr);
+                log->printf(LOG_LEVEL_INFO, "RAFT: error sending packet to " + addr);
                 clients.erase(addr);
             }
         }
@@ -59,17 +59,17 @@ public:
             sf::IpAddress ipAddr(addr);
             if(socket->connect(ipAddr, port, sf::seconds(3))) {
                 if(clients.find(addr) == clients.end()) {
-                    log->printf(LOG_LEVEL_INFO, "Raft connected to " + addr);
+                    log->printf(LOG_LEVEL_INFO, "RAFT: Raft connected to " + addr);
                     RaftConnection* connection = new RaftConnection(socket);
                     clients.insert(addr, connection);
                 }
                 else {
-                    log->printf(LOG_LEVEL_INFO, "Raft was already connected to " + addr);
+                    log->printf(LOG_LEVEL_INFO, "RAFT: Raft was already connected to " + addr);
                     delete socket;
                 }
             }
             else {
-                log->printf(LOG_LEVEL_INFO, "Failed to connect to " + addr);
+                log->printf(LOG_LEVEL_INFO, "RAFT: Failed to connect to " + addr);
                 delete socket;
             }
         }
@@ -106,7 +106,7 @@ private:
                     if (listener.accept(*client) == sf::Socket::Done) {
                         // Add the new client to the clients list
                         std::string addr = client->getRemoteAddress().toString();
-                        log->printf(LOG_LEVEL_INFO, "Received incoming connection from " + addr);
+                        log->printf(LOG_LEVEL_INFO, "RAFT: Raft received incoming connection from " + addr);
                         if(clients.find(addr) == clients.end()) {
                             clients.insert(client->getRemoteAddress().toString(), new RaftConnection(client));
                             // Add the new client to the selector so that we will
@@ -115,7 +115,7 @@ private:
                         }
                     }
                     else {
-                        log->printf(LOG_LEVEL_INFO, "Raft didn't accept connection, deleting client");
+                        log->printf(LOG_LEVEL_INFO, "RAFT: Raft didn't accept connection, deleting client");
                         // Error, we won't get a new connection, delete the socket
                         delete client;
                     }
@@ -134,7 +134,7 @@ private:
                                 if(client->receive(packet) == sf::Socket::Done) {
                                     std::string message;
                                     packet >> message;
-                                    log->printf(LOG_LEVEL_INFO, "Received packet: " + message);
+                                    log->printf(LOG_LEVEL_INFO, "RAFT: Received packet: " + message);
                                 }
                             }   
                         }
