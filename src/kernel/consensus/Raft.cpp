@@ -58,6 +58,7 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
 
     Json::Value data = block.getConsensusData();
     if(data["rpc"] && data["sender"].asString() != pubKey) {
+        log->printf(LOG_LEVEL_INFO, "Okay, there IS an RPC call being made");
         if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sending") {
             int requesterTerm = data["term"].asInt();
             if(requesterTerm >= term) {
