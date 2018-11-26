@@ -94,7 +94,7 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
         }
     }
 
-    return false;
+    return result;
 }
 
 void CryptoKernel::Consensus::Raft::floater() {
