@@ -114,10 +114,12 @@ void CryptoKernel::Consensus::Raft::floater() {
             }
             else {
                 // time to elect a new leader
+                lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
                 log->printf(LOG_LEVEL_INFO, "I haven't got a leader.  We need to elect a leader!");
                 resetValues();
                 candidate = true;
                 supporters.insert(pubKey);
+                ++term;
                 requestVotes();
             }
         }
@@ -139,7 +141,7 @@ void CryptoKernel::Consensus::Raft::requestVotes() {
     dummyData["rpc"] = "request_votes";
     dummyData["direction"] = "sender";
     dummyData["sender"] = pubKey;
-    dummyData["term"] = ++term;
+    dummyData["term"] = term;
     dummyBlock.setConsensusData(dummyData);
     blockchain->submitBlock(dummyBlock);
 }
