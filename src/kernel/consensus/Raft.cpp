@@ -71,6 +71,7 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
             if(candidate) {
                 supporters.insert(data["sender"].asString());
                 if(supporters.size() > networkSize / 2) { // we have a simple majority of voters
+                    log->printf(LOG_LEVEL_INFO, "I have been elected leader.");
                     leader = true; // I am the captain now!
                 }
             }
@@ -111,7 +112,7 @@ void CryptoKernel::Consensus::Raft::floater() {
                 // time to elect a new leader
                 log->printf(LOG_LEVEL_INFO, "I haven't got a leader.  We need to elect a leader!");
                 resetValues();
-                leader = true;
+                candidate = true;
                 supporters.insert(pubKey);
                 requestVotes();
             }
