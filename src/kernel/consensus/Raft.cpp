@@ -15,6 +15,7 @@ CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::s
 }
 
 CryptoKernel::Consensus::Raft::~Raft() {
+    running = false;
     floaterThread->join();
 }
 
