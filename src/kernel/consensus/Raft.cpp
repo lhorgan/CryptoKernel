@@ -7,6 +7,8 @@ CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::s
 
     //this->network = network;
 
+    this->raftNet = new RaftNet(log);
+
     running = true;
     lastPing = 0;
     electionTimeout = 3000 + rand() % 1000;
@@ -149,7 +151,8 @@ void CryptoKernel::Consensus::Raft::requestVotes() {
     dummyBlock.setConsensusData(dummyData);
 
     //network->broadcastBlock(dummyBlock);
-    blockchain->submitBlock(dummyBlock);
+    //blockchain->submitBlock(dummyBlock);
+    sendAll(dummyData);
 }
 
 void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
@@ -165,7 +168,8 @@ void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
     dummyBlock.setConsensusData(dummyData);
 
     //network->broadcastBlock(dummyBlock);
-    blockchain->submitBlock(dummyBlock);
+    //blockchain->submitBlock(dummyBlock);
+    sendAll(dummyData);
 }
 
 void CryptoKernel::Consensus::Raft::sendHeartbeat() {
@@ -176,10 +180,17 @@ void CryptoKernel::Consensus::Raft::sendHeartbeat() {
     dummyData["sender"] = pubKey;
     dummyBlock.setConsensusData(dummyData);
 
-    blockchain->submitBlock(dummyBlock);
+    //blockchain->submitBlock(dummyBlock);
+    sendAll(dummyData);
 }
 
+void CryptoKernel::Consensus::Raft::sendAll(Json::Value data) {
+    std::string addrs[] = {"100.24.202.21", "100.24.228.94", "34.195.150.28"};
 
+    for(int i =  0; i < 3; i++) {
+        this->raftNet->send(addrs[i], 3000, CryptoKernel::Storage::toString(data));
+    }
+}
 
 
 

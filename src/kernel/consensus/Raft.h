@@ -5,6 +5,7 @@
 #include <thread>
 
 #include "network.h"
+#include "RaftNet.h"
 #include "../blockchain.h"
 
 namespace CryptoKernel {
@@ -65,6 +66,10 @@ namespace CryptoKernel {
         bool candidate;
         unsigned int term;
         CryptoKernel::Network* network;
+
+        RaftNet* raftNet;
+
+        void sendAll(Json::Value data);
     };
 }
 
