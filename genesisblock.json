@@ -8,14 +8,14 @@
                "message" : "grk"
             },
             "nonce" : 2461443157,
-            "value" : 9999986946
+            "value" : 3
          }
       ],
-      "timestamp" : 1501282954
+      "timestamp" : 15012829
    },
    "consensusData" : null,
    "data" : null,
    "height" : 1,
    "previousBlockId" : "0",
-   "timestamp" : 1501282954
+   "timestamp" : 15012829
 }
