@@ -7,7 +7,7 @@ CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::s
 
     running = true;
     lastPing = 0;
-    electionTimeout = 500 + rand() % 500;
+    electionTimeout = 2000 + rand() % 1000;
     networkSize = 3;
     leader = false;
     candidate = false;
@@ -119,7 +119,7 @@ void CryptoKernel::Consensus::Raft::floater() {
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
 
