@@ -107,7 +107,7 @@ void CryptoKernel::Consensus::Raft::floater() {
         }
         else {
             unsigned long long currTime = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
-            if(currTime - lastPing < electionTimeout) {
+            if(currTime - lastPing < electionTimeout && !candidate) {
                 // everything is fine
                 resetValues();
                 log->printf(LOG_LEVEL_INFO, "I am a follower.  I got a heartbeat recently.");
@@ -148,6 +148,7 @@ void CryptoKernel::Consensus::Raft::requestVotes() {
 
 void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
     log->printf(LOG_LEVEL_INFO, "Casting vote for " + candidateId);
+    candidate = false;
     CryptoKernel::Blockchain::block dummyBlock = blockchain->generateVerifyingBlock(pubKey);
     Json::Value dummyData;
     dummyData["rpc"] = "request_votes";
