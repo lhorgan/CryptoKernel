@@ -59,10 +59,12 @@ public:
             sf::IpAddress ipAddr(addr);
             if(socket->connect(ipAddr, port, sf::seconds(3))) {
                 if(clients.find(addr) == clients.end()) {
+                    log->printf(LOG_LEVEL_INFO, "Raft connected to " + addr);
                     RaftConnection* connection = new RaftConnection(socket);
                     clients.insert(addr, connection);
                 }
                 else {
+                    log->printf(LOG_LEVEL_INFO, "Raft was already connected to " + addr);
                     delete socket;
                 }
             }
@@ -104,6 +106,7 @@ private:
                     if (listener.accept(*client) == sf::Socket::Done) {
                         // Add the new client to the clients list
                         std::string addr = client->getRemoteAddress().toString();
+                        log->printf(LOG_LEVEL_INFO, "Received incoming connection from " + addr);
                         if(clients.find(addr) == clients.end()) {
                             clients.insert(client->getRemoteAddress().toString(), new RaftConnection(client));
                             // Add the new client to the selector so that we will
@@ -112,6 +115,7 @@ private:
                         }
                     }
                     else {
+                        log->printf(LOG_LEVEL_INFO, "Raft didn't accept connection, deleting client");
                         // Error, we won't get a new connection, delete the socket
                         delete client;
                     }
