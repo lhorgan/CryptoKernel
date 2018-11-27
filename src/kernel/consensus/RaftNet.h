@@ -61,23 +61,23 @@ public:
         if(it != clients.end()) {
             sf::Socket::Status res = it->second->send(packet);
             if(res != sf::Socket::Done) {
-                printf("RAFT: error sending packet to %s", addr);
+                printf("RAFT: error sending packet to %s", addr.c_str());
                 if(res == sf::Socket::Status::Disconnected) {
-                    printf("We got disconnected from %s", addr);
+                    printf("We got disconnected from %s", addr.c_str());
                 }
                 else if(res == sf::Socket::Status::Error) {
-                    printf("Some unspecified error %s", addr);
+                    printf("Some unspecified error %s", addr.c_str());
                 }
                 else if(res == sf::Socket::Status::NotReady) {
-                    printf("The address wasn't ready %s", addr);
+                    printf("The address wasn't ready %s", addr.c_str());
                 }
                 else if(res == sf::Socket::Status::Partial) {
-                    printf("We got a partial message from %s", addr);
+                    printf("We got a partial message from %s", addr.c_str());
                 }
                 clients.erase(addr);
             }
             else {
-                printf("Successfully sent message to %s", addr);
+                printf("Successfully sent message to %s", addr.c_str());
             }
         }
         else {
@@ -85,19 +85,19 @@ public:
 
             if(socket->connect(ipAddr, port, sf::seconds(3)) == sf::Socket::Done) {
                 if(!clients.contains(addr)) {
-                    printf("RAFT: Raft connected to %s", addr);
+                    printf("RAFT: Raft connected to %s", addr.c_str());
                     RaftConnection* connection = new RaftConnection(socket);
                     clients.insert(addr, connection);
                     //this->send(addr, port, message);
                 }
                 else {
-                    printf("RAFT: Raft was already connected to %s", addr);
+                    printf("RAFT: Raft was already connected to %s", addr.c_str());
                     delete socket;
                 }
-                printf("RAFT: Raft connected to %s", addr);
+                printf("RAFT: Raft connected to %s", addr.c_str());
             }
             else {
-                printf("RAFT: Failed to connect to %s", addr);
+                printf("RAFT: Failed to connect to %s", addr.c_str());
                 delete socket;
             }
         }
@@ -148,9 +148,9 @@ private:
                     if (listener.accept(*client) == sf::Socket::Done) {
                         // Add the new client to the clients list
                         std::string addr = client->getRemoteAddress().toString();
-                        printf("RAFT: Raft received incoming connection from %s", addr);
+                        printf("RAFT: Raft received incoming connection from %s", addr.c_str());
                         if(!clients.contains(addr)) {
-                            printf("RAFT: adding %s to client map\n", addr);
+                            printf("RAFT: adding %s to client map\n", addr.c_str());
                             std::string remoteAddr = client->getRemoteAddress().toString();
                             clients.insert(remoteAddr, new RaftConnection(client));
                             // Add the new client to the selector so that we will
@@ -159,7 +159,7 @@ private:
                             socketSet.insert(remoteAddr);
                         }
                         else {
-                            printf("RAFT: %s is an existing address\n", addr);
+                            printf("RAFT: %s is an existing address\n", addr.c_str());
                         }
                     }
                     else {
@@ -189,7 +189,7 @@ private:
                                     if(client->receive(packet) == sf::Socket::Done) {
                                         std::string message;
                                         packet >> message;
-                                        printf("RAFT: Received packet: %s", message);
+                                        printf("RAFT: Received packet: %s", message.c_str());
                                     }
                                     else {
                                         printf("RAFT: Error receiving packet\n");
