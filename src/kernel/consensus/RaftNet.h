@@ -113,6 +113,7 @@ private:
     sf::TcpListener listener;
 
     void listen() {
+        listener.listen(1701);
         // Create a socket to listen to new connections
         // Create a selector
         sf::SocketSelector selector;
