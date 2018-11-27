@@ -69,6 +69,7 @@ public:
         printf("RAFT: CLOSING RAFTNET!!!\n");
         running = false;
         listenThread->join();
+        receiveThread->join();
         listener.close();
         this->clients.clear();
     }
@@ -100,7 +101,9 @@ private:
                 if(clients.find(addr) == clients.end()) {
                     printf("RAFT: adding %s to client map\n", addr.c_str());
                     clients[addr] = client;
+                    selectorMutex.lock();
                     selector.add(*client);
+                    selectorMutex.unlock();
                 }
                 else {
                     printf("RAFT: %s is an existing address\n", addr.c_str());
