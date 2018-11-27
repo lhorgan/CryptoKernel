@@ -48,8 +48,8 @@ public:
         sf::IpAddress ipAddr(addr);
 
         if(ipAddr == sf::IpAddress::getLocalAddress()
-                    || addr == sf::IpAddress::LocalHost
-                    || addr == sf::IpAddress::None) {
+                    || ipAddr == sf::IpAddress::LocalHost
+                    || ipAddr == sf::IpAddress::None) {
                         log->printf(LOG_LEVEL_INFO, "RAFT: Can't send message to self");
                         return;
                     }
