@@ -77,7 +77,7 @@ public:
                 clients.erase(addr);
             }
             else {
-                log->printf(LOG_LEVEL_INFO, "Successuflly sent message to " + addr);
+                log->printf(LOG_LEVEL_INFO, "Successfully sent message to " + addr);
             }
         }
         else {
@@ -170,8 +170,14 @@ private:
                                     packet >> message;
                                     log->printf(LOG_LEVEL_INFO, "RAFT: Received packet: " + message);
                                 }
+                                else {
+                                    log->printf(LOG_LEVEL_INFO, "RAFT: Error receiving packet");
+                                }
                             }
-                            it->second->release();   
+                            it->second->release(); 
+                        }
+                        else {
+                            log->printf(LOG_LEVEL_INFO, "RAFT: Could not acquire lock");
                         }
                     }
                 }
