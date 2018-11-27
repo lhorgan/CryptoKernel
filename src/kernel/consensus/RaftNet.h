@@ -141,7 +141,7 @@ private:
             }
             //printf("Running...\n");
             // Make the selector wait for data on any socket
-            if(selector.wait(sf::milliseconds(50))) {
+            if(selector.wait(sf::milliseconds(2000))) {
                 // Test the listener
                 if(selector.isReady(listener)) {
                     //printf("we're ready here\n");
