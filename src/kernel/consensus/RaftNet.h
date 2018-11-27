@@ -89,7 +89,10 @@ private:
 
     void listen() {
         listener.listen(1701);
+
+        selectorMutex.lock();
         selector.add(listener);
+        selectorMutex.unlock();
 
         printf("RAFT: selector thread started\n");
         while(running) {
@@ -112,11 +115,14 @@ private:
                 }
                 clientMutex.unlock();
             }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 
     void receive() {
         while(running) {
+            log->printf(LOG_LEVEL_INFO, "RECEIVE THREAD HUMMING");
             // The listener socket is not ready, test all other sockets (the clients)
             clientMutex.lock();
             for(auto it = clients.begin(); it != clients.end(); it++) {
@@ -141,6 +147,8 @@ private:
                 selectorMutex.unlock();
             }
             clientMutex.unlock();
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 };
