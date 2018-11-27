@@ -99,6 +99,8 @@ private:
                         }
                         else {
                             printf("RAFT: %s is an existing address\n", addr.c_str());
+                            client->disconnect();
+                            delete client;
                         }
                         clientMutex.unlock();
                     }
