@@ -131,11 +131,15 @@ private:
                         // Add the new client to the clients list
                         std::string addr = client->getRemoteAddress().toString();
                         log->printf(LOG_LEVEL_INFO, "RAFT: Raft received incoming connection from " + addr);
-                        if(clients.find(addr) == clients.end()) {
+                        if(!clients.contains(addr)) {
+                            log->printf(LOG_LEVEL_INFO, "RAFT: adding " + addr + " to client map");
                             clients.insert(client->getRemoteAddress().toString(), new RaftConnection(client));
                             // Add the new client to the selector so that we will
                             // be notified when he sends something
                             selector.add(*client);
+                        }
+                        else {
+                            log->printf(LOG_LEVEL_INFO, "RAFT: " + addr + " is an existing address");
                         }
                     }
                     else {
