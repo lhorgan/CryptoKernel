@@ -11,10 +11,7 @@ public:
     }
 
     bool acquire() {
-        if(clientMutex.try_lock()) {
-		    return true;
-        }
-        return false;
+        return clientMutex.try_lock();
     }
 
     void release() {
@@ -26,7 +23,7 @@ public:
     }
 
     sf::Socket::Status send(sf::Packet& packet) {
-        //std::lock_guard<std::mutex> cml(clientMutex);
+        std::lock_guard<std::mutex> cml(clientMutex);
         sf::Socket::Status res = client->send(packet);
         return res;
     }
@@ -63,7 +60,7 @@ public:
         sf::Packet packet;
         packet << message;
         auto it = clients.find(addr);
-        if(it != clients.end() && it->second->acquire()) {
+        if(it != clients.end()) {
             sf::Socket::Status res = it->second->send(packet);
             if(res != sf::Socket::Done) {
                 printf("RAFT: error sending packet to %s\n", addr.c_str());
@@ -84,7 +81,6 @@ public:
             else {
                 printf("Successfully sent message to %s\n", addr.c_str());
             }
-            it->second->release();
         }
         else {
             sf::TcpSocket* socket = new sf::TcpSocket();
@@ -139,10 +135,6 @@ private:
         int i = 0;
 
         while(running) {
-            if(++i % 50 == 0) {
-                //printf("Still running...\n");
-            }
-            //printf("Running...\n");
             // Make the selector wait for data on any socket
             if(selector.wait(sf::milliseconds(2000))) {
                 // Test the listener
@@ -178,9 +170,9 @@ private:
                     std::vector<std::string> keys = clients.keys();
                     std::random_shuffle(keys.begin(), keys.end());
                     for(std::string key : keys) {
-                        printf("RAFT: Trying key %s\n", key.c_str());
+                        //printf("Trying " + key);
                         auto it = clients.find(key);
-                        if(it != clients.end()) {
+                        //if(it != clients.end()) {
                             if(it->second->acquire()) {
                                 sf::TcpSocket* client = it->second->get();
                                 if(socketSet.find(key) == socketSet.end()) {
@@ -205,7 +197,7 @@ private:
                                 }
                                 it->second->release(); 
                             }
-                        }
+                        //}
                     }
                 }
             }
