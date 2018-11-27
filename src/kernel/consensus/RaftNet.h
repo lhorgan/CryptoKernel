@@ -137,7 +137,7 @@ private:
 
         while(running) {
             if(++i % 50 == 0) {
-                printf("Still running...\n");
+                //printf("Still running...\n");
             }
             //printf("Running...\n");
             // Make the selector wait for data on any socket
