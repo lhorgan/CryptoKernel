@@ -76,7 +76,7 @@ public:
                 clients.erase(addr);
             }
         }
-        else {
+        /*else {
             sf::TcpSocket* socket = new sf::TcpSocket();
 
             if(socket->connect(ipAddr, port, sf::seconds(3))) {
@@ -95,7 +95,7 @@ public:
                 log->printf(LOG_LEVEL_INFO, "RAFT: Failed to connect to " + addr);
                 delete socket;
             }
-        }
+        }*/
     }
 
     ~RaftNet() {
