@@ -117,6 +117,8 @@ private:
     std::unique_ptr<std::thread> listenThread;
     sf::TcpListener listener;
 
+    std::set<std::string> socketSet;
+
     void listen() {
         listener.listen(1701);
         // Create a socket to listen to new connections
@@ -139,10 +141,12 @@ private:
                         log->printf(LOG_LEVEL_INFO, "RAFT: Raft received incoming connection from " + addr);
                         if(!clients.contains(addr)) {
                             log->printf(LOG_LEVEL_INFO, "RAFT: adding " + addr + " to client map");
-                            clients.insert(client->getRemoteAddress().toString(), new RaftConnection(client));
+                            std::string remoteAddr = client->getRemoteAddress().toString();
+                            clients.insert(remoteAddr, new RaftConnection(client));
                             // Add the new client to the selector so that we will
                             // be notified when he sends something
                             selector.add(*client);
+                            socketSet.insert(remoteAddr);
                         }
                         else {
                             log->printf(LOG_LEVEL_INFO, "RAFT: " + addr + " is an existing address");
@@ -160,10 +164,14 @@ private:
                     std::random_shuffle(keys.begin(), keys.end());
                     for(std::string key : keys) {
                         auto it = clients.find(key);
-                        if(it != clients.end() && it->second->acquire()) {
+                        if(it != clients.end() && it->second->acquire()) { 
                             sf::TcpSocket* client = it->second->get();
-                            selector.add(*client); // hopefully this doesn't wreak havoc
-                            if(selector.isReady(*client)) {
+                            if(socketSet.find(key) == socketSet.end()) {
+                                log->printf(LOG_LEVEL_INFO, "RAFT: We have to add " + key  + " to our socket set");
+                                socketSet.insert(key);
+                                selector.add(*client); // hopefully this doesn't wreak havoc
+                            }  
+                            else if(selector.isReady(*client)) {
                                 // The client has sent some data, we can receive it
                                 sf::Packet packet;
                                 if(client->receive(packet) == sf::Socket::Done) {
