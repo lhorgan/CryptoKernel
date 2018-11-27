@@ -76,6 +76,9 @@ public:
                 }
                 clients.erase(addr);
             }
+            else {
+                log->printf(LOG_LEVEL_INFO, "Successuflly sent message to " + addr);
+            }
         }
         else {
             sf::TcpSocket* socket = new sf::TcpSocket();
@@ -123,6 +126,7 @@ private:
         selector.add(listener);
         // Endless loop that waits for new connections
         while(running) {
+            log->printf(LOG_LEVEL_INFO, "Running...");
             // Make the selector wait for data on any socket
             if (selector.wait()) {
                 // Test the listener
