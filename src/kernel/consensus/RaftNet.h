@@ -1,42 +1,6 @@
 #include <SFML/Network.hpp>
 
-#include "concurrentmap.h"
 #include "log.h"
-
-class RaftConnection {
-public:
-    RaftConnection(sf::TcpSocket* client) {
-        std::lock_guard<std::mutex> cml(clientMutex);
-        this->client = client;
-    }
-
-    bool acquire() {
-        return clientMutex.try_lock();
-    }
-
-    void release() {
-        clientMutex.unlock();
-    }
-
-    sf::TcpSocket* get() {
-        return this->client;
-    }
-
-    sf::Socket::Status send(sf::Packet& packet) {
-        std::lock_guard<std::mutex> cml(clientMutex);
-        sf::Socket::Status res = client->send(packet);
-        return res;
-    }
-
-    ~RaftConnection() {
-        std::lock_guard<std::mutex> cml(clientMutex);
-        delete client;
-    }
-
-private:
-    sf::TcpSocket* client;
-    std::mutex clientMutex;
-};
 
 class RaftNet {
 public:
@@ -59,47 +23,37 @@ public:
 
         sf::Packet packet;
         packet << message;
+
+        clientMutex.lock();
         auto it = clients.find(addr);
         if(it != clients.end()) {
             sf::Socket::Status res = it->second->send(packet);
             if(res != sf::Socket::Done) {
                 printf("RAFT: error sending packet to %s\n", addr.c_str());
-                if(res == sf::Socket::Status::Disconnected) {
-                    printf("We got disconnected from %s\n", addr.c_str());
-                }
-                else if(res == sf::Socket::Status::Error) {
-                    printf("Some unspecified error %s\n", addr.c_str());
-                }
-                else if(res == sf::Socket::Status::NotReady) {
-                    printf("The address wasn't ready %s\n", addr.c_str());
-                }
-                else if(res == sf::Socket::Status::Partial) {
-                    printf("We got a partial message from %s\n", addr.c_str());
-                }
                 clients.erase(addr);
             }
             else {
                 printf("Successfully sent message to %s\n", addr.c_str());
             }
+
+            clientMutex.unlock();
         }
         else {
             sf::TcpSocket* socket = new sf::TcpSocket();
+            clients[addr] = NULL;
+            clientMutex.unlock();
 
             if(socket->connect(ipAddr, port, sf::seconds(3)) == sf::Socket::Done) {
-                if(!clients.contains(addr)) {
-                    printf("RAFT: Raft connected to %s\n", addr.c_str());
-                    RaftConnection* connection = new RaftConnection(socket);
-                    clients.insert(addr, connection);
-                    //this->send(addr, port, message);
-                }
-                else {
-                    printf("RAFT: Raft was already connected to %s\n", addr.c_str());
-                    delete socket;
-                }
+                clientMutex.lock();
+                clients[addr] = socket;
+                clientMutex.unlock();
+                printf("RAFT: Raft connected to %s\n", addr.c_str());
             }
             else {
-                printf("RAFT: Failed to connect to %s\n", addr.c_str());
-                delete socket;
+                log->printf(LOG_LEVEL_INFO, "failed to connct to " + addr);
+                clientMutex.lock();
+                clients.erase(addr);
+                clientMutex.unlock();
             }
         }
     }
@@ -107,57 +61,46 @@ public:
     ~RaftNet() {
         printf("RAFT: CLOSING RAFTNET!!!\n");
         running = false;
-        listener.close();
         listenThread->join();
+        listener.close();
         this->clients.clear();
     }
 
 private: 
-    ConcurrentMap <std::string, RaftConnection*> clients;
+    std::map <std::string, sf::TcpSocket*> clients;
     bool running;
     CryptoKernel::Log* log;
     std::unique_ptr<std::thread> listenThread;
     sf::TcpListener listener;
 
     std::set<std::string> socketSet;
+    std::mutex clientMutex;
 
     void listen() {
         listener.listen(1701);
-        // Create a socket to listen to new connections
-        // Create a selector
         sf::SocketSelector selector;
-        // Add the listener to the selector
         selector.add(listener);
-        // Endless loop that waits for new connections
 
         printf("RAFT: selector thread started\n");
-
-        int i = 0;
-
         while(running) {
-            // Make the selector wait for data on any socket
-            if(selector.wait(sf::milliseconds(2000))) {
+            if(selector.wait(sf::milliseconds(300))) {
                 // Test the listener
                 if(selector.isReady(listener)) {
-                    //printf("we're ready here\n");
-                    // The listener is ready: there is a pending connection
                     sf::TcpSocket* client = new sf::TcpSocket;
-                    if (listener.accept(*client) == sf::Socket::Done) {
-                        // Add the new client to the clients list
+                    if(listener.accept(*client) == sf::Socket::Done) {
                         std::string addr = client->getRemoteAddress().toString();
                         printf("RAFT: Raft received incoming connection from %s\n", addr.c_str());
-                        if(!clients.contains(addr)) {
+                        clientMutex.lock();
+                        if(clients.find(addr) == clients.end()) {
                             printf("RAFT: adding %s to client map\n", addr.c_str());
-                            std::string remoteAddr = client->getRemoteAddress().toString();
-                            clients.insert(remoteAddr, new RaftConnection(client));
-                            // Add the new client to the selector so that we will
-                            // be notified when he sends something
+                            clients[addr] = client;
                             selector.add(*client);
-                            socketSet.insert(remoteAddr);
+                            socketSet.insert(addr);
                         }
                         else {
                             printf("RAFT: %s is an existing address\n", addr.c_str());
                         }
+                        clientMutex.unlock();
                     }
                     else {
                         printf("RAFT: Raft didn't accept connection, deleting client\n");
@@ -167,43 +110,30 @@ private:
                 }
                 else {
                     // The listener socket is not ready, test all other sockets (the clients)
-                    std::vector<std::string> keys = clients.keys();
-                    std::random_shuffle(keys.begin(), keys.end());
-                    for(std::string key : keys) {
-                        //printf("Trying " + key);
-                        auto it = clients.find(key);
-                        if(it != clients.end()) {
-                            //if(it->second->acquire()) {
-                                sf::TcpSocket* client = it->second->get();
-                                if(socketSet.find(key) == socketSet.end()) {
-                                    printf("RAFT: We have to add %s to our socket set\n", key);
-                                    socketSet.insert(key);
-                                    selector.add(*client); // hopefully this doesn't wreak havoc
-                                }  
-                                else if(selector.isReady(*client)) {
-                                    // The client has sent some data, we can receive it
-                                    sf::Packet packet;
-                                    if(client->receive(packet) == sf::Socket::Done) {
-                                        std::string message;
-                                        packet >> message;
-                                        printf("RAFT: Received packet: %s\n", message.c_str());
-                                    }
-                                    else {
-                                        printf("RAFT: Error receiving packet\n");
-                                    }
-                                }
-                                else {
-                                    //printf("RAFT: " + key + " wasn't ready\n");
-                                }
-                                it->second->release(); 
-                            //}
+                    clientMutex.lock();
+                    for(auto it = clients.begin(); it != clients.end(); it++) {
+                        sf::TcpSocket* client = it->second;
+                        if(socketSet.find(it->first) == socketSet.end()) {
+                            printf("RAFT: We have to add %s to our socket set\n", it->first);
+                            socketSet.insert(it->first);
+                            selector.add(*client); // hopefully this doesn't wreak havoc
+                        }  
+                        else if(selector.isReady(*client)) {
+                            // The client has sent some data, we can receive it
+                            sf::Packet packet;
+                            if(client->receive(packet) == sf::Socket::Done) {
+                                std::string message;
+                                packet >> message;
+                                printf("RAFT: Received packet: %s\n", message.c_str());
+                            }
+                            else {
+                                printf("RAFT: Error receiving packet\n");
+                            }
                         }
                     }
+                    clientMutex.unlock();
                 }
             }
-            /*else {
-                printf("Something is wrong with the selector\n");
-            }*/
         }
     }
 };
