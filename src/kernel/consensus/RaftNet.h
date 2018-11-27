@@ -11,7 +11,10 @@ public:
     }
 
     bool acquire() {
-        return clientMutex.try_lock();
+        if(clientMutex.try_lock()) {
+		    return true;
+        }
+        return false;
     }
 
     void release() {
@@ -23,7 +26,7 @@ public:
     }
 
     sf::Socket::Status send(sf::Packet& packet) {
-        std::lock_guard<std::mutex> cml(clientMutex);
+        //std::lock_guard<std::mutex> cml(clientMutex);
         sf::Socket::Status res = client->send(packet);
         return res;
     }
