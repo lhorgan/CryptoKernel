@@ -104,6 +104,7 @@ public:
     }
 
     ~RaftNet() {
+        log->printf(LOG_LEVEL_INFO, "RAFT: CLOSING RAFTNET!!!");
         running = false;
         listener.close();
         listenThread->join();
@@ -127,6 +128,9 @@ private:
         // Add the listener to the selector
         selector.add(listener);
         // Endless loop that waits for new connections
+
+        log->printf(LOG_LEVEL_INFO, "RAFT: selector thread started");
+
         while(running) {
             //log->printf(LOG_LEVEL_INFO, "Running...");
             // Make the selector wait for data on any socket
