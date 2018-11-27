@@ -170,7 +170,8 @@ private:
                                     packet >> message;
                                     log->printf(LOG_LEVEL_INFO, "RAFT: Received packet: " + message);
                                 }
-                            }   
+                            }
+                            it->second->release();   
                         }
                     }
                 }
