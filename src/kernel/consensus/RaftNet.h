@@ -172,8 +172,8 @@ private:
                     for(std::string key : keys) {
                         //printf("Trying " + key);
                         auto it = clients.find(key);
-                        //if(it != clients.end()) {
-                            if(it->second->acquire()) {
+                        if(it != clients.end()) {
+                            //if(it->second->acquire()) {
                                 sf::TcpSocket* client = it->second->get();
                                 if(socketSet.find(key) == socketSet.end()) {
                                     printf("RAFT: We have to add %s to our socket set\n", key);
@@ -196,8 +196,8 @@ private:
                                     //printf("RAFT: " + key + " wasn't ready\n");
                                 }
                                 it->second->release(); 
-                            }
-                        //}
+                            //}
+                        }
                     }
                 }
             }
