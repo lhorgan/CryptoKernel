@@ -163,8 +163,9 @@ private:
                     std::vector<std::string> keys = clients.keys();
                     std::random_shuffle(keys.begin(), keys.end());
                     for(std::string key : keys) {
+                        log->printf(LOG_LEVEL_INFO, "Trying " + key);
                         auto it = clients.find(key);
-                        if(it != clients.end() && it->second->acquire()) { 
+                        if(it != clients.end() && it->second->acquire()) {
                             sf::TcpSocket* client = it->second->get();
                             if(socketSet.find(key) == socketSet.end()) {
                                 log->printf(LOG_LEVEL_INFO, "RAFT: We have to add " + key  + " to our socket set");
@@ -190,6 +191,9 @@ private:
                         }
                     }
                 }
+            }
+            else {
+                log->printf(LOG_LEVEL_INFO, "Something is wrong with the selector");
             }
         }
     }
