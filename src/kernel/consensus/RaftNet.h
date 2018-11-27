@@ -65,7 +65,7 @@ public:
                     log->printf(LOG_LEVEL_INFO, "We got disconnected from " + addr);
                 }
                 else if(res == sf::Socket::Status::Error) {
-                    log->printf(LOG_LEVEL_INFO, "We got disconnected from " + addr);
+                    log->printf(LOG_LEVEL_INFO, "Some unspecified error " + addr);
                 }
                 else if(res == sf::Socket::Status::NotReady) {
                     log->printf(LOG_LEVEL_INFO, "The address wasn't ready " + addr);
