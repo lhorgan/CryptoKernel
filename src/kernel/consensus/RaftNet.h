@@ -47,7 +47,7 @@ public:
     void send(std::string addr, unsigned short port, std::string message) {
         sf::IpAddress ipAddr(addr);
 
-        if(addr == sf::IpAddress::getLocalAddress()
+        if(ipAddr == sf::IpAddress::getLocalAddress()
                     || addr == sf::IpAddress::LocalHost
                     || addr == sf::IpAddress::None) {
                         log->printf(LOG_LEVEL_INFO, "RAFT: Can't send message to self");
