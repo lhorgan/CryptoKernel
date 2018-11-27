@@ -59,6 +59,19 @@ public:
         }
     }
 
+    std::vector<std::string> pullMessages() {
+        std::vector<std::string> messageQueue;
+
+        messageMutex.lock();
+        for(auto i = messages.end(); i != messages.begin(); i--) {
+            messageQueue.push_back(*i);
+        }
+        messages.clear();
+        messageMutex.unlock();
+
+        return messageQueue;
+    }
+
     ~RaftNet() {
         printf("RAFT: CLOSING RAFTNET!!!\n");
         running = false;
@@ -70,13 +83,16 @@ public:
 private: 
     std::map <std::string, sf::TcpSocket*> clients;
     std::map <std::string, sf::TcpSocket*> toRemove;
+
+    std::vector<std::string> messages;
+
     bool running;
     CryptoKernel::Log* log;
     std::unique_ptr<std::thread> listenThread;
     std::unique_ptr<std::thread> receiveThread;
 
     std::mutex clientMutex;
-    std::mutex selectorMutex;
+    std::mutex messageMutex;
 
     void listen() {
         sf::TcpListener listener;
@@ -116,7 +132,7 @@ private:
 
         while(running) {
             if(selector.wait(sf::milliseconds(500))) {
-                log->printf(LOG_LEVEL_INFO, "RECEIVE THREAD HUMMING");
+                //log->printf(LOG_LEVEL_INFO, "RECEIVE THREAD HUMMING");
                 clientMutex.lock();
                 for(auto it = clients.begin(); it != clients.end(); it++) {
                     log->printf(LOG_LEVEL_INFO, "Looking at address " + it->first);
@@ -133,6 +149,10 @@ private:
                             std::string message;
                             packet >> message;
                             printf("RAFT: Received packet: %s\n", message.c_str());
+
+                            messageMutex.lock();
+                            messages.push_back(message);
+                            messageMutex.unlock();
                         }
                         else {
                             printf("RAFT: Error receiving packet\n");
