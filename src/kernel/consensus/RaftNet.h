@@ -134,9 +134,10 @@ private:
         while(running) {
             //log->printf(LOG_LEVEL_INFO, "Running...");
             // Make the selector wait for data on any socket
-            if (selector.wait()) {
+            if(selector.wait()) {
                 // Test the listener
-                if (selector.isReady(listener)) {
+                if(selector.isReady(listener)) {
+                    log->printf(LOG_LEVEL_INFO, "we're ready here");
                     // The listener is ready: there is a pending connection
                     sf::TcpSocket* client = new sf::TcpSocket;
                     if (listener.accept(*client) == sf::Socket::Done) {
