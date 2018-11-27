@@ -187,6 +187,7 @@ void CryptoKernel::Consensus::Raft::sendHeartbeat() {
 void CryptoKernel::Consensus::Raft::sendAll(Json::Value data) {
     std::string addrs[] = {"100.24.202.21", "100.24.228.94", "34.195.150.28"};
 
+    log->printf(LOG_LEVEL_INFO, "Sending messages (requesting votes");
     for(int i =  0; i < 3; i++) {
         this->raftNet->send(addrs[i], 1701, CryptoKernel::Storage::toString(data));
     }

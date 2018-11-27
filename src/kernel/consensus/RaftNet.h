@@ -131,13 +131,18 @@ private:
 
         log->printf(LOG_LEVEL_INFO, "RAFT: selector thread started");
 
+        int i = 0;
+
         while(running) {
+            if(++i % 10000 == 0) {
+                log->printf(LOG_LEVEL_INFO, "Still running...");
+            }
             //log->printf(LOG_LEVEL_INFO, "Running...");
             // Make the selector wait for data on any socket
             if(selector.wait()) {
                 // Test the listener
                 if(selector.isReady(listener)) {
-                    log->printf(LOG_LEVEL_INFO, "we're ready here");
+                    //log->printf(LOG_LEVEL_INFO, "we're ready here");
                     // The listener is ready: there is a pending connection
                     sf::TcpSocket* client = new sf::TcpSocket;
                     if (listener.accept(*client) == sf::Socket::Done) {
@@ -168,7 +173,7 @@ private:
                     std::vector<std::string> keys = clients.keys();
                     std::random_shuffle(keys.begin(), keys.end());
                     for(std::string key : keys) {
-                        log->printf(LOG_LEVEL_INFO, "Trying " + key);
+                        //log->printf(LOG_LEVEL_INFO, "Trying " + key);
                         auto it = clients.find(key);
                         if(it != clients.end()) {
                             if(it->second->acquire()) {
