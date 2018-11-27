@@ -129,6 +129,7 @@ private:
                 log->printf(LOG_LEVEL_INFO, "Looking at address " + it->first);
                 sf::TcpSocket* client = it->second;
                 if(!client) {
+                    log->printf(LOG_LEVEL_INFO, "Client for " + it->first + " is null");
                     continue;
                 }
 
@@ -144,6 +145,9 @@ private:
                     else {
                         printf("RAFT: Error receiving packet\n");
                     }
+                }
+                else {
+                    log->printf(LOG_LEVEL_INFO, "RAFT: Selector wasn't ready for " + it->first);
                 }
                 selectorMutex.unlock();
             }
