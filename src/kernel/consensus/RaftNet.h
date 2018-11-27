@@ -169,29 +169,31 @@ private:
                     for(std::string key : keys) {
                         log->printf(LOG_LEVEL_INFO, "Trying " + key);
                         auto it = clients.find(key);
-                        if(it != clients.end() && it->second->acquire()) {
-                            sf::TcpSocket* client = it->second->get();
-                            if(socketSet.find(key) == socketSet.end()) {
-                                log->printf(LOG_LEVEL_INFO, "RAFT: We have to add " + key  + " to our socket set");
-                                socketSet.insert(key);
-                                selector.add(*client); // hopefully this doesn't wreak havoc
-                            }  
-                            else if(selector.isReady(*client)) {
-                                // The client has sent some data, we can receive it
-                                sf::Packet packet;
-                                if(client->receive(packet) == sf::Socket::Done) {
-                                    std::string message;
-                                    packet >> message;
-                                    log->printf(LOG_LEVEL_INFO, "RAFT: Received packet: " + message);
+                        if(it != clients.end()) {
+                            if(it->second->acquire()) {
+                                sf::TcpSocket* client = it->second->get();
+                                if(socketSet.find(key) == socketSet.end()) {
+                                    log->printf(LOG_LEVEL_INFO, "RAFT: We have to add " + key  + " to our socket set");
+                                    socketSet.insert(key);
+                                    selector.add(*client); // hopefully this doesn't wreak havoc
+                                }  
+                                else if(selector.isReady(*client)) {
+                                    // The client has sent some data, we can receive it
+                                    sf::Packet packet;
+                                    if(client->receive(packet) == sf::Socket::Done) {
+                                        std::string message;
+                                        packet >> message;
+                                        log->printf(LOG_LEVEL_INFO, "RAFT: Received packet: " + message);
+                                    }
+                                    else {
+                                        log->printf(LOG_LEVEL_INFO, "RAFT: Error receiving packet");
+                                    }
                                 }
                                 else {
-                                    log->printf(LOG_LEVEL_INFO, "RAFT: Error receiving packet");
+                                    log->printf(LOG_LEVEL_INFO, "RAFT: " + key + " wasn't ready");
                                 }
+                                it->second->release(); 
                             }
-                            it->second->release(); 
-                        }
-                        else {
-                            log->printf(LOG_LEVEL_INFO, "RAFT: Could not acquire lock");
                         }
                     }
                 }
