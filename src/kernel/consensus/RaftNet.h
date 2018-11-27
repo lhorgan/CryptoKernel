@@ -45,6 +45,15 @@ public:
     }
 
     void send(std::string addr, unsigned short port, std::string message) {
+        sf::IpAddress ipAddr(addr);
+
+        if(addr == sf::IpAddress::getLocalAddress()
+                    || addr == sf::IpAddress::LocalHost
+                    || addr == sf::IpAddress::None) {
+                        log->printf(LOG_LEVEL_INFO, "RAFT: Can't send message to self");
+                        return;
+                    }
+
         sf::Packet packet;
         packet << message;
         auto it = clients.find(addr);
@@ -56,12 +65,13 @@ public:
         }
         else {
             sf::TcpSocket* socket = new sf::TcpSocket();
-            sf::IpAddress ipAddr(addr);
+
             if(socket->connect(ipAddr, port, sf::seconds(3))) {
                 if(clients.find(addr) == clients.end()) {
                     log->printf(LOG_LEVEL_INFO, "RAFT: Raft connected to " + addr);
                     RaftConnection* connection = new RaftConnection(socket);
                     clients.insert(addr, connection);
+                    this->send(addr, port, message);
                 }
                 else {
                     log->printf(LOG_LEVEL_INFO, "RAFT: Raft was already connected to " + addr);
