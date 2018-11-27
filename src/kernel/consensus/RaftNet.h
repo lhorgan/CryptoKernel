@@ -132,7 +132,7 @@ private:
         log->printf(LOG_LEVEL_INFO, "RAFT: selector thread started");
 
         while(running) {
-            //log->printf(LOG_LEVEL_INFO, "Running...");
+            log->printf(LOG_LEVEL_INFO, "Running...");
             // Make the selector wait for data on any socket
             if (selector.wait()) {
                 // Test the listener
