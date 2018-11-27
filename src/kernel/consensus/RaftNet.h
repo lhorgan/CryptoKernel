@@ -6,6 +6,7 @@
 class RaftConnection {
 public:
     RaftConnection(sf::TcpSocket* client) {
+        std::lock_guard<std::mutex> cml(clientMutex);
         this->client = client;
     }
 
@@ -28,6 +29,7 @@ public:
     }
 
     ~RaftConnection() {
+        std::lock_guard<std::mutex> cml(clientMutex);
         delete client;
     }
 
@@ -61,23 +63,23 @@ public:
         if(it != clients.end()) {
             sf::Socket::Status res = it->second->send(packet);
             if(res != sf::Socket::Done) {
-                printf("RAFT: error sending packet to %s", addr.c_str());
+                printf("RAFT: error sending packet to %s\n", addr.c_str());
                 if(res == sf::Socket::Status::Disconnected) {
-                    printf("We got disconnected from %s", addr.c_str());
+                    printf("We got disconnected from %s\n", addr.c_str());
                 }
                 else if(res == sf::Socket::Status::Error) {
-                    printf("Some unspecified error %s", addr.c_str());
+                    printf("Some unspecified error %s\n", addr.c_str());
                 }
                 else if(res == sf::Socket::Status::NotReady) {
-                    printf("The address wasn't ready %s", addr.c_str());
+                    printf("The address wasn't ready %s\n", addr.c_str());
                 }
                 else if(res == sf::Socket::Status::Partial) {
-                    printf("We got a partial message from %s", addr.c_str());
+                    printf("We got a partial message from %s\n", addr.c_str());
                 }
                 clients.erase(addr);
             }
             else {
-                printf("Successfully sent message to %s", addr.c_str());
+                printf("Successfully sent message to %s\n", addr.c_str());
             }
         }
         else {
@@ -85,19 +87,19 @@ public:
 
             if(socket->connect(ipAddr, port, sf::seconds(3)) == sf::Socket::Done) {
                 if(!clients.contains(addr)) {
-                    printf("RAFT: Raft connected to %s", addr.c_str());
+                    printf("RAFT: Raft connected to %s\n", addr.c_str());
                     RaftConnection* connection = new RaftConnection(socket);
                     clients.insert(addr, connection);
                     //this->send(addr, port, message);
                 }
                 else {
-                    printf("RAFT: Raft was already connected to %s", addr.c_str());
+                    printf("RAFT: Raft was already connected to %s\n", addr.c_str());
                     delete socket;
                 }
-                printf("RAFT: Raft connected to %s", addr.c_str());
+                printf("RAFT: Raft connected to %s\n", addr.c_str());
             }
             else {
-                printf("RAFT: Failed to connect to %s", addr.c_str());
+                printf("RAFT: Failed to connect to %s\n", addr.c_str());
                 delete socket;
             }
         }
@@ -111,7 +113,7 @@ public:
         this->clients.clear();
     }
 
-private:
+private: 
     ConcurrentMap <std::string, RaftConnection*> clients;
     bool running;
     CryptoKernel::Log* log;
@@ -134,12 +136,12 @@ private:
         int i = 0;
 
         while(running) {
-            if(++i % 10000 == 0) {
+            if(++i % 50 == 0) {
                 printf("Still running...\n");
             }
             //printf("Running...\n");
             // Make the selector wait for data on any socket
-            if(selector.wait()) {
+            if(selector.wait(sf::milliseconds(50))) {
                 // Test the listener
                 if(selector.isReady(listener)) {
                     //printf("we're ready here\n");
@@ -148,7 +150,7 @@ private:
                     if (listener.accept(*client) == sf::Socket::Done) {
                         // Add the new client to the clients list
                         std::string addr = client->getRemoteAddress().toString();
-                        printf("RAFT: Raft received incoming connection from %s", addr.c_str());
+                        printf("RAFT: Raft received incoming connection from %s\n", addr.c_str());
                         if(!clients.contains(addr)) {
                             printf("RAFT: adding %s to client map\n", addr.c_str());
                             std::string remoteAddr = client->getRemoteAddress().toString();
@@ -189,7 +191,7 @@ private:
                                     if(client->receive(packet) == sf::Socket::Done) {
                                         std::string message;
                                         packet >> message;
-                                        printf("RAFT: Received packet: %s", message.c_str());
+                                        printf("RAFT: Received packet: %s\n", message.c_str());
                                     }
                                     else {
                                         printf("RAFT: Error receiving packet\n");
