@@ -132,7 +132,7 @@ private:
         log->printf(LOG_LEVEL_INFO, "RAFT: selector thread started");
 
         while(running) {
-            log->printf(LOG_LEVEL_INFO, "Running...");
+            //log->printf(LOG_LEVEL_INFO, "Running...");
             // Make the selector wait for data on any socket
             if (selector.wait()) {
                 // Test the listener
@@ -167,7 +167,7 @@ private:
                     std::vector<std::string> keys = clients.keys();
                     std::random_shuffle(keys.begin(), keys.end());
                     for(std::string key : keys) {
-                        log->printf(LOG_LEVEL_INFO, "Trying " + key);
+                        //log->printf(LOG_LEVEL_INFO, "Trying " + key);
                         auto it = clients.find(key);
                         if(it != clients.end()) {
                             if(it->second->acquire()) {
@@ -190,7 +190,7 @@ private:
                                     }
                                 }
                                 else {
-                                    log->printf(LOG_LEVEL_INFO, "RAFT: " + key + " wasn't ready");
+                                    //log->printf(LOG_LEVEL_INFO, "RAFT: " + key + " wasn't ready");
                                 }
                                 it->second->release(); 
                             }
