@@ -76,11 +76,11 @@ public:
                 clients.erase(addr);
             }
         }
-        /*else {
+        else {
             sf::TcpSocket* socket = new sf::TcpSocket();
 
             if(socket->connect(ipAddr, port, sf::seconds(3))) {
-                if(clients.find(addr) == clients.end()) {
+                /*if(clients.find(addr) == clients.end()) {
                     log->printf(LOG_LEVEL_INFO, "RAFT: Raft connected to " + addr);
                     RaftConnection* connection = new RaftConnection(socket);
                     clients.insert(addr, connection);
@@ -89,13 +89,14 @@ public:
                 else {
                     log->printf(LOG_LEVEL_INFO, "RAFT: Raft was already connected to " + addr);
                     delete socket;
-                }
+                }*/
+                log->printf(LOG_LEVEL_INFO, "RAFT: Raft connected to " + addr);
             }
             else {
                 log->printf(LOG_LEVEL_INFO, "RAFT: Failed to connect to " + addr);
                 delete socket;
             }
-        }*/
+        }
     }
 
     ~RaftNet() {
