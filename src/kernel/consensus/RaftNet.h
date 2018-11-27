@@ -23,7 +23,8 @@ public:
 
     sf::Socket::Status send(sf::Packet& packet) {
         std::lock_guard<std::mutex> cml(clientMutex);
-        return client->send(packet);
+        sf::Socket::Status res = client->send(packet);
+        return res;
     }
 
     ~RaftConnection() {
@@ -57,8 +58,21 @@ public:
         packet << message;
         auto it = clients.find(addr);
         if(it != clients.end()) {
-            if(it->second->send(packet) != sf::Socket::Done) {
+            sf::Socket::Status res = it->second->send(packet);
+            if(res != sf::Socket::Done) {
                 log->printf(LOG_LEVEL_INFO, "RAFT: error sending packet to " + addr);
+                if(res == sf::Socket::Status::Disconnected) {
+                    log->printf(LOG_LEVEL_INFO, "We got disconnected from " + addr);
+                }
+                else if(res == sf::Socket::Status::Error) {
+                    log->printf(LOG_LEVEL_INFO, "We got disconnected from " + addr);
+                }
+                else if(res == sf::Socket::Status::NotReady) {
+                    log->printf(LOG_LEVEL_INFO, "The address wasn't ready " + addr);
+                }
+                else if(res == sf::Socket::Status::Partial) {
+                    log->printf(LOG_LEVEL_INFO, "We got a partial message from " + addr);
+                }
                 clients.erase(addr);
             }
         }
