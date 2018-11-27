@@ -126,6 +126,7 @@ private:
             // The listener socket is not ready, test all other sockets (the clients)
             clientMutex.lock();
             for(auto it = clients.begin(); it != clients.end(); it++) {
+                log->printf(LOG_LEVEL_INFO, "Looking at address " + it->first);
                 sf::TcpSocket* client = it->second;
                 if(!client) {
                     continue;
