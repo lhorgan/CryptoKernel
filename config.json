@@ -9,7 +9,7 @@
 				{
 					"blocktime" : 150
 				},
-				"type" : "raft"
+				"type" : "kgw_lyra2rev2"
 			},
 			"genesisblock" : "genesisblock.json",
 			"name" : "K320",
@@ -20,9 +20,9 @@
 			"walletdb" : "./addressesdb"
 		}
 	],
-	"miner" : true,
-	"pubKey" : "BGOjpbmxzX26d7zHmNxy3RWb94MzTciGhF7y8ehF2EH2BlTDStCrAhSmmfmbaWDuRYqagRViAhVj6QhOsfp4oT4=",
-	"rpcpassword" : "zLWfqTiGEOSzLMcnZF7Az7G1qka56dzGUV7yv1c9Fq0=",
+	"rpcpassword" : "password",
 	"rpcuser" : "ckrpc",
-	"verbose" : true,
+	"verbose" : false,
+	"pubKey": "BGOjpbmxzX26d7zHmNxy3RWb94MzTciGhF7y8ehF2EH2BlTDStCrAhSmmfmbaWDuRYqagRViAhVj6QhOsfp4oT4=",
+	"miner": false
 }
