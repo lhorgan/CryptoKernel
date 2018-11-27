@@ -127,7 +127,8 @@ private:
             clientMutex.lock();
             for(auto it = clients.begin(); it != clients.end(); it++) {
                 log->printf(LOG_LEVEL_INFO, "Looking at address " + it->first);
-                sf::TcpSocket* client = it->second;
+                sf::TcpSocket* client = std::get<1>(*it);
+
                 if(!client) {
                     log->printf(LOG_LEVEL_INFO, "Client for " + it->first + " is null");
                     continue;
