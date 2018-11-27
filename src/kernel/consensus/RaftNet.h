@@ -60,7 +60,7 @@ public:
         sf::Packet packet;
         packet << message;
         auto it = clients.find(addr);
-        if(it != clients.end()) {
+        if(it != clients.end() && it->second->acquire()) {
             sf::Socket::Status res = it->second->send(packet);
             if(res != sf::Socket::Done) {
                 printf("RAFT: error sending packet to %s\n", addr.c_str());
@@ -81,6 +81,7 @@ public:
             else {
                 printf("Successfully sent message to %s\n", addr.c_str());
             }
+            it->second->release();
         }
         else {
             sf::TcpSocket* socket = new sf::TcpSocket();
@@ -174,7 +175,7 @@ private:
                     std::vector<std::string> keys = clients.keys();
                     std::random_shuffle(keys.begin(), keys.end());
                     for(std::string key : keys) {
-                        printf("RAFT: Trying key %s\n", key);
+                        printf("RAFT: Trying key %s\n", key.c_str());
                         auto it = clients.find(key);
                         if(it != clients.end()) {
                             if(it->second->acquire()) {
