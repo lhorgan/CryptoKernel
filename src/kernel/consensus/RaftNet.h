@@ -40,7 +40,6 @@ public:
     RaftNet(CryptoKernel::Log* log) {
         this->log = log;
         running = true;
-        listener.listen(1701);
         listenThread.reset(new std::thread(&RaftNet::listen, this));
     }
 
