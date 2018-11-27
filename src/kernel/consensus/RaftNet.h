@@ -96,7 +96,6 @@ public:
                     printf("RAFT: Raft was already connected to %s\n", addr.c_str());
                     delete socket;
                 }
-                printf("RAFT: Raft connected to %s\n", addr.c_str());
             }
             else {
                 printf("RAFT: Failed to connect to %s\n", addr.c_str());
@@ -175,7 +174,7 @@ private:
                     std::vector<std::string> keys = clients.keys();
                     std::random_shuffle(keys.begin(), keys.end());
                     for(std::string key : keys) {
-                        //printf("Trying " + key);
+                        printf("RAFT: Trying key %s\n", key);
                         auto it = clients.find(key);
                         if(it != clients.end()) {
                             if(it->second->acquire()) {
