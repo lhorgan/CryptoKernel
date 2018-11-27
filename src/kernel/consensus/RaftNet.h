@@ -51,7 +51,7 @@ public:
                     || ipAddr == sf::IpAddress::LocalHost
                     || ipAddr == sf::IpAddress::None
                     || ipAddr == sf::IpAddress::getPublicAddress()) {
-                        log->printf(LOG_LEVEL_INFO, "RAFT: Can't send message to self");
+                        printf("RAFT: Can't send message to self\n");
                         return;
                     }
 
@@ -61,23 +61,23 @@ public:
         if(it != clients.end()) {
             sf::Socket::Status res = it->second->send(packet);
             if(res != sf::Socket::Done) {
-                log->printf(LOG_LEVEL_INFO, "RAFT: error sending packet to " + addr);
+                printf("RAFT: error sending packet to %s", addr);
                 if(res == sf::Socket::Status::Disconnected) {
-                    log->printf(LOG_LEVEL_INFO, "We got disconnected from " + addr);
+                    printf("We got disconnected from %s", addr);
                 }
                 else if(res == sf::Socket::Status::Error) {
-                    log->printf(LOG_LEVEL_INFO, "Some unspecified error " + addr);
+                    printf("Some unspecified error %s", addr);
                 }
                 else if(res == sf::Socket::Status::NotReady) {
-                    log->printf(LOG_LEVEL_INFO, "The address wasn't ready " + addr);
+                    printf("The address wasn't ready %s", addr);
                 }
                 else if(res == sf::Socket::Status::Partial) {
-                    log->printf(LOG_LEVEL_INFO, "We got a partial message from " + addr);
+                    printf("We got a partial message from %s", addr);
                 }
                 clients.erase(addr);
             }
             else {
-                log->printf(LOG_LEVEL_INFO, "Successfully sent message to " + addr);
+                printf("Successfully sent message to %s", addr);
             }
         }
         else {
@@ -85,26 +85,26 @@ public:
 
             if(socket->connect(ipAddr, port, sf::seconds(3)) == sf::Socket::Done) {
                 if(!clients.contains(addr)) {
-                    log->printf(LOG_LEVEL_INFO, "RAFT: Raft connected to " + addr);
+                    printf("RAFT: Raft connected to %s", addr);
                     RaftConnection* connection = new RaftConnection(socket);
                     clients.insert(addr, connection);
                     //this->send(addr, port, message);
                 }
                 else {
-                    log->printf(LOG_LEVEL_INFO, "RAFT: Raft was already connected to " + addr);
+                    printf("RAFT: Raft was already connected to %s", addr);
                     delete socket;
                 }
-                log->printf(LOG_LEVEL_INFO, "RAFT: Raft connected to " + addr);
+                printf("RAFT: Raft connected to %s", addr);
             }
             else {
-                log->printf(LOG_LEVEL_INFO, "RAFT: Failed to connect to " + addr);
+                printf("RAFT: Failed to connect to %s", addr);
                 delete socket;
             }
         }
     }
 
     ~RaftNet() {
-        log->printf(LOG_LEVEL_INFO, "RAFT: CLOSING RAFTNET!!!");
+        printf("RAFT: CLOSING RAFTNET!!!\n");
         running = false;
         listener.close();
         listenThread->join();
@@ -129,28 +129,28 @@ private:
         selector.add(listener);
         // Endless loop that waits for new connections
 
-        log->printf(LOG_LEVEL_INFO, "RAFT: selector thread started");
+        printf("RAFT: selector thread started\n");
 
         int i = 0;
 
         while(running) {
             if(++i % 10000 == 0) {
-                log->printf(LOG_LEVEL_INFO, "Still running...");
+                printf("Still running...\n");
             }
-            //log->printf(LOG_LEVEL_INFO, "Running...");
+            //printf("Running...\n");
             // Make the selector wait for data on any socket
             if(selector.wait()) {
                 // Test the listener
                 if(selector.isReady(listener)) {
-                    //log->printf(LOG_LEVEL_INFO, "we're ready here");
+                    //printf("we're ready here\n");
                     // The listener is ready: there is a pending connection
                     sf::TcpSocket* client = new sf::TcpSocket;
                     if (listener.accept(*client) == sf::Socket::Done) {
                         // Add the new client to the clients list
                         std::string addr = client->getRemoteAddress().toString();
-                        log->printf(LOG_LEVEL_INFO, "RAFT: Raft received incoming connection from " + addr);
+                        printf("RAFT: Raft received incoming connection from %s", addr);
                         if(!clients.contains(addr)) {
-                            log->printf(LOG_LEVEL_INFO, "RAFT: adding " + addr + " to client map");
+                            printf("RAFT: adding %s to client map\n", addr);
                             std::string remoteAddr = client->getRemoteAddress().toString();
                             clients.insert(remoteAddr, new RaftConnection(client));
                             // Add the new client to the selector so that we will
@@ -159,11 +159,11 @@ private:
                             socketSet.insert(remoteAddr);
                         }
                         else {
-                            log->printf(LOG_LEVEL_INFO, "RAFT: " + addr + " is an existing address");
+                            printf("RAFT: %s is an existing address\n", addr);
                         }
                     }
                     else {
-                        log->printf(LOG_LEVEL_INFO, "RAFT: Raft didn't accept connection, deleting client");
+                        printf("RAFT: Raft didn't accept connection, deleting client\n");
                         // Error, we won't get a new connection, delete the socket
                         delete client;
                     }
@@ -173,13 +173,13 @@ private:
                     std::vector<std::string> keys = clients.keys();
                     std::random_shuffle(keys.begin(), keys.end());
                     for(std::string key : keys) {
-                        //log->printf(LOG_LEVEL_INFO, "Trying " + key);
+                        //printf("Trying " + key);
                         auto it = clients.find(key);
                         if(it != clients.end()) {
                             if(it->second->acquire()) {
                                 sf::TcpSocket* client = it->second->get();
                                 if(socketSet.find(key) == socketSet.end()) {
-                                    log->printf(LOG_LEVEL_INFO, "RAFT: We have to add " + key  + " to our socket set");
+                                    printf("RAFT: We have to add %s to our socket set\n", key);
                                     socketSet.insert(key);
                                     selector.add(*client); // hopefully this doesn't wreak havoc
                                 }  
@@ -189,14 +189,14 @@ private:
                                     if(client->receive(packet) == sf::Socket::Done) {
                                         std::string message;
                                         packet >> message;
-                                        log->printf(LOG_LEVEL_INFO, "RAFT: Received packet: " + message);
+                                        printf("RAFT: Received packet: %s", message);
                                     }
                                     else {
-                                        log->printf(LOG_LEVEL_INFO, "RAFT: Error receiving packet");
+                                        printf("RAFT: Error receiving packet\n");
                                     }
                                 }
                                 else {
-                                    //log->printf(LOG_LEVEL_INFO, "RAFT: " + key + " wasn't ready");
+                                    //printf("RAFT: " + key + " wasn't ready\n");
                                 }
                                 it->second->release(); 
                             }
@@ -205,7 +205,7 @@ private:
                 }
             }
             else {
-                log->printf(LOG_LEVEL_INFO, "Something is wrong with the selector");
+                printf("Something is wrong with the selector\n");
             }
         }
     }
