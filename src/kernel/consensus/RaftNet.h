@@ -167,7 +167,7 @@ private:
                     std::vector<std::string> keys = clients.keys();
                     std::random_shuffle(keys.begin(), keys.end());
                     for(std::string key : keys) {
-                        //log->printf(LOG_LEVEL_INFO, "Trying " + key);
+                        log->printf(LOG_LEVEL_INFO, "Trying " + key);
                         auto it = clients.find(key);
                         if(it != clients.end()) {
                             if(it->second->acquire()) {
