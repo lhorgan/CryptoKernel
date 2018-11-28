@@ -43,39 +43,36 @@ void CryptoKernel::Consensus::Raft::processQueue() {
         Json::Value data = CryptoKernel::Storage::toJson(queue[i]);
 
         if(data["rpc"] && data["sender"].asString() != pubKey) {
-            log->printf(LOG_LEVEL_INFO, "Okay, there IS an RPC call being made");
-            if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sender") {
-                int requesterTerm = data["term"].asInt();
-                if(requesterTerm >= term) {
-                    log->printf(LOG_LEVEL_INFO, "I have received a vote request.");
+            int requesterTerm = data["term"].asInt();
+            if(requesterTerm >= term) {
+                if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sender") {
                     // cast a vote for this node
-                    term = requesterTerm;
                     castVote(data["sender"].asString());
                 }
-            }
-            else if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "responding") {
-                // am I a candidate?
-                if(candidate) {
-                    supporters.insert(data["sender"].asString());
-                    if(supporters.size() > networkSize / 2) { // we have a simple majority of voters
-                        log->printf(LOG_LEVEL_INFO, "I have been elected leader.");
-                        leader = true; // I am the captain now!
+                else if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "responding") {
+                    // am I a candidate?
+                    if(candidate) {
+                        supporters.insert(data["sender"].asString());
+                        if(supporters.size() > networkSize / 2) { // we have a simple majority of voters
+                            log->printf(LOG_LEVEL_INFO, "I have been elected leader.");
+                            leader = true; // I am the captain now!
+                        }
+                    }
+                    else {
+                        log->printf(LOG_LEVEL_INFO, "Thanks for the vote, but someone else is already leader.");
                     }
                 }
-                else {
-                    log->printf(LOG_LEVEL_INFO, "Thanks for the vote, but someone else is already leader.");
+                else if(data["rpc"].asString() == "heartbeat") {
+                    // update last ping
+                    resetValues();
+                    log->printf(LOG_LEVEL_INFO, "I have received a heartbeat.  I have received a heartbeat!");
+                    lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
                 }
+                term = requesterTerm;
             }
-            else if(data["rpc"].asString() == "heartbeat") {
-                // update last ping
-                if(data["sender"].asString() != pubKey) { // I guess it doesn't really matter
-                    if(data["term"].asInt() >= term) { // only accept a leader if it's term is at least as big as ours
-                        term = data["term"].asInt();
-                        resetValues();
-                        log->printf(LOG_LEVEL_INFO, "I have received a heartbeat.  I have received a heartbeat!");
-                        lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
-                    }
-                }
+            else {
+                log->printf(LOG_LEVEL_INFO, "Received ping from node with out of date term");
+                // todo, tell that node its term is out of date
             }
         }
     }
@@ -133,7 +130,7 @@ void CryptoKernel::Consensus::Raft::requestVotes() {
 
 void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
     log->printf(LOG_LEVEL_INFO, "Casting vote for " + candidateId);
-    candidate = false;
+    resetValues();
     Json::Value dummyData;
     dummyData["rpc"] = "request_votes";
     dummyData["direction"] = "responding";
@@ -156,7 +153,7 @@ void CryptoKernel::Consensus::Raft::sendHeartbeat() {
 void CryptoKernel::Consensus::Raft::sendAll(Json::Value data) {
     std::string addrs[] = {"100.24.202.21", "100.24.228.94", "34.195.150.28"};
 
-    log->printf(LOG_LEVEL_INFO, "Sending messages (requesting votes");
+    log->printf(LOG_LEVEL_INFO, "Sending messages (requesting votes)");
     for(int i =  0; i < 3; i++) {
         this->raftNet->send(addrs[i], 1701, CryptoKernel::Storage::toString(data));
     }

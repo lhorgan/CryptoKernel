@@ -18,7 +18,7 @@ public:
                     || ipAddr == sf::IpAddress::LocalHost
                     || ipAddr == sf::IpAddress::None
                     || ipAddr == sf::IpAddress::getPublicAddress()) {
-                        printf("RAFT: Can't send message to self\n");
+                        //printf("RAFT: Can't send message to self\n");
                         return;
                     }
 
@@ -38,7 +38,7 @@ public:
                     toRemove[addr] = it->second;
                 }
                 else {
-                    printf("Successfully sent message to %s\n", addr.c_str());
+                    printf("RAFT: Successfully sent message to %s\n", addr.c_str());
                 }
             }
             clientMutex.unlock();
