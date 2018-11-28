@@ -38,9 +38,10 @@ void CryptoKernel::Consensus::Raft::processQueue() {
     std::vector<std::string> queue = this->raftNet->pullMessages();
 
     for(auto it = queue.begin(); it != queue.end(); it++) {
-        Json::Value data = CryptoKernel::Storage::toJson(*it);
+        log->printf(LOG_LEVEL_INFO, "THE DECODED MESSAGE: " + *it);
+        //Json::Value data = CryptoKernel::Storage::toJson(*it);
 
-        if(data["rpc"] && data["sender"].asString() != pubKey) {
+        /*if(data["rpc"] && data["sender"].asString() != pubKey) {
             log->printf(LOG_LEVEL_INFO, "Okay, there IS an RPC call being made");
             if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sender") {
                 int requesterTerm = data["term"].asInt();
@@ -70,7 +71,7 @@ void CryptoKernel::Consensus::Raft::processQueue() {
                     lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
                 }
             }
-        }
+        }*/
     }
 }
 
@@ -102,7 +103,7 @@ void CryptoKernel::Consensus::Raft::floater() {
                 requestVotes();
             }
         }
-        //processQueue();
+        processQueue();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
