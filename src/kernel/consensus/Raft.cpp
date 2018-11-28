@@ -56,7 +56,7 @@ void CryptoKernel::Consensus::Raft::processQueue() {
 }
 
 void CryptoKernel::Consensus::Raft::handleRequestVotes(Json::Value& data) {
-    log->printf(LOG_LEVEL_INFO, "Handling vote request , " + data["direction"]);
+    log->printf(LOG_LEVEL_INFO, "Handling vote request , " + data["direction"].asString());
 
     int requesterTerm = data["term"].asInt();
 
