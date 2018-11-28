@@ -159,13 +159,13 @@ private:
                             messageMutex.unlock();
                         }
                         else {
-                            toRemove[it->first] = it->second;
-                            printf("RAFT: Error receiving packet, marking %s for removal\n", it->first.c_str());
+                            //toRemove[it->first] = it->second;
+                            //printf("RAFT: Error receiving packet, marking %s for removal\n", it->first.c_str());
                         }
                     }
                     else {
-                        toRemove[it->first] = it->second; // c1
-                        log->printf(LOG_LEVEL_INFO, "RAFT: Selector wasn't ready for " + it->first);
+                        //toRemove[it->first] = it->second; // c1
+                        //log->printf(LOG_LEVEL_INFO, "RAFT: Selector wasn't ready for " + it->first);
                     }
                 }
                 clientMutex.unlock();
