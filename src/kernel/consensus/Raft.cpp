@@ -112,7 +112,7 @@ void CryptoKernel::Consensus::Raft::floater() {
                 resetValues();
                 candidate = true;
                 supporters.insert(pubKey);
-                votedFor = "";
+                votedFor = pubKey;
                 ++term;
                 requestVotes();
             }
