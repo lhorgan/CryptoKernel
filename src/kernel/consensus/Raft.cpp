@@ -47,6 +47,7 @@ void CryptoKernel::Consensus::Raft::processQueue() {
             int requesterTerm = data["term"].asInt();
             if(requesterTerm >= term) {
                 if(requesterTerm > term) { // we're out of date, don't be a leader, don't be a candidate
+                    log->printf(LOG_LEVEL_INFO, "Received ping from server with GREATER term " + std::to_string(requesterTerm) + ", " + std::to_string(term));
                     term = requesterTerm;
                     candidate = false;
                     leader = false;
@@ -66,7 +67,7 @@ void CryptoKernel::Consensus::Raft::processQueue() {
                 term = requesterTerm;
             }
             else {
-                log->printf(LOG_LEVEL_INFO, "Received ping from node with out of date term");
+                log->printf(LOG_LEVEL_INFO, "Received ping from server with LESSER term " + std::to_string(requesterTerm) + ", " + std::to_string(term));
                 // todo, tell that node its term is out of date
 
                 // we accept votes from nodes with out of date term... for now**
