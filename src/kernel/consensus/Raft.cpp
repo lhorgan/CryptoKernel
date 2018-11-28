@@ -33,7 +33,7 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
 }
 
 void CryptoKernel::Consensus::Raft::processQueue() {
-    log->printf(LOG_LEVEL_INFO, "Checking consenus rules");
+    //log->printf(LOG_LEVEL_INFO, "Checking consenus rules");
 
     std::vector<std::string> queue = this->raftNet->pullMessages();
     log->printf(LOG_LEVEL_INFO, "Queue length: " + std::to_string(queue.size()));
@@ -154,7 +154,7 @@ void CryptoKernel::Consensus::Raft::sendHeartbeat() {
 void CryptoKernel::Consensus::Raft::sendAll(Json::Value data) {
     std::string addrs[] = {"100.24.202.21", "100.24.228.94", "34.195.150.28"};
 
-    log->printf(LOG_LEVEL_INFO, "Sending messages (requesting votes)");
+    //log->printf(LOG_LEVEL_INFO, "Sending messages (requesting votes)");
     for(int i =  0; i < 3; i++) {
         this->raftNet->send(addrs[i], 1701, CryptoKernel::Storage::toString(data));
     }
