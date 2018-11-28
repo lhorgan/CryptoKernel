@@ -173,7 +173,7 @@ void CryptoKernel::Consensus::Raft::requestVotes() {
     log->printf(LOG_LEVEL_INFO, "Requesting votes...");
     Json::Value dummyData;
     dummyData["rpc"] = "request_votes";
-    dummyData["direction"] = "sender";
+    dummyData["direction"] = "sending";
     dummyData["sender"] = pubKey;
     dummyData["term"] = term;
     sendAll(dummyData);
@@ -201,7 +201,7 @@ void CryptoKernel::Consensus::Raft::castVote(std::string candidateId, bool vote)
 void CryptoKernel::Consensus::Raft::sendAppendEntries() {
     log->printf(LOG_LEVEL_INFO, "Sending heartbeat...");
     Json::Value dummyData;
-    dummyData["rpc"] = "heartbeat";
+    dummyData["rpc"] = "append_entries";
     dummyData["direction"] = "sending";
     dummyData["sender"] = pubKey;
     dummyData["term"] = term;
