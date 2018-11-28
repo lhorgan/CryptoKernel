@@ -135,7 +135,7 @@ private:
                 //log->printf(LOG_LEVEL_INFO, "RECEIVE THREAD HUMMING");
                 clientMutex.lock();
                 for(auto it = clients.begin(); it != clients.end(); it++) {
-                    //log->printf(LOG_LEVEL_INFO, "Looking at address " + it->first);
+                    log->printf(LOG_LEVEL_INFO, "Looking at address " + it->first);
                     sf::TcpSocket* client = std::get<1>(*it);
                     
                     if(!client || selectorSet.find(it->first) == selectorSet.end()) {
@@ -159,8 +159,7 @@ private:
                         }
                     }
                     else {
-                        //toRemove[it->first] = it->second;
-                        //log->printf(LOG_LEVEL_INFO, "RAFT: Selector wasn't ready for " + it->first);
+                        log->printf(LOG_LEVEL_INFO, "RAFT: Selector wasn't ready for " + it->first);
                     }
                 }
                 clientMutex.unlock();
