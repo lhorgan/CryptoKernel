@@ -55,7 +55,7 @@ public:
                 printf("RAFT: Raft connected to %s\n", addr.c_str());
             }
             else {
-                log->printf(LOG_LEVEL_INFO, "failed to connct to " + addr);
+                log->printf(LOG_LEVEL_INFO, "RAFT: failed to connect to " + addr);
                 clientMutex.lock();
                 toRemove[addr] = socket;
                 clientMutex.unlock();
