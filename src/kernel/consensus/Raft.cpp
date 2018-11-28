@@ -16,6 +16,7 @@ CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::s
     leader = false;
     candidate = false;
     term = 0;
+    votedFor = "";
 }
 
 CryptoKernel::Consensus::Raft::~Raft() {
@@ -46,8 +47,10 @@ void CryptoKernel::Consensus::Raft::processQueue() {
             int requesterTerm = data["term"].asInt();
             if(requesterTerm >= term) {
                 if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sender") {
-                    // cast a vote for this node
-                    castVote(data["sender"].asString());
+                    if(votedFor == "" || votedFor == data["sender"].asString()) {
+                        // cast a vote for this node
+                        castVote(data["sender"].asString());
+                    }
                 }
                 else if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "responding") {
                     // am I a candidate?
@@ -102,6 +105,7 @@ void CryptoKernel::Consensus::Raft::floater() {
                 resetValues();
                 candidate = true;
                 supporters.insert(pubKey);
+                votedFor = "";
                 ++term;
                 requestVotes();
             }
@@ -131,7 +135,7 @@ void CryptoKernel::Consensus::Raft::requestVotes() {
 
 void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
     log->printf(LOG_LEVEL_INFO, "Casting vote for " + candidateId);
-    resetValues();
+    votedFor = candidateId;
     Json::Value dummyData;
     dummyData["rpc"] = "request_votes";
     dummyData["direction"] = "responding";

@@ -67,6 +67,8 @@ namespace CryptoKernel {
         unsigned int term;
         CryptoKernel::Network* network;
 
+        std::string votedFor;
+
         RaftNet* raftNet;
 
         void sendAll(Json::Value data);
