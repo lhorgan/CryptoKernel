@@ -139,7 +139,7 @@ private:
                 //log->printf(LOG_LEVEL_INFO, "RECEIVE THREAD HUMMING");
                 clientMutex.lock();
                 for(auto it = clients.begin(); it != clients.end(); it++) {
-                    log->printf(LOG_LEVEL_INFO, "Looking at address " + it->first);
+                    //log->printf(LOG_LEVEL_INFO, "Looking at address " + it->first);
                     sf::TcpSocket* client = std::get<1>(*it);
                     
                     if(!client || selectorSet.find(it->first) == selectorSet.end()) {
@@ -152,7 +152,7 @@ private:
                         if(client->receive(packet) == sf::Socket::Done) {
                             std::string message;
                             packet >> message;
-                            printf("RAFT: Received packet: %s\n", message.c_str());
+                            log->printf(LOG_LEVEL_INFO, "RAFT: Received packet " + message + " from " + it->first);
 
                             messageMutex.lock();
                             messages.push_back(message);
