@@ -292,16 +292,16 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 				try {
 					const std::string peerVersion = info["version"].asString();
 					if(peerVersion.substr(0, peerVersion.find(".")) != version.substr(0, version.find("."))) {
-						//log->printf(LOG_LEVEL_WARN,
-									"Network(): " + it->first + " has a different major version than us");
+						/*log->printf(LOG_LEVEL_WARN,
+									"Network(): " + it->first + " has a different major version than us");*/
 						throw Peer::NetworkError("peer has an incompatible major version");
 					}
 
 					const auto banIt = banned.find(it->first);
 					if(banIt != banned.end()) {
 						if(banIt->second > static_cast<uint64_t>(std::time(nullptr))) {
-							//log->printf(LOG_LEVEL_WARN,
-										"Network(): Disconnecting " + it->first + " for being banned");
+							/*log->printf(LOG_LEVEL_WARN,
+										"Network(): Disconnecting " + it->first + " for being banned");*/
 							throw Peer::NetworkError("peer is banned");
 						}
 					}
@@ -339,8 +339,8 @@ void CryptoKernel::Network::infoOutgoingConnections() {
 				const std::time_t result = std::time(nullptr);
 				it->second->setInfo("lastseen", static_cast<uint64_t>(result));
 			} catch(const Peer::NetworkError& e) {
-				//log->printf(LOG_LEVEL_WARN,
-							"Network(): Failed to contact " + it->first + ", disconnecting it for: " + e.what());
+				/*log->printf(LOG_LEVEL_WARN,
+							"Network(): Failed to contact " + it->first + ", disconnecting it for: " + e.what());*/
 
 				peers->put(dbTx.get(), it->first, it->second->getCachedInfo());
 				connectedStats.erase(it->first);
@@ -383,9 +383,9 @@ void CryptoKernel::Network::networkFunc() {
         }
         this->bestHeight = bestHeight;
 
-        //log->printf(LOG_LEVEL_INFO,
+        /*log->printf(LOG_LEVEL_INFO,
                     "Network(): Current height: " + std::to_string(currentHeight) + ", best height: " +
-                    std::to_string(bestHeight) + ", start height: " + std::to_string(startHeight));
+                    std::to_string(bestHeight) + ", start height: " + std::to_string(startHeight));*/
 
         bool madeProgress = false;
 
@@ -405,9 +405,9 @@ void CryptoKernel::Network::networkFunc() {
 						if(currentHeight == startHeight) {
 							auto nBlocks = 0;
 							do {
-								//log->printf(LOG_LEVEL_INFO,
+								/*log->printf(LOG_LEVEL_INFO,
 											"Network(): Downloading blocks " + std::to_string(currentHeight + 1) + " to " +
-											std::to_string(currentHeight + 6));
+											std::to_string(currentHeight + 6));*/
 								try {
 									const auto newBlocks = it->second->getBlocks(currentHeight + 1, currentHeight + 6);
 									nBlocks = newBlocks.size();
@@ -418,9 +418,9 @@ void CryptoKernel::Network::networkFunc() {
 										//log->printf(LOG_LEVEL_WARN, "Network(): Peer responded with no blocks");
 									}
 								} catch(const Peer::NetworkError& e) {
-									//log->printf(LOG_LEVEL_WARN,
+									/*log->printf(LOG_LEVEL_WARN,
 												"Network(): Failed to contact " + it->first + " " + e.what() +
-												" while downloading blocks");
+												" while downloading blocks");*/
 									break;
 								}
 
@@ -451,9 +451,9 @@ void CryptoKernel::Network::networkFunc() {
 						//log->printf(LOG_LEVEL_INFO, "Network(): Found common block " + std::to_string(currentHeight-1) + " with peer, starting block download");
 
 						while(blocks.size() < 2000 && running && !failure && currentHeight < bestHeight) {
-							//log->printf(LOG_LEVEL_INFO,
+							/*log->printf(LOG_LEVEL_INFO,
 										"Network(): Downloading blocks " + std::to_string(currentHeight + 1) + " to " +
-										std::to_string(currentHeight + 6));
+										std::to_string(currentHeight + 6));*/
 
 							auto nBlocks = 0;
 							try {
@@ -467,9 +467,9 @@ void CryptoKernel::Network::networkFunc() {
 									break;
 								}
 							} catch(const Peer::NetworkError& e) {
-								//log->printf(LOG_LEVEL_WARN,
+								/*log->printf(LOG_LEVEL_WARN,
 											"Network(): Failed to contact " + it->first + " " + e.what() +
-											" while downloading blocks");
+											" while downloading blocks");*/
 								break;
 							}
 
@@ -543,9 +543,9 @@ void CryptoKernel::Network::connectionFunc() {
             }
 
             if(connected.contains(client->getRemoteAddress().toString())) {
-                //log->printf(LOG_LEVEL_INFO,
+                /*log->printf(LOG_LEVEL_INFO,
                             "Network(): Incoming connection duplicates existing connection for " +
-                            client->getRemoteAddress().toString());
+                            client->getRemoteAddress().toString());*/
                 client->disconnect();
                 delete client;
                 continue;
@@ -554,8 +554,8 @@ void CryptoKernel::Network::connectionFunc() {
             const auto it = banned.find(client->getRemoteAddress().toString());
             if(it != banned.end()) {
                 if(it->second > static_cast<uint64_t>(std::time(nullptr))) {
-                    //log->printf(LOG_LEVEL_INFO,
-                                "Network(): Incoming connection " + client->getRemoteAddress().toString() + " is banned");
+                    /*log->printf(LOG_LEVEL_INFO,
+                                "Network(): Incoming connection " + client->getRemoteAddress().toString() + " is banned");*/
                     client->disconnect();
                     delete client;
                     continue;
@@ -568,18 +568,18 @@ void CryptoKernel::Network::connectionFunc() {
                     || addr == myAddress
                     || addr == sf::IpAddress::LocalHost
                     || addr == sf::IpAddress::None) {
-                //log->printf(LOG_LEVEL_INFO,
+                /*log->printf(LOG_LEVEL_INFO,
                             "Network(): Incoming connection " + client->getRemoteAddress().toString() +
-                            " is connecting to self");
+                            " is connecting to self");*/
                 client->disconnect();
                 delete client;
                 continue;
             }
 
 
-            //log->printf(LOG_LEVEL_INFO,
+            /*log->printf(LOG_LEVEL_INFO,
                         "Network(): Peer connected from " + client->getRemoteAddress().toString() + ":" +
-                        std::to_string(client->getRemotePort()));
+                        std::to_string(client->getRemotePort()));*/
             Connection* connection = new Connection();
 			connection->acquire();
 			defer d([&]{connection->release();});
@@ -664,12 +664,12 @@ double CryptoKernel::Network::syncProgress() {
 void CryptoKernel::Network::changeScore(const std::string& url, const uint64_t score) {
     if(connected.contains(url)) { // this check isn't necessary
         connected.at(url)->setInfo("score", connected.at(url)->getInfo("score").asUInt64() + score);
-        //log->printf(LOG_LEVEL_WARN,
+        /*log->printf(LOG_LEVEL_WARN,
                     "Network(): " + url + " misbehaving, increasing ban score by " + std::to_string(
-                        score) + " to " + connected.at(url)->getInfo("score").asString());
+                        score) + " to " + connected.at(url)->getInfo("score").asString());*/
         if(connected.at(url)->getInfo("score").asUInt64() > 200) {
-            //log->printf(LOG_LEVEL_WARN,
-                        "Network(): Banning " + url + " for being above the ban score threshold");
+            /*log->printf(LOG_LEVEL_WARN,
+                        "Network(): Banning " + url + " for being above the ban score threshold");*/
             // Ban for 24 hours
             banned.insert(url, static_cast<uint64_t>(std::time(nullptr)) + 24 * 60 * 60);
         }
