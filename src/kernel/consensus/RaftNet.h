@@ -18,7 +18,6 @@ public:
                     || ipAddr == sf::IpAddress::LocalHost
                     || ipAddr == sf::IpAddress::None
                     || ipAddr == sf::IpAddress::getPublicAddress()) {
-                        //printf("RAFT: Can't send message to self\n");
                         return;
                     }
 
@@ -29,16 +28,16 @@ public:
         auto it = clients.find(addr);
         if(it != clients.end()) {
             if(!it->second) {
-                log->printf(LOG_LEVEL_INFO, "A connection attempt to " + it->first + " is in progress...");
+                //log->printf(LOG_LEVEL_INFO, "A connection attempt to " + it->first + " is in progress...");
             }
             else {
                 sf::Socket::Status res = it->second->send(packet);
                 if(res != sf::Socket::Done) {
-                    printf("RAFT: error sending packet to %s\n", addr.c_str());
+                    //printf("RAFT: error sending packet to %s\n", addr.c_str());
                     toRemove[addr] = it->second;
                 }
                 else {
-                    printf("RAFT: Successfully sent message to %s\n", addr.c_str());
+                    //printf("RAFT: Successfully sent message to %s\n", addr.c_str());
                 }
             }
             clientMutex.unlock();
@@ -52,10 +51,10 @@ public:
                 clientMutex.lock();
                 clients[addr] = socket;
                 clientMutex.unlock();
-                printf("RAFT: Raft connected to %s\n", addr.c_str());
+                //printf("RAFT: Raft connected to %s\n", addr.c_str());
             }
             else {
-                log->printf(LOG_LEVEL_INFO, "RAFT: failed to connect to " + addr);
+                //log->printf(LOG_LEVEL_INFO, "RAFT: failed to connect to " + addr);
                 clientMutex.lock();
                 toRemove[addr] = socket;
                 clientMutex.unlock();
@@ -77,7 +76,7 @@ public:
     }
 
     ~RaftNet() {
-        printf("RAFT: CLOSING RAFTNET!!!\n");
+        //printf("RAFT: CLOSING RAFTNET!!!\n");
         running = false;
         listenThread->join();
         receiveThread->join();
@@ -105,20 +104,20 @@ private:
         sf::SocketSelector selector;
         selector.add(listener);
 
-        printf("RAFT: selector thread started\n");
+        //printf("RAFT: selector thread started\n");
         while(running) {
             if(selector.wait()) {
                 sf::TcpSocket* client = new sf::TcpSocket;
                 if(listener.accept(*client) == sf::Socket::Done) {
                     std::string addr = client->getRemoteAddress().toString();
-                    printf("RAFT: Raft received incoming connection from %s\n", addr.c_str());
+                    //printf("RAFT: Raft received incoming connection from %s\n", addr.c_str());
                     clientMutex.lock();
                     if(clients.find(addr) == clients.end()) {
-                        printf("RAFT: adding %s to client map\n", addr.c_str());
+                        //printf("RAFT: adding %s to client map\n", addr.c_str());
                         clients[addr] = client;
                     }
                     else {
-                        printf("RAFT: %s is an existing address\n", addr.c_str());
+                        //printf("RAFT: %s is an existing address\n", addr.c_str());
                         client->disconnect();
                         delete client;
                     }
@@ -136,10 +135,8 @@ private:
 
         while(running) {
             if(selector.wait(sf::milliseconds(500))) {
-                //log->printf(LOG_LEVEL_INFO, "RECEIVE THREAD HUMMING");
                 clientMutex.lock();
                 for(auto it = clients.begin(); it != clients.end(); it++) {
-                    //log->printf(LOG_LEVEL_INFO, "Looking at address " + it->first);
                     sf::TcpSocket* client = std::get<1>(*it);
                     
                     if(!client || selectorSet.find(it->first) == selectorSet.end()) {
@@ -152,7 +149,7 @@ private:
                         if(client->receive(packet) == sf::Socket::Done) {
                             std::string message;
                             packet >> message;
-                            log->printf(LOG_LEVEL_INFO, "RAFT: Received packet " + message + " from " + it->first);
+                            //log->printf(LOG_LEVEL_INFO, "RAFT: Received packet " + message + " from " + it->first);
 
                             messageMutex.lock();
                             messages.push_back(message);
@@ -160,12 +157,10 @@ private:
                         }
                         else {
                             //toRemove[it->first] = it->second;
-                            //printf("RAFT: Error receiving packet, marking %s for removal\n", it->first.c_str());
                         }
                     }
                     else {
                         //toRemove[it->first] = it->second; // c1
-                        //log->printf(LOG_LEVEL_INFO, "RAFT: Selector wasn't ready for " + it->first);
                     }
                 }
                 clientMutex.unlock();
