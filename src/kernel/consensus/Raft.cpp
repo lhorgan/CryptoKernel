@@ -102,7 +102,7 @@ void CryptoKernel::Consensus::Raft::floater() {
                 requestVotes();
             }
         }
-        processQueue();
+        //processQueue();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
