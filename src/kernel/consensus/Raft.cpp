@@ -134,7 +134,7 @@ void CryptoKernel::Consensus::Raft::floater() {
     while(running) {
         // this node is the leader
         if(leader) {
-            log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader.");
+            //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader.");
             sendAppendEntries();
         }
         else {
@@ -142,9 +142,11 @@ void CryptoKernel::Consensus::Raft::floater() {
             if(currTime - lastPing < electionTimeout && !candidate) {
                 // everything is fine
                 resetValues();
-                log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am a follower.  I got a heartbeat recently.");
+                //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am a follower.  I got a heartbeat recently.");
             }
             else {
+                printf("\n~~~~~~~\n\n");
+
                 // time to elect a new leader
                 lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
                 log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I haven't got a leader.  We need to elect a leader!");
@@ -158,8 +160,7 @@ void CryptoKernel::Consensus::Raft::floater() {
         }
         processQueue();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-        printf("\n~~~~~~~\n\n");
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
 
