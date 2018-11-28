@@ -38,8 +38,8 @@ void CryptoKernel::Consensus::Raft::processQueue() {
     std::vector<std::string> queue = this->raftNet->pullMessages();
     log->printf(LOG_LEVEL_INFO, "Queue length: " + std::to_string(queue.size()));
 
-    for(auto it = queue.begin(); it != queue.end(); it++) {
-        log->printf(LOG_LEVEL_INFO, "THE DECODED MESSAGE: " + *it);
+    for(int i = 0; i < queue.size(); i++) {
+        log->printf(LOG_LEVEL_INFO, "THE DECODED MESSAGE: " + queue[i]);
         //Json::Value data = CryptoKernel::Storage::toJson(*it);
 
         /*if(data["rpc"] && data["sender"].asString() != pubKey) {
