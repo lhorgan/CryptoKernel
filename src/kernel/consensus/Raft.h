@@ -70,6 +70,7 @@ namespace CryptoKernel {
         RaftNet* raftNet;
 
         void sendAll(Json::Value data);
+        void processQueue(); // process the incoming message queue
     };
 }
 

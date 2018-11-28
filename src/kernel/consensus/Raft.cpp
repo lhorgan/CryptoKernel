@@ -30,75 +30,48 @@ void CryptoKernel::Consensus::Raft::start() {
 bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* transaction,
                                                         CryptoKernel::Blockchain::block& block,
                                                         const CryptoKernel::Blockchain::dbBlock& previousBlock) {
-    /*
-    if leader {
-        if block is log proposal {
-            add to log queue
-        }
-        else if block is append_entries rpc or request_vote rpc from someone with a higher term {
-            step down as leader (just stop sending heartbeats)
-        }
-    }
-    else {
-        if block comes from leader and term/index of prevBlock match our prevBlock {
-            broadcast confirmation of receipt block
-            return true
-        }
-        else {
-            broadcast failure of receipt block
-            return false
-        }
-    }
-    */
+}
 
-    /*if(this->leader) {
-
-    }
-    else {
-
-    }*/
+void CryptoKernel::Consensus::Raft::processQueue() {
     log->printf(LOG_LEVEL_INFO, "Checking consenus rules");
-    bool result = true; // this probably should be false sometimes
 
-    Json::Value data = block.getConsensusData();
+    std::vector<std::string> queue = this->raftNet->pullMessages();
 
-    log->printf(LOG_LEVEL_INFO, data.toStyledString());
+    for(auto it = queue.begin(); it != queue.end(); it++) {
+        Json::Value data = CryptoKernel::Storage::toJson(*it);
 
-    if(data["rpc"] && data["sender"].asString() != pubKey) {
-        log->printf(LOG_LEVEL_INFO, "Okay, there IS an RPC call being made");
-        if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sender") {
-            int requesterTerm = data["term"].asInt();
-            if(requesterTerm >= term) {
-                // cast a vote for this node
-                term = requesterTerm;
-                castVote(data["sender"].asString());
-            }
-        }
-        else if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "responding") {
-            // am I a candidate?
-            if(candidate) {
-                supporters.insert(data["sender"].asString());
-                if(supporters.size() > networkSize / 2) { // we have a simple majority of voters
-                    log->printf(LOG_LEVEL_INFO, "I have been elected leader.");
-                    leader = true; // I am the captain now!
+        if(data["rpc"] && data["sender"].asString() != pubKey) {
+            log->printf(LOG_LEVEL_INFO, "Okay, there IS an RPC call being made");
+            if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sender") {
+                int requesterTerm = data["term"].asInt();
+                if(requesterTerm >= term) {
+                    // cast a vote for this node
+                    term = requesterTerm;
+                    castVote(data["sender"].asString());
                 }
             }
-            else {
-                log->printf(LOG_LEVEL_INFO, "Thanks for the vote, but someone else is already leader.");
+            else if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "responding") {
+                // am I a candidate?
+                if(candidate) {
+                    supporters.insert(data["sender"].asString());
+                    if(supporters.size() > networkSize / 2) { // we have a simple majority of voters
+                        log->printf(LOG_LEVEL_INFO, "I have been elected leader.");
+                        leader = true; // I am the captain now!
+                    }
+                }
+                else {
+                    log->printf(LOG_LEVEL_INFO, "Thanks for the vote, but someone else is already leader.");
+                }
+            }
+            else if(data["rpc"].asString() == "heartbeat") {
+                // update last ping
+                if(data["sender"].asString() != pubKey) { // I guess it doesn't really matter
+                    log->printf(LOG_LEVEL_INFO, "I have received a heartbeat.  I have received a heartbeat!");
+                    lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
+                }
             }
         }
-        else if(data["rpc"].asString() == "heartbeat") {
-            // update last ping
-            if(data["sender"].asString() != pubKey) { // I guess it doesn't really matter
-                log->printf(LOG_LEVEL_INFO, "I have received a heartbeat.  I have received a heartbeat!");
-                lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
-            }
-        }
-
-        return false;
     }
-
-    return true;
 }
 
 void CryptoKernel::Consensus::Raft::floater() {
@@ -129,6 +102,7 @@ void CryptoKernel::Consensus::Raft::floater() {
                 requestVotes();
             }
         }
+        processQueue();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
@@ -142,45 +116,31 @@ void CryptoKernel::Consensus::Raft::resetValues() {
 
 void CryptoKernel::Consensus::Raft::requestVotes() {
     log->printf(LOG_LEVEL_INFO, "Requesting votes...");
-    CryptoKernel::Blockchain::block dummyBlock = blockchain->generateVerifyingBlock(pubKey);
     Json::Value dummyData;
     dummyData["rpc"] = "request_votes";
     dummyData["direction"] = "sender";
     dummyData["sender"] = pubKey;
     dummyData["term"] = term;
-    dummyBlock.setConsensusData(dummyData);
-
-    //network->broadcastBlock(dummyBlock);
-    //blockchain->submitBlock(dummyBlock);
     sendAll(dummyData);
 }
 
 void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
     log->printf(LOG_LEVEL_INFO, "Casting vote for " + candidateId);
     candidate = false;
-    CryptoKernel::Blockchain::block dummyBlock = blockchain->generateVerifyingBlock(pubKey);
     Json::Value dummyData;
     dummyData["rpc"] = "request_votes";
     dummyData["direction"] = "responding";
     dummyData["sender"] = pubKey;
     dummyData["term"] = term;
     dummyData["candidate"] = candidateId;
-    dummyBlock.setConsensusData(dummyData);
-
-    //network->broadcastBlock(dummyBlock);
-    //blockchain->submitBlock(dummyBlock);
     sendAll(dummyData);
 }
 
 void CryptoKernel::Consensus::Raft::sendHeartbeat() {
     log->printf(LOG_LEVEL_INFO, "Sending heartbeat...");
-    CryptoKernel::Blockchain::block dummyBlock = blockchain->generateVerifyingBlock(pubKey);
     Json::Value dummyData;
     dummyData["rpc"] = "heartbeat"; // paper uses an empty append_entries, but this is easier
     dummyData["sender"] = pubKey;
-    dummyBlock.setConsensusData(dummyData);
-
-    //blockchain->submitBlock(dummyBlock);
     sendAll(dummyData);
 }
 
@@ -192,11 +152,6 @@ void CryptoKernel::Consensus::Raft::sendAll(Json::Value data) {
         this->raftNet->send(addrs[i], 1701, CryptoKernel::Storage::toString(data));
     }
 }
-
-
-
-
-
 
 bool CryptoKernel::Consensus::Raft::isBlockBetter(Storage::Transaction* transaction,
                                const CryptoKernel::Blockchain::block& block,
