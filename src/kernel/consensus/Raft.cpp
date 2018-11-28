@@ -56,6 +56,8 @@ void CryptoKernel::Consensus::Raft::processQueue() {
 }
 
 void CryptoKernel::Consensus::Raft::handleRequestVotes(Json::Value& data) {
+    log->printf(LOG_LEVEL_INFO, "Handling vote request");
+
     int requesterTerm = data["term"].asInt();
 
     if(data["direction"].asString() == "sending") { // we have RECEIVED a request for a vote
@@ -70,7 +72,7 @@ void CryptoKernel::Consensus::Raft::handleRequestVotes(Json::Value& data) {
             }
         }
     }
-    if(data["direction"].asString() == "responding") { // someone else has voted for us
+    else if(data["direction"].asString() == "responding") { // someone else has voted for us
         // am I a candidate?
         if(candidate && term >= requesterTerm) { // we don't care about a voter's term status, anyone can vote for us (but we can't be elected if our term is out of date)
             if(data["vote"].asBool()) { // the vote was a yes
