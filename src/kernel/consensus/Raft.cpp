@@ -76,7 +76,7 @@ void CryptoKernel::Consensus::Raft::processQueue() {
                     if(candidate) {
                         supporters.insert(data["sender"].asString());
                         if(supporters.size() > networkSize / 2) { // we have a simple majority of voters
-                            log->printf(LOG_LEVEL_INFO, "I have been elected leader.");
+                            log->printf(LOG_LEVEL_INFO, "I have been elected leader");
                             leader = true; // I am the captain now!
                         }
                     }
