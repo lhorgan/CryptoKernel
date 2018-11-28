@@ -160,6 +160,7 @@ private:
                         }
                     }
                     else {
+                        toRemove[it->first] = it->second; // c1
                         log->printf(LOG_LEVEL_INFO, "RAFT: Selector wasn't ready for " + it->first);
                     }
                 }

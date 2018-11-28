@@ -47,6 +47,7 @@ void CryptoKernel::Consensus::Raft::processQueue() {
             if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sender") {
                 int requesterTerm = data["term"].asInt();
                 if(requesterTerm >= term) {
+                    log->printf(LOG_LEVEL_INFO, "I have received a vote request.");
                     // cast a vote for this node
                     term = requesterTerm;
                     castVote(data["sender"].asString());
