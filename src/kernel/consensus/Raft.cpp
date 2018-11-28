@@ -62,9 +62,9 @@ void CryptoKernel::Consensus::Raft::handleRequestVotes(Json::Value& data) {
 
     if(data["direction"].asString() == "sending") { // we have RECEIVED a request for a vote
         if(requesterTerm >= term) { // only vote for candidates with a greater term
+            handleTermDisparity(requesterTerm);
             if(votedFor == "" || votedFor == data["sender"].asString()) {
                 // cast a vote for this node
-                handleTermDisparity(requesterTerm);
                 castVote(data["sender"].asString(), true);
             }
             else {
@@ -89,13 +89,6 @@ void CryptoKernel::Consensus::Raft::handleRequestVotes(Json::Value& data) {
             }
             handleTermDisparity(requesterTerm);   
         }
-    }
-
-    if(requesterTerm > term) {
-        log->printf(LOG_LEVEL_INFO, "Received ping from server with GREATER term " + std::to_string(requesterTerm) + ", " + std::to_string(term));
-        term = requesterTerm;
-        candidate = false;
-        leader = false;
     }
 }
 
