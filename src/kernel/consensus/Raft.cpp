@@ -36,6 +36,7 @@ void CryptoKernel::Consensus::Raft::processQueue() {
     log->printf(LOG_LEVEL_INFO, "Checking consenus rules");
 
     std::vector<std::string> queue = this->raftNet->pullMessages();
+    log->printf(LOG_LEVEL_INFO, "Queue length: " + std::to_string(queue.size()));
 
     for(auto it = queue.begin(); it != queue.end(); it++) {
         log->printf(LOG_LEVEL_INFO, "THE DECODED MESSAGE: " + *it);
