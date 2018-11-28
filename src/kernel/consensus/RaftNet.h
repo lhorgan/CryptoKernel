@@ -155,7 +155,8 @@ private:
                             messageMutex.unlock();
                         }
                         else {
-                            printf("RAFT: Error receiving packet\n");
+                            toRemove[it->first] = it->second;
+                            printf("RAFT: Error receiving packet, marking %s for removal\n", it->first.c_str());
                         }
                     }
                     else {
