@@ -63,7 +63,7 @@ public:
         std::vector<std::string> messageQueue;
 
         messageMutex.lock();
-        for(int i = messages.size(); i >= 0; i--) {
+        for(int i = messages.size() - 1; i >= 0; i--) {
             messageQueue.push_back(messages[i]);
         }
         messages.clear();
