@@ -28,15 +28,19 @@ public:
         clientMutex.lock();
         auto it = clients.find(addr);
         if(it != clients.end()) {
-            sf::Socket::Status res = it->second->send(packet);
-            if(res != sf::Socket::Done) {
-                printf("RAFT: error sending packet to %s\n", addr.c_str());
-                toRemove[addr] = it->second;
+            if(!it->second) {
+                log->printf(LOG_LEVEL_INFO, "A connection attempt to " + it->first + " is in progress...");
             }
             else {
-                printf("Successfully sent message to %s\n", addr.c_str());
+                sf::Socket::Status res = it->second->send(packet);
+                if(res != sf::Socket::Done) {
+                    printf("RAFT: error sending packet to %s\n", addr.c_str());
+                    toRemove[addr] = it->second;
+                }
+                else {
+                    printf("Successfully sent message to %s\n", addr.c_str());
+                }
             }
-
             clientMutex.unlock();
         }
         else {
