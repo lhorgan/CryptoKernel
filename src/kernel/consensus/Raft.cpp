@@ -57,7 +57,7 @@ void CryptoKernel::Consensus::Raft::processQueue() {
                 if(candidate) {
                     supporters.insert(data["sender"].asString());
                     if(supporters.size() > networkSize / 2) { // we have a simple majority of voters
-                        log->printf(LOG_LEVEL_INFO, "I have been elected leader.");
+                        log->printf(LOG_LEVEL_INFO, "~~~~I have been elected leader!~~~~");
                         leader = true; // I am the captain now!
                     }
                 }
@@ -68,8 +68,12 @@ void CryptoKernel::Consensus::Raft::processQueue() {
             else if(data["rpc"].asString() == "heartbeat") {
                 // update last ping
                 if(data["sender"].asString() != pubKey) { // I guess it doesn't really matter
-                    log->printf(LOG_LEVEL_INFO, "I have received a heartbeat.  I have received a heartbeat!");
-                    lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
+                    if(data["term"].asInt() >= term) { // only accept a leader if it's term is at least as big as ours
+                        term = data["term"].asInt();
+                        resetValues();
+                        log->printf(LOG_LEVEL_INFO, "I have received a heartbeat.  I have received a heartbeat!");
+                        lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
+                    }
                 }
             }
         }
@@ -141,8 +145,10 @@ void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
 void CryptoKernel::Consensus::Raft::sendHeartbeat() {
     log->printf(LOG_LEVEL_INFO, "Sending heartbeat...");
     Json::Value dummyData;
-    dummyData["rpc"] = "heartbeat"; // paper uses an empty append_entries, but this is easier
+    dummyData["rpc"] = "heartbeat";
+    dummyData["direction"] = "sending";
     dummyData["sender"] = pubKey;
+    dummyData["term"] = term;
     sendAll(dummyData);
 }
 
