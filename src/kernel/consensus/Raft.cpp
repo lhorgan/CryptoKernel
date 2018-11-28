@@ -43,49 +43,87 @@ void CryptoKernel::Consensus::Raft::processQueue() {
         log->printf(LOG_LEVEL_INFO, "THE DECODED MESSAGE: " + queue[i]);
         Json::Value data = CryptoKernel::Storage::toJson(queue[i]);
 
+        // we accept votes from nodes with out of date term... for now**
         if(data["rpc"] && data["sender"].asString() != pubKey) {
-            int requesterTerm = data["term"].asInt();
-            if(requesterTerm >= term) {
-                if(requesterTerm > term) { // we're out of date, don't be a leader, don't be a candidate
-                    log->printf(LOG_LEVEL_INFO, "Received ping from server with GREATER term " + std::to_string(requesterTerm) + ", " + std::to_string(term));
-                    term = requesterTerm;
-                    candidate = false;
-                    leader = false;
-                }
-                if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sender") {
-                    if(votedFor == "" || votedFor == data["sender"].asString()) {
-                        // cast a vote for this node
-                        castVote(data["sender"].asString());
-                    }
-                }
-                else if(data["rpc"].asString() == "heartbeat") {
-                    // update last ping
-                    resetValues();
-                    log->printf(LOG_LEVEL_INFO, "I have received a heartbeat.  I have received a heartbeat!");
-                    lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
-                }
-                term = requesterTerm;
+            if(data["rpc"].asString() == "append_entries") {
+                handleAppendEntries(data);
             }
-            else {
-                log->printf(LOG_LEVEL_INFO, "Received ping from server with LESSER term " + std::to_string(requesterTerm) + ", " + std::to_string(term));
-                // todo, tell that node its term is out of date
-
-                // we accept votes from nodes with out of date term... for now**
-                if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "responding") {
-                    // am I a candidate?
-                    if(candidate) {
-                        supporters.insert(data["sender"].asString());
-                        if(supporters.size() > networkSize / 2) { // we have a simple majority of voters
-                            log->printf(LOG_LEVEL_INFO, "I have been elected leader");
-                            leader = true; // I am the captain now!
-                        }
-                    }
-                    else {
-                        log->printf(LOG_LEVEL_INFO, "Thanks for the vote, but someone else is already leader.");
-                    }
-                }
+            else if(data["rpc"].asString() == "request_votes") {
+                handleRequestVotes(data);
             }
         }
+    }
+}
+
+void CryptoKernel::Consensus::Raft::handleRequestVotes(Json::Value& data) {
+    int requesterTerm = data["term"].asInt();
+
+    if(data["direction"].asString() == "sending") { // we have RECEIVED a request for a vote
+        if(votedFor == "" || votedFor == data["sender"].asString()) {
+            if(requesterTerm >= term) { // only vote for candidates with a greater term
+                // cast a vote for this node
+                handleTermDisparity(requesterTerm);
+                castVote(data["sender"].asString(), true);
+            }
+            else { // their term is too small, don't vote for them
+                castVote(data["sender"].asString(), false);
+            }
+        }
+    }
+    if(data["direction"].asString() == "responding") { // someone else has voted for us
+        // am I a candidate?
+        if(candidate && term >= requesterTerm) { // we don't care about a voter's term status, anyone can vote for us (but we can't be elected if our term is out of date)
+            if(data["vote"].asBool()) { // the vote was a yes
+                supporters.insert(data["sender"].asString());
+                if(supporters.size() > networkSize / 2) { // we have a simple majority of voters
+                    log->printf(LOG_LEVEL_INFO, "I have been elected leader");
+                    leader = true; // I am the captain now!
+                }
+            }
+            handleTermDisparity(requesterTerm);   
+        }
+    }
+
+    if(requesterTerm > term) {
+        log->printf(LOG_LEVEL_INFO, "Received ping from server with GREATER term " + std::to_string(requesterTerm) + ", " + std::to_string(term));
+        term = requesterTerm;
+        candidate = false;
+        leader = false;
+    }
+}
+
+void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
+    int requesterTerm = data["term"].asInt();
+
+    if(data["direction"] == "sending") { // we have received a heartbeat from a node
+        if(requesterTerm >= term) {
+            // update last ping
+            resetValues();
+            log->printf(LOG_LEVEL_INFO, "I have received a heartbeat from " + data["sender"].asString());
+            lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
+        }
+        handleTermDisparity(requesterTerm);
+
+        Json::Value response;
+        response["rpc"] = "append_entries";
+        response["direction"] = "sending";
+        response["sender"] = pubKey;
+        response["term"] = term;
+
+        sendAll(response);
+    }
+    else if(data["direction"] == "responding") { // someone responded to our heartbeat
+        // right now, there's nothing to do here
+        handleTermDisparity(requesterTerm);
+    }
+}
+
+void CryptoKernel::Consensus::Raft::handleTermDisparity(int requesterTerm) {
+    if(requesterTerm > term) {
+        log->printf(LOG_LEVEL_INFO, "Received ping from server with GREATER term " + std::to_string(requesterTerm) + ", " + std::to_string(term));
+        term = requesterTerm;
+        candidate = false;
+        leader = false;
     }
 }
 
@@ -97,7 +135,7 @@ void CryptoKernel::Consensus::Raft::floater() {
         // this node is the leader
         if(leader) {
             log->printf(LOG_LEVEL_INFO, "I am the leader.");
-            sendHeartbeat();
+            sendAppendEntries();
         }
         else {
             unsigned long long currTime = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
@@ -141,25 +179,33 @@ void CryptoKernel::Consensus::Raft::requestVotes() {
     sendAll(dummyData);
 }
 
-void CryptoKernel::Consensus::Raft::castVote(std::string candidateId) {
-    log->printf(LOG_LEVEL_INFO, "Casting vote for " + candidateId);
-    votedFor = candidateId;
+void CryptoKernel::Consensus::Raft::castVote(std::string candidateId, bool vote) {
+    if(vote) {
+        log->printf(LOG_LEVEL_INFO, "Casting YES vote for " + candidateId);
+        votedFor = candidateId;
+    }
+    else {
+        log->printf(LOG_LEVEL_INFO, "Casting NO vote for " + candidateId);
+    }
+    
     Json::Value dummyData;
     dummyData["rpc"] = "request_votes";
     dummyData["direction"] = "responding";
     dummyData["sender"] = pubKey;
     dummyData["term"] = term;
     dummyData["candidate"] = candidateId;
+    dummyData["vote"] = vote;
     sendAll(dummyData);
 }
 
-void CryptoKernel::Consensus::Raft::sendHeartbeat() {
+void CryptoKernel::Consensus::Raft::sendAppendEntries() {
     log->printf(LOG_LEVEL_INFO, "Sending heartbeat...");
     Json::Value dummyData;
     dummyData["rpc"] = "heartbeat";
     dummyData["direction"] = "sending";
     dummyData["sender"] = pubKey;
     dummyData["term"] = term;
+    dummyData["log"] = {};
     sendAll(dummyData);
 }
 

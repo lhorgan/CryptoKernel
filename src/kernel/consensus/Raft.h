@@ -45,9 +45,10 @@ namespace CryptoKernel {
         void floater();
         void start();
         void requestVotes();
-        void castVote(std::string candidateId);
-        void sendHeartbeat();
+        void castVote(std::string candidateId, bool vote);
+        void sendAppendEntries();
         void resetValues();
+        void handleTermDisparity(int requesterTerm);
 
         class LifeRaft;
     
@@ -73,6 +74,9 @@ namespace CryptoKernel {
 
         void sendAll(Json::Value data);
         void processQueue(); // process the incoming message queue
+
+        void handleAppendEntries(Json::Value& data);
+        void handleRequestVotes(Json::Value& data);
     };
 }
 
