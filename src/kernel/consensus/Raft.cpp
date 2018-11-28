@@ -46,23 +46,15 @@ void CryptoKernel::Consensus::Raft::processQueue() {
         if(data["rpc"] && data["sender"].asString() != pubKey) {
             int requesterTerm = data["term"].asInt();
             if(requesterTerm >= term) {
+                if(requesterTerm > term) { // we're out of date, don't be a leader, don't be a candidate
+                    term = requesterTerm;
+                    candidate = false;
+                    leader = false;
+                }
                 if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "sender") {
                     if(votedFor == "" || votedFor == data["sender"].asString()) {
                         // cast a vote for this node
                         castVote(data["sender"].asString());
-                    }
-                }
-                else if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "responding") {
-                    // am I a candidate?
-                    if(candidate) {
-                        supporters.insert(data["sender"].asString());
-                        if(supporters.size() > networkSize / 2) { // we have a simple majority of voters
-                            log->printf(LOG_LEVEL_INFO, "I have been elected leader.");
-                            leader = true; // I am the captain now!
-                        }
-                    }
-                    else {
-                        log->printf(LOG_LEVEL_INFO, "Thanks for the vote, but someone else is already leader.");
                     }
                 }
                 else if(data["rpc"].asString() == "heartbeat") {
@@ -76,6 +68,21 @@ void CryptoKernel::Consensus::Raft::processQueue() {
             else {
                 log->printf(LOG_LEVEL_INFO, "Received ping from node with out of date term");
                 // todo, tell that node its term is out of date
+
+                // we accept votes from nodes with out of date term... for now**
+                if(data["rpc"].asString() == "request_votes" && data["direction"].asString() == "responding") {
+                    // am I a candidate?
+                    if(candidate) {
+                        supporters.insert(data["sender"].asString());
+                        if(supporters.size() > networkSize / 2) { // we have a simple majority of voters
+                            log->printf(LOG_LEVEL_INFO, "I have been elected leader.");
+                            leader = true; // I am the captain now!
+                        }
+                    }
+                    else {
+                        log->printf(LOG_LEVEL_INFO, "Thanks for the vote, but someone else is already leader.");
+                    }
+                }
             }
         }
     }
