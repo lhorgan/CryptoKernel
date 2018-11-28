@@ -159,7 +159,7 @@ void CryptoKernel::Consensus::Raft::floater() {
         processQueue();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-        printf("\n");
+        printf("\n~~~~~~~\n");
     }
 }
 
