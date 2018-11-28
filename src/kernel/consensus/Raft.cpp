@@ -61,15 +61,20 @@ void CryptoKernel::Consensus::Raft::handleRequestVotes(Json::Value& data) {
     int requesterTerm = data["term"].asInt();
 
     if(data["direction"].asString() == "sending") { // we have RECEIVED a request for a vote
-        if(votedFor == "" || votedFor == data["sender"].asString()) {
-            if(requesterTerm >= term) { // only vote for candidates with a greater term
+        if(requesterTerm >= term) { // only vote for candidates with a greater term
+            if(votedFor == "" || votedFor == data["sender"].asString()) {
                 // cast a vote for this node
                 handleTermDisparity(requesterTerm);
                 castVote(data["sender"].asString(), true);
             }
-            else { // their term is too small, don't vote for them
+            else {
+                log->printf(LOG_LEVEL_INFO, "I am not voting for " + data["sender"].asString() + " because I already voted for " + votedFor);
                 castVote(data["sender"].asString(), false);
             }
+        }
+        else { // their term is too small, don't vote for them
+            log->printf(LOG_LEVEL_INFO, "I am not voting for " + data["sender"].asString() + " because their term is smaller than mine.");
+            castVote(data["sender"].asString(), false);
         }
     }
     else if(data["direction"].asString() == "responding") { // someone else has voted for us
