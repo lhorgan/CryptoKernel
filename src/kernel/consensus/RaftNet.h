@@ -120,6 +120,7 @@ class RaftNet {
 public:
     RaftNet(CryptoKernel::Log* log) {
         this->log = log;
+        this->publicAddress = sf::IpAddress::getPublicAddress();
         running = true;
         listenThread.reset(new std::thread(&RaftNet::listen, this));
         receiveThread.reset(new std::thread(&RaftNet::receive, this));
@@ -132,7 +133,7 @@ public:
         if(ipAddr == sf::IpAddress::getLocalAddress()
                     || ipAddr == sf::IpAddress::LocalHost
                     || ipAddr == sf::IpAddress::None
-                    || ipAddr == sf::IpAddress::getPublicAddress()) {
+                    || ipAddr == publicAddress) {
                         return;
                     }
 
@@ -186,6 +187,7 @@ private:
 
     std::mutex clientMutex;
     std::mutex messageMutex;
+    sf::IpAddress publicAddress;
 
     void listen() {
         int port = 1701;
