@@ -249,6 +249,7 @@ private:
 
             clientMutex.lock();
             for(auto it = clients.begin(); it != clients.end(); it++) {
+                log->printf(LOG_LEVEL_INFO, "RAFT: assessning " + it->first);
                 if(it->second->isPoisoned()) {
                     selectorSet.erase(it->first);
                     selector.remove(*(it->second->client));
