@@ -106,7 +106,7 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
 
         Json::Value response;
         response["rpc"] = "append_entries";
-        response["direction"] = "sending";
+        response["direction"] = "responding";
         response["sender"] = pubKey;
         response["term"] = term;
 
@@ -135,7 +135,7 @@ void CryptoKernel::Consensus::Raft::floater() {
     while(running) {
         // this node is the leader
         if(leader) {
-            //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader.");
+            log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader.");
             sendAppendEntries();
         }
         else {
