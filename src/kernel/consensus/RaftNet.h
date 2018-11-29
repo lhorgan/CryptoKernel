@@ -163,7 +163,6 @@ public:
 
 private: 
     std::map <std::string, Sender*> clients;
-    std::map <std::string, Sender*> toRemove;
 
     std::vector<std::string> messages;
     std::vector<std::string> toSend;
@@ -248,14 +247,24 @@ private:
             }
 
             clientMutex.lock();
+            std::vector<std::string> toRemove;
             for(auto it = clients.begin(); it != clients.end(); it++) {
-                log->printf(LOG_LEVEL_INFO, "RAFT: assessning " + it->first);
+                log->printf(LOG_LEVEL_INFO, "RAFT: assessing " + it->first);
                 if(it->second->isPoisoned()) {
-                    selectorSet.erase(it->first);
-                    selector.remove(*(it->second->client));
-                    clients.erase(it->first);
-                    delete it->second;
+                    log->printf(LOG_LEVEL_INFO, "RAFT: marking " + it->first + " for removal");
+                    toRemove.push_back(it->first);
                 }
+            }
+
+            for(int i = 0; i < toRemove.size(); i++) {
+                auto it = clients.find(toRemove[i]);
+                std::string addr = it->first;
+                sf::TcpSocket* client = it->second->client;
+
+                selector.remove(*client);
+                selectorSet.erase(addr);
+                clients.erase(addr);
+                delete client;
             }
 
             for(auto it = clients.begin(); it != clients.end(); it++) {
@@ -266,7 +275,6 @@ private:
                     }
                 }
             }
-
             clientMutex.unlock();
         }
     }
