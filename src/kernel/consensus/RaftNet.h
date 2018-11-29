@@ -266,7 +266,8 @@ private:
                 selector.remove(*client);
                 selectorSet.erase(addr);
                 clients.erase(addr);
-                delete client;
+                delete it->second;
+                //delete client;
             }
 
             for(auto it = clients.begin(); it != clients.end(); it++) {
