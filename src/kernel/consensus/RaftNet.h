@@ -221,7 +221,7 @@ private:
                 for(auto it = clients.begin(); it != clients.end(); it++) {
                     sf::TcpSocket* client = std::get<1>(*it)->client;
                     
-                    if(!client || selectorSet.find(it->first) == selectorSet.end()) {
+                    if(selectorSet.find(it->first) == selectorSet.end()) {
                         continue;
                     }
 
@@ -273,6 +273,7 @@ private:
             for(auto it = clients.begin(); it != clients.end(); it++) {
                 if(selectorSet.find(it->first) == selectorSet.end()) {
                     if(it->second->isConnected()) {
+                        log->printf(LOG_LEVEL_INFO, "Adding " + it->first + " to selector");
                         selector.add(*(it->second->client));
                         selectorSet.insert(it->first);
                     }
