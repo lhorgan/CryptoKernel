@@ -2,6 +2,32 @@
 
 #include "log.h"
 
+class Sender {
+public:
+    sf::IpAddress dest;
+    unsigned int port;
+    sf::TcpSocket* client;
+
+    std::unique_ptr<std::thread> sendThread;
+
+    Sender(sf::TcpSocket* client, std::string addr, unsigned int port) {
+        dest = sf::IpAddress(addr);
+        this->port = port;
+    }
+
+    void sendFunc() {
+
+    }
+
+    void pushMessage() {
+
+    }
+
+    ~Sender() {
+        delete client;
+    }
+};
+
 class RaftNet {
 public:
     RaftNet(CryptoKernel::Log* log) {
@@ -9,6 +35,7 @@ public:
         running = true;
         listenThread.reset(new std::thread(&RaftNet::listen, this));
         receiveThread.reset(new std::thread(&RaftNet::receive, this));
+        
     }
 
     void send(std::string addr, unsigned short port, std::string message) {
@@ -31,7 +58,7 @@ public:
                 //log->printf(LOG_LEVEL_INFO, "A connection attempt to " + it->first + " is in progress...");
             }
             else {
-                sf::Socket::Status res = it->second->send(packet);
+                sf::Socket::Status res = it->second->client->send(packet);
                 if(res != sf::Socket::Done) {
                     //printf("RAFT: error sending packet to %s\n", addr.c_str());
                     toRemove[addr] = it->second;
@@ -44,19 +71,20 @@ public:
         }
         else {
             sf::TcpSocket* socket = new sf::TcpSocket();
+            Sender* sender = new Sender(socket, addr, port);
             clients[addr] = NULL;
             clientMutex.unlock();
 
             if(socket->connect(ipAddr, port, sf::seconds(3)) == sf::Socket::Done) {
                 clientMutex.lock();
-                clients[addr] = socket;
+                clients[addr] = sender;
                 clientMutex.unlock();
                 //printf("RAFT: Raft connected to %s\n", addr.c_str());
             }
             else {
                 //log->printf(LOG_LEVEL_INFO, "RAFT: failed to connect to " + addr);
                 clientMutex.lock();
-                toRemove[addr] = socket;
+                toRemove[addr] = sender;
                 clientMutex.unlock();
             }
         }
@@ -84,10 +112,11 @@ public:
     }
 
 private: 
-    std::map <std::string, sf::TcpSocket*> clients;
-    std::map <std::string, sf::TcpSocket*> toRemove;
+    std::map <std::string, Sender*> clients;
+    std::map <std::string, Sender*> toRemove;
 
     std::vector<std::string> messages;
+    std::vector<std::string> toSend;
 
     bool running;
     CryptoKernel::Log* log;
@@ -98,8 +127,10 @@ private:
     std::mutex messageMutex;
 
     void listen() {
+        int port = 1701;
+
         sf::TcpListener listener;
-        listener.listen(1701);
+        listener.listen(port);
 
         sf::SocketSelector selector;
         selector.add(listener);
@@ -114,7 +145,7 @@ private:
                     clientMutex.lock();
                     if(clients.find(addr) == clients.end()) {
                         //printf("RAFT: adding %s to client map\n", addr.c_str());
-                        clients[addr] = client;
+                        clients[addr] = new Sender(client, addr, port);
                     }
                     else {
                         //printf("RAFT: %s is an existing address\n", addr.c_str());
@@ -137,7 +168,7 @@ private:
             if(selector.wait(sf::milliseconds(500))) {
                 clientMutex.lock();
                 for(auto it = clients.begin(); it != clients.end(); it++) {
-                    sf::TcpSocket* client = std::get<1>(*it);
+                    sf::TcpSocket* client = std::get<1>(*it)->client;
                     
                     if(!client || selectorSet.find(it->first) == selectorSet.end()) {
                         continue;
@@ -170,7 +201,7 @@ private:
             for(auto it = clients.begin(); it != clients.end(); it++) {
                 std::string addr = it->first;
                 if(selectorSet.find(addr) == selectorSet.end()) {
-                    sf::TcpSocket* socket = it->second;
+                    sf::TcpSocket* socket = it->second->client;
                     if(socket) {
                         selector.add(*socket);
                         selectorSet.insert(addr);
@@ -180,7 +211,7 @@ private:
 
             for(auto it = toRemove.begin(); it != toRemove.end(); it++) {
                 std::string addr = it->first;
-                sf::TcpSocket* client = it->second;
+                sf::TcpSocket* client = it->second->client;
 
                 selectorSet.erase(addr);
                 selector.remove(*client);
