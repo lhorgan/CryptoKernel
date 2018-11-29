@@ -45,6 +45,9 @@ public:
                 poisonedMutex.unlock();
             }
         }
+        else {
+            running = true; // we start off running since we assume we're connected to begin with
+        }
 
         while(running && !poisoned) {
             std::vector<std::string> toSend;
