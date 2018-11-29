@@ -65,8 +65,12 @@ public:
                 std::string data = CryptoKernel::Storage::toString(batched);
                 sf::Packet packet;
                 packet << data;
-                if(client->send(packet) != sf::Socket::Done) {
+                sf::Socket::Status grk = client->send(packet);
+                if(grk != sf::Socket::Done) {
                     log->printf(LOG_LEVEL_INFO, "Error, poisoning " + dest.toString());
+
+                    log->printf(LOG_LEVEL_INFO, "Cause of failure " + std::to_string(grk));
+
                     running = false;
                     poisonedMutex.lock();
                     poisoned = true;
