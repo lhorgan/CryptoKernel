@@ -122,6 +122,7 @@ void CryptoKernel::Consensus::Raft::handleTermDisparity(int requesterTerm) {
     if(requesterTerm > term) {
         log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Received ping from server with GREATER term " + std::to_string(requesterTerm) + ", " + std::to_string(term));
         term = requesterTerm;
+        votedFor = "";
         candidate = false;
         leader = false;
     }
@@ -149,6 +150,7 @@ void CryptoKernel::Consensus::Raft::floater() {
 
                 // time to elect a new leader
                 lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
+                electionTimeout = 150 + rand() % 150;
                 log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I haven't got a leader.  We need to elect a leader!");
                 resetValues();
                 candidate = true;
