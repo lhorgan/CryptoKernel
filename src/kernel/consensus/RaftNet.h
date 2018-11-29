@@ -56,15 +56,17 @@ public:
             messages.clear();
             messagesMutex.unlock();
 
-            Json::Value batched = batchMessages(toSend);
-            std::string data = CryptoKernel::Storage::toString(batched);
-            sf::Packet packet;
-            packet << data;
-            if(client->send(packet) != sf::Socket::Done) {
-                running = false;
-                poisonedMutex.lock();
-                poisoned = true;
-                poisonedMutex.lock();
+            if(toSend.size() > 0) {
+                Json::Value batched = batchMessages(toSend);
+                std::string data = CryptoKernel::Storage::toString(batched);
+                sf::Packet packet;
+                packet << data;
+                if(client->send(packet) != sf::Socket::Done) {
+                    running = false;
+                    poisonedMutex.lock();
+                    poisoned = true;
+                    poisonedMutex.lock();
+                }
             }
         }
     }
