@@ -70,7 +70,7 @@ public:
                     running = false;
                     poisonedMutex.lock();
                     poisoned = true;
-                    poisonedMutex.lock();
+                    poisonedMutex.unlock();
                 }
                 else {
                     log->printf(LOG_LEVEL_INFO, "Successfully sent message " + data.substr(0, 10) + " to " + dest.toString());
