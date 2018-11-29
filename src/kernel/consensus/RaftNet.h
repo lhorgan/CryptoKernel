@@ -57,18 +57,20 @@ public:
             messagesMutex.unlock();
 
             if(toSend.size() > 0) {
+                log->printf(LOG_LEVEL_INFO, "Messages in queue for  " + dest.toString());
                 Json::Value batched = batchMessages(toSend);
                 std::string data = CryptoKernel::Storage::toString(batched);
                 sf::Packet packet;
                 packet << data;
                 if(client->send(packet) != sf::Socket::Done) {
+                    log->printf(LOG_LEVEL_INFO, "Error, poisoning " + dest.toString());
                     running = false;
                     poisonedMutex.lock();
                     poisoned = true;
                     poisonedMutex.lock();
                 }
                 else {
-                    log->printf(LOG_LEVEL_INFO, "Successfully sent message " + data.substr(10) + " to " + dest.toString());
+                    log->printf(LOG_LEVEL_INFO, "Successfully sent message " + data.substr(0, 10) + " to " + dest.toString());
                 }
             }
         }
@@ -92,6 +94,7 @@ public:
 
     void pushMessage(std::string message) {
         messagesMutex.lock();
+        //log->printf(LOG_LEVEL_INFO)
         messages.push_back(message);
         messagesMutex.unlock();
     }
