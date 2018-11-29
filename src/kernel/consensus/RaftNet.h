@@ -33,7 +33,7 @@ public:
     void sendFunc() {
         if(!connected) {
             if(client->connect(dest, port, sf::seconds(3)) == sf::Socket::Done) {
-                //log->printf(LOG_LEVEL_INFO, "RAFT: Raft connected to " + dest.toString());
+                log->printf(LOG_LEVEL_INFO, "RAFT: Raft connected to " + dest.toString());
                 running = true;
                 connectedMutex.lock();
                 connected = true;
@@ -60,20 +60,20 @@ public:
             messagesMutex.unlock();
 
             if(toSend.size() > 0) {
-                //log->printf(LOG_LEVEL_INFO, "Messages in queue for  " + dest.toString());
+                log->printf(LOG_LEVEL_INFO, "Messages in queue for  " + dest.toString());
                 Json::Value batched = batchMessages(toSend);
                 std::string data = CryptoKernel::Storage::toString(batched);
                 sf::Packet packet;
                 packet << data;
                 if(client->send(packet) != sf::Socket::Done) {
-                    //log->printf(LOG_LEVEL_INFO, "Error, poisoning " + dest.toString());
+                    log->printf(LOG_LEVEL_INFO, "Error, poisoning " + dest.toString());
                     running = false;
                     poisonedMutex.lock();
                     poisoned = true;
                     poisonedMutex.unlock();
                 }
                 else {
-                    //log->printf(LOG_LEVEL_INFO, "Successfully sent message " + data.substr(0, 10) + " to " + dest.toString());
+                    log->printf(LOG_LEVEL_INFO, "Successfully sent message " + data.substr(0, 10) + " to " + dest.toString());
                 }
             }
         }
@@ -142,12 +142,12 @@ public:
         if(it == clients.end()) {
             sf::TcpSocket* socket = new sf::TcpSocket();
             Sender* sender = new Sender(socket, addr, port, false, log);
-            //log->printf(LOG_LEVEL_INFO, "a) Pushing message to " + addr + ": " + message.substr(0, 10));
+            log->printf(LOG_LEVEL_INFO, "a) Pushing message to " + addr + ": " + message.substr(0, 10));
             sender->pushMessage(message);
             clients[addr] = sender;
         }
         else {
-            //log->printf(LOG_LEVEL_INFO, "b) Pushing message to " + addr + ": " + message.substr(0, 10));
+            log->printf(LOG_LEVEL_INFO, "b) Pushing message to " + addr + ": " + message.substr(0, 10));
             it->second->pushMessage(message);
         }
         clientMutex.unlock();
@@ -203,14 +203,14 @@ private:
                 sf::TcpSocket* client = new sf::TcpSocket;
                 if(listener.accept(*client) == sf::Socket::Done) {
                     std::string addr = client->getRemoteAddress().toString();
-                    //printf("RAFT: Raft received incoming connection from %s\n", addr.c_str());
+                    printf("RAFT: Raft received incoming connection from %s\n", addr.c_str());
                     clientMutex.lock();
                     if(clients.find(addr) == clients.end()) {
-                        //printf("RAFT: adding %s to client map\n", addr.c_str());
+                        printf("RAFT: adding %s to client map\n", addr.c_str());
                         clients[addr] = new Sender(client, addr, port, true, log);
                     }
                     else {
-                        //printf("RAFT: %s is an existing address\n", addr.c_str());
+                        printf("RAFT: %s is an existing address\n", addr.c_str());
                         client->disconnect();
                         delete client;
                     }
@@ -242,18 +242,18 @@ private:
                         if(client->receive(packet) == sf::Socket::Done) {
                             std::string message;
                             packet >> message;
-                            //log->printf(LOG_LEVEL_INFO, "RAFT: Received packet " + message + " from " + it->first);
+                            log->printf(LOG_LEVEL_INFO, "RAFT: Received packet " + message + " from " + it->first);
 
                             messageMutex.lock();
                             messages.push_back(message);
                             messageMutex.unlock();
                         }
                         else {
-                            //toRemove[it->first] = it->second;
+                            toRemove[it->first] = it->second;
                         }
                     }
                     else {
-                        //toRemove[it->first] = it->second; // c1
+                        toRemove[it->first] = it->second; // c1
                     }
                 }
                 clientMutex.unlock();
@@ -263,7 +263,7 @@ private:
             std::vector<std::string> toRemove;
             for(auto it = clients.begin(); it != clients.end(); it++) {
                 if(it->second->isPoisoned()) {
-                    //log->printf(LOG_LEVEL_INFO, "RAFT: marking " + it->first + " for removal");
+                    log->printf(LOG_LEVEL_INFO, "RAFT: marking " + it->first + " for removal");
                     toRemove.push_back(it->first);
                 }
             }
@@ -283,7 +283,7 @@ private:
             for(auto it = clients.begin(); it != clients.end(); it++) {
                 if(selectorSet.find(it->first) == selectorSet.end()) {
                     if(it->second->isConnected()) {
-                        //log->printf(LOG_LEVEL_INFO, "Adding " + it->first + " to selector");
+                        log->printf(LOG_LEVEL_INFO, "Adding " + it->first + " to selector");
                         selector.add(*(it->second->client));
                         selectorSet.insert(it->first);
                     }
