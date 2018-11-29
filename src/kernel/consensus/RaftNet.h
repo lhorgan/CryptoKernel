@@ -6,24 +6,101 @@ class Sender {
 public:
     sf::IpAddress dest;
     unsigned int port;
+    bool running;
+    bool poisoned;
+    bool connected;
     sf::TcpSocket* client;
+    std::vector<std::string> messages;
+    CryptoKernel::Log* log;
 
     std::unique_ptr<std::thread> sendThread;
+    std::mutex messagesMutex;
+    std::mutex poisonedMutex;
+    std::mutex connectedMutex;
 
-    Sender(sf::TcpSocket* client, std::string addr, unsigned int port) {
+    Sender(sf::TcpSocket* client, std::string addr, unsigned int port, bool connected, CryptoKernel::Log* log) {
         dest = sf::IpAddress(addr);
         this->port = port;
+        poisoned = false;
+        running = false;
+        this->connected = connected;
+        this->log = log;
+
+        sendThread.reset(new std::thread(&Sender::sendFunc, this));
     }
 
     void sendFunc() {
+        if(!connected) {
+            if(client->connect(dest, port, sf::seconds(3)) == sf::Socket::Done) {
+                log->printf(LOG_LEVEL_INFO, "RAFT: Raft connected to " + dest.toString());
+                running = true;
+                connectedMutex.lock();
+                connected = true;
+                connectedMutex.unlock();
+            }
+            else {
+                poisonedMutex.lock();
+                poisoned = true;
+                poisonedMutex.unlock();
+            }
+        }
 
+        while(running && !poisoned) {
+            std::vector<std::string> toSend;
+
+            messagesMutex.lock();
+            for(int i = 0; i < messages.size(); i++) {
+                toSend.push_back(messages[i]);
+            }
+            messages.clear();
+            messagesMutex.unlock();
+
+            Json::Value batched = batchMessages(toSend);
+            std::string data = CryptoKernel::Storage::toString(batched);
+            sf::Packet packet;
+            packet << data;
+            if(client->send(packet) != sf::Socket::Done) {
+                running = false;
+                poisonedMutex.lock();
+                poisoned = true;
+                poisonedMutex.lock();
+            }
+        }
     }
 
-    void pushMessage() {
+    bool isPoisoned() {
+        bool val;
+        poisonedMutex.lock();
+        val = poisoned;
+        poisonedMutex.unlock();
+        return val;
+    }
 
+    bool isConnected() {
+        bool val;
+        connectedMutex.lock();
+        val = connected;
+        connectedMutex.unlock();
+        return val;
+    }
+
+    void pushMessage(std::string message) {
+        messagesMutex.lock();
+        messages.push_back(message);
+        messagesMutex.unlock();
+    }
+
+    Json::Value batchMessages(std::vector<std::string>& messageList) {
+        Json::Value batched = Json::arrayValue;
+        for(int i = 0; i < messageList.size(); i++) {
+            batched.append(messageList[i]);
+        }
+        return batched;
     }
 
     ~Sender() {
+        running = false;
+        sendThread->join();
         delete client;
     }
 };
@@ -48,53 +125,25 @@ public:
                         return;
                     }
 
-        sf::Packet packet;
-        packet << message;
-
         clientMutex.lock();
         auto it = clients.find(addr);
-        if(it != clients.end()) {
-            if(!it->second) {
-                //log->printf(LOG_LEVEL_INFO, "A connection attempt to " + it->first + " is in progress...");
-            }
-            else {
-                sf::Socket::Status res = it->second->client->send(packet);
-                if(res != sf::Socket::Done) {
-                    //printf("RAFT: error sending packet to %s\n", addr.c_str());
-                    toRemove[addr] = it->second;
-                }
-                else {
-                    //printf("RAFT: Successfully sent message to %s\n", addr.c_str());
-                }
-            }
-            clientMutex.unlock();
+        if(it == clients.end()) {
+            sf::TcpSocket* socket = new sf::TcpSocket();
+            Sender* sender = new Sender(socket, addr, port, false, log);
+            sender->pushMessage(message);
+            clients[addr] = sender;
         }
         else {
-            sf::TcpSocket* socket = new sf::TcpSocket();
-            Sender* sender = new Sender(socket, addr, port);
-            clients[addr] = NULL;
-            clientMutex.unlock();
-
-            if(socket->connect(ipAddr, port, sf::seconds(3)) == sf::Socket::Done) {
-                clientMutex.lock();
-                clients[addr] = sender;
-                clientMutex.unlock();
-                //printf("RAFT: Raft connected to %s\n", addr.c_str());
-            }
-            else {
-                //log->printf(LOG_LEVEL_INFO, "RAFT: failed to connect to " + addr);
-                clientMutex.lock();
-                toRemove[addr] = sender;
-                clientMutex.unlock();
-            }
+            it->second->pushMessage(message);
         }
+        clientMutex.unlock();
     }
 
     std::vector<std::string> pullMessages() {
         std::vector<std::string> messageQueue;
 
         messageMutex.lock();
-        for(int i = messages.size() - 1; i >= 0; i--) {
+        for(int i = 0; i < messages.size(); i++) {
             messageQueue.push_back(messages[i]);
         }
         messages.clear();
@@ -145,7 +194,7 @@ private:
                     clientMutex.lock();
                     if(clients.find(addr) == clients.end()) {
                         //printf("RAFT: adding %s to client map\n", addr.c_str());
-                        clients[addr] = new Sender(client, addr, port);
+                        clients[addr] = new Sender(client, addr, port, true, log);
                     }
                     else {
                         //printf("RAFT: %s is an existing address\n", addr.c_str());
@@ -199,27 +248,23 @@ private:
 
             clientMutex.lock();
             for(auto it = clients.begin(); it != clients.end(); it++) {
-                std::string addr = it->first;
-                if(selectorSet.find(addr) == selectorSet.end()) {
-                    sf::TcpSocket* socket = it->second->client;
-                    if(socket) {
-                        selector.add(*socket);
-                        selectorSet.insert(addr);
+                if(it->second->isPoisoned()) {
+                    selectorSet.erase(it->first);
+                    selector.remove(*(it->second->client));
+                    clients.erase(it->first);
+                    delete it->second;
+                }
+            }
+
+            for(auto it = clients.begin(); it != clients.end(); it++) {
+                if(selectorSet.find(it->first) == selectorSet.end()) {
+                    if(it->second->isConnected()) {
+                        selector.add(*(it->second->client));
+                        selectorSet.insert(it->first);
                     }
                 }
             }
 
-            for(auto it = toRemove.begin(); it != toRemove.end(); it++) {
-                std::string addr = it->first;
-                sf::TcpSocket* client = it->second->client;
-
-                selectorSet.erase(addr);
-                selector.remove(*client);
-                clients.erase(addr);
-                toRemove.erase(addr);
-                
-                delete client;
-            }
             clientMutex.unlock();
         }
     }

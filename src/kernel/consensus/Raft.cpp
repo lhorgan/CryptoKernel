@@ -41,15 +41,17 @@ void CryptoKernel::Consensus::Raft::processQueue() {
 
     for(int i = 0; i < queue.size(); i++) {
         log->printf(LOG_LEVEL_INFO, std::to_string(term) + " THE DECODED MESSAGE: " + queue[i]);
-        Json::Value data = CryptoKernel::Storage::toJson(queue[i]);
-
-        // we accept votes from nodes with out of date term... for now**
-        if(data["rpc"] && data["sender"].asString() != pubKey) {
-            if(data["rpc"].asString() == "append_entries") {
-                handleAppendEntries(data);
-            }
-            else if(data["rpc"].asString() == "request_votes") {
-                handleRequestVotes(data);
+        Json::Value dataArr = CryptoKernel::Storage::toJson(queue[i]);
+        for(Json::Value::ArrayIndex j = 0; j < dataArr.size(); j++) {
+            Json::Value data = CryptoKernel::Storage::toJson(dataArr[j].asString());
+            // we accept votes from nodes with out of date term... for now**
+            if(data["rpc"] && data["sender"].asString() != pubKey) {
+                if(data["rpc"].asString() == "append_entries") {
+                    handleAppendEntries(data);
+                }
+                else if(data["rpc"].asString() == "request_votes") {
+                    handleRequestVotes(data);
+                }
             }
         }
     }
