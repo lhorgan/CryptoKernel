@@ -154,7 +154,7 @@ public:
     }
 
     ~RaftNet() {
-        //printf("RAFT: CLOSING RAFTNET!!!\n");
+        printf("RAFT: CLOSING RAFTNET!!!\n");
         running = false;
         listenThread->join();
         receiveThread->join();
@@ -190,14 +190,14 @@ private:
                 sf::TcpSocket* client = new sf::TcpSocket;
                 if(listener.accept(*client) == sf::Socket::Done) {
                     std::string addr = client->getRemoteAddress().toString();
-                    //printf("RAFT: Raft received incoming connection from %s\n", addr.c_str());
+                    printf("RAFT: Raft received incoming connection from %s\n", addr.c_str());
                     clientMutex.lock();
                     if(clients.find(addr) == clients.end()) {
-                        //printf("RAFT: adding %s to client map\n", addr.c_str());
+                        printf("RAFT: adding %s to client map\n", addr.c_str());
                         clients[addr] = new Sender(client, addr, port, true, log);
                     }
                     else {
-                        //printf("RAFT: %s is an existing address\n", addr.c_str());
+                        printf("RAFT: %s is an existing address\n", addr.c_str());
                         client->disconnect();
                         delete client;
                     }
@@ -229,7 +229,7 @@ private:
                         if(client->receive(packet) == sf::Socket::Done) {
                             std::string message;
                             packet >> message;
-                            //log->printf(LOG_LEVEL_INFO, "RAFT: Received packet " + message + " from " + it->first);
+                            log->printf(LOG_LEVEL_INFO, "RAFT: Received packet " + message + " from " + it->first);
 
                             messageMutex.lock();
                             messages.push_back(message);
@@ -249,7 +249,7 @@ private:
             clientMutex.lock();
             std::vector<std::string> toRemove;
             for(auto it = clients.begin(); it != clients.end(); it++) {
-                log->printf(LOG_LEVEL_INFO, "RAFT: assessing " + it->first);
+                //log->printf(LOG_LEVEL_INFO, "RAFT: assessing " + it->first);
                 if(it->second->isPoisoned()) {
                     log->printf(LOG_LEVEL_INFO, "RAFT: marking " + it->first + " for removal");
                     toRemove.push_back(it->first);
