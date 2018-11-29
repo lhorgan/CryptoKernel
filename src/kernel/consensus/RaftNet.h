@@ -25,6 +25,7 @@ public:
         running = false;
         this->connected = connected;
         this->log = log;
+        this->client = client;
 
         sendThread.reset(new std::thread(&Sender::sendFunc, this));
     }
