@@ -67,6 +67,9 @@ public:
                     poisoned = true;
                     poisonedMutex.lock();
                 }
+                else {
+                    log->printf(LOG_LEVEL_INFO, "Successfully sent message " + data.substr(10) + " to " + dest.toString());
+                }
             }
         }
     }
