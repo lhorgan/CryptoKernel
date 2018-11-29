@@ -249,11 +249,11 @@ private:
                             messageMutex.unlock();
                         }
                         else {
-                            toRemove[it->first] = it->second;
+                            //toRemove[it->first] = it->second;
                         }
                     }
                     else {
-                        toRemove[it->first] = it->second; // c1
+                        //toRemove[it->first] = it->second; // c1
                     }
                 }
                 clientMutex.unlock();
