@@ -214,9 +214,15 @@ private:
                         clients[addr] = new Sender(client, addr, port, true, log);
                     }
                     else {
-                        printf("RAFT: %s is an existing address\n", addr.c_str());
-                        client->disconnect();
-                        delete client;
+                        printf("RAFT: %s is an existing address, just noting that \n", addr.c_str());
+                        if(addr < publicAddress) {
+                            client->disconnect();
+                            delete client;
+                        }
+                        else {
+                            clients.erase(addr);
+                            clients[addr] = new Sender(client, addr, port, true, log);
+                        }
                     }
                     clientMutex.unlock();
                 }
