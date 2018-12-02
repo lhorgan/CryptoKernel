@@ -31,6 +31,7 @@ void CryptoKernel::Consensus::Raft::start() {
 bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* transaction,
                                                         CryptoKernel::Blockchain::block& block,
                                                         const CryptoKernel::Blockchain::dbBlock& previousBlock) {
+    
 }
 
 void CryptoKernel::Consensus::Raft::processQueue() {
@@ -128,15 +129,51 @@ void CryptoKernel::Consensus::Raft::handleTermDisparity(int requesterTerm) {
     }
 }
 
+void CryptoKernel::Consensus::Raft::generateRandomTx() {
+    std::set<CryptoKernel::Blockchain::dbOutput> outputs = blockchain->getUnspentOutputs(pubKey);
+    if(outputs.size() > 0) {
+        log->printf(LOG_LEVEL_INFO, "I have " + std::to_string(outputs.size()) + " unspent outputs to share.");
+        
+    }
+}
+
+void CryptoKernel::Consensus::Raft::createBlock() {
+    CryptoKernel::Blockchain::block Block = blockchain->generateVerifyingBlock(pubKey);
+    const std::set<CryptoKernel::Blockchain::transaction> blockTransactions = Block.getTransactions();
+    
+    /*for(auto it = blockTransactions.begin(); it != blockTransactions.end(); it++) {
+        if(queuedTransactions.find(it) == queuedTransactions.end()) { // this transaction is not "queued"
+            queuedTransactions.insert(*it);
+        }
+    }
+    for(auto it = queuedTransactions.begin(); it != queuedTransactions.end(); it++) {
+        if(blockTransactions.find(*it) == blockTransactions.end()) { // this transaction has evidently been confirmed
+            queuedTransactions.erase(it);
+        }
+    }*/
+
+    CryptoKernel::Blockchain::dbBlock previousBlock = blockchain->getBlockDB(Block.getPreviousBlockId().toString());
+    Json::Value consensusData = Block.getConsensusData();
+    consensusData["nonce"] = rand() % 10000000; // make this random**
+    Block.setConsensusData(consensusData);
+    blockchain->submitBlock(Block);
+}
+
 void CryptoKernel::Consensus::Raft::floater() {
     time_t t = std::time(0);
     uint64_t now = static_cast<uint64_t> (t);
 
+    int iteration = 0;
     while(running) {
         // this node is the leader
         if(leader) {
             log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader.");
-            sendAppendEntries();
+            sendAppendEntries(); // hearbeat
+            
+            if(iteration == 40) { // about once ever 2 seconds
+                createBlock();
+                iteration = 0;
+            }
         }
         else {
             unsigned long long currTime = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
@@ -145,7 +182,7 @@ void CryptoKernel::Consensus::Raft::floater() {
                 resetValues();
             }
             else {
-                printf("\n~~~~~~~\n\n");
+                log->printf(LOG_LEVEL_INFO, "\n~~~~~~~\n\n");
 
                 // time to elect a new leader
                 lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();

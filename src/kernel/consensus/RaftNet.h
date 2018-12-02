@@ -171,7 +171,6 @@ public:
     }
 
     ~RaftNet() {
-        //printf("RAFT: CLOSING RAFTNET!!!\n");
         running = false;
         listenThread->join();
         receiveThread->join();
@@ -207,14 +206,14 @@ private:
                 sf::TcpSocket* client = new sf::TcpSocket;
                 if(listener.accept(*client) == sf::Socket::Done) {
                     std::string addr = client->getRemoteAddress().toString();
-                    printf("RAFT: Raft received incoming connection from %s\n", addr.c_str());
+                    log->printf(LOG_LEVEL_INFO, "RAFT: Raft received incoming connection from " + addr);
                     clientMutex.lock();
                     if(clients.find(addr) == clients.end()) {
-                        printf("RAFT: adding %s to client map\n", addr.c_str());
+                        log->printf(LOG_LEVEL_INFO, "RAFT: adding " + addr + " to client map\n");
                         clients[addr] = new Sender(client, addr, port, true, log);
                     }
                     else {
-                        printf("RAFT: %s is an existing address, just noting that \n", addr.c_str());
+                        log->printf(LOG_LEVEL_INFO, "RAFT: "  + addr + " is an existing address, just noting that");
                         if(addr < publicAddress) {
                             client->disconnect();
                             delete client;

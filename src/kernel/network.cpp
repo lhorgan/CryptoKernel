@@ -671,7 +671,7 @@ void CryptoKernel::Network::changeScore(const std::string& url, const uint64_t s
             /*log->printf(LOG_LEVEL_WARN,
                         "Network(): Banning " + url + " for being above the ban score threshold");*/
             // Ban for 24 hours
-            banned.insert(url, static_cast<uint64_t>(std::time(nullptr)) + 24 * 60 * 60);
+            //banned.insert(url, static_cast<uint64_t>(std::time(nullptr)) + 24 * 60 * 60);
         }
         connected.at(url)->setInfo("disconnect", true);
     }

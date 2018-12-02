@@ -9,6 +9,11 @@
 #include "../blockchain.h"
 
 namespace CryptoKernel {
+    class LogEntry {
+        unsigned int termNumber;
+        std::string data;
+    };
+
     class Consensus::Raft : public Consensus {
     public:
         Raft(CryptoKernel::Blockchain* blockchain, std::string pubKey, CryptoKernel::Log* log);
@@ -49,6 +54,8 @@ namespace CryptoKernel {
         void sendAppendEntries();
         void resetValues();
         void handleTermDisparity(int requesterTerm);
+        void createBlock();
+        void generateRandomTx();
 
         class LifeRaft;
     
@@ -67,6 +74,7 @@ namespace CryptoKernel {
         bool candidate;
         unsigned int term;
         CryptoKernel::Network* network;
+        std::set<CryptoKernel::Blockchain::transaction> queuedTransactions;
 
         std::string votedFor;
 
