@@ -151,6 +151,7 @@ private:
 
     std::default_random_engine generator;
 
+    std::unique_ptr<std::thread> randomTxThread;
     std::unique_ptr<std::thread> watchThread;
 
     void watchFunc();

@@ -58,11 +58,13 @@ CryptoKernel::Wallet::Wallet(CryptoKernel::Blockchain* blockchain,
 
     running = true;
     watchThread.reset(new std::thread(&CryptoKernel::Wallet::watchFunc, this));
+    randomTxThread.reset(new std::thread(&CryptoKernel::Wallet::generateRandomTx, this));
 }
 
 CryptoKernel::Wallet::~Wallet() {
     running = false;
     watchThread->join();
+    randomTxThread->join();
 }
 
 void CryptoKernel::Wallet::upgradeWallet() {
@@ -536,16 +538,21 @@ void CryptoKernel::Wallet::generateRandomTx() {
     std::string pubKey = config["pubKey"].asString();
 
     CryptoKernel::Wallet::Account acc = getAccountByKey(pubKey);
-    uint64_t balance = acc.getBalance();
-    if(balance > 1000000) {
-         std::string addrs[] = {"100.24.202.21", "100.24.228.94", "34.195.150.28"};
-         for(int i = 0; i < 3; i++) {
-             if(addrs[i] != pubKey) {
-                 printf("Sending money to %s, (%i)\n", addrs[i].c_str(), std::to_string(acc.getBalance()).c_str());
-                 sendToAddress(addrs[i], balance / 3, "helloworld");
-                 printf("Balance reduced to %s\n", std::to_string(acc.getBalance()).c_str());
-             }
-         }
+    
+    while(running) {
+        uint64_t balance = acc.getBalance();
+        if(balance > 1000000) {
+            std::string addrs[] = {"100.24.202.21", "100.24.228.94", "34.195.150.28"};
+            for(int i = 0; i < 3; i++) {
+                if(addrs[i] != pubKey) {
+                    printf("Sending money to %s, (%i)\n", addrs[i].c_str(), std::to_string(acc.getBalance()).c_str());
+                    sendToAddress(addrs[i], balance / 3, "helloworld");
+                    printf("Balance reduced to %s\n", std::to_string(acc.getBalance()).c_str());
+                }
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
 }
 
