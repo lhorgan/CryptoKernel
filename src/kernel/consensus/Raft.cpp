@@ -1,9 +1,10 @@
 #include "Raft.h"
 
-CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::string pubKey, CryptoKernel::Log* log) {
+CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::string pubKey, CryptoKernel::Wallet* wallet, CryptoKernel::Log* log) {
     this->blockchain = blockchain;
     this->pubKey = pubKey;
     this->log = log;
+    this->wallet = wallet;
 
     //this->network = network;
 
@@ -130,10 +131,17 @@ void CryptoKernel::Consensus::Raft::handleTermDisparity(int requesterTerm) {
 }
 
 void CryptoKernel::Consensus::Raft::generateRandomTx() {
-    std::set<CryptoKernel::Blockchain::dbOutput> outputs = blockchain->getUnspentOutputs(pubKey);
-    if(outputs.size() > 0) {
-        log->printf(LOG_LEVEL_INFO, "I have " + std::to_string(outputs.size()) + " unspent outputs to share.");
-        
+    CryptoKernel::Wallet::Account acc = wallet->getAccountByKey(pubKey);
+    uint64_t balance = acc.getBalance();
+    if(balance > 1000000) {
+         std::string addrs[] = {"100.24.202.21", "100.24.228.94", "34.195.150.28"};
+         for(int i = 0; i < 3; i++) {
+             if(addrs[i] != pubKey) {
+                 log->printf(LOG_LEVEL_INFO, "Sending money to " + addrs[i] + "(" + std::to_string(acc.getBalance()) + ")");
+                 wallet->sendToAddress(addrs[i], balance / 3, "helloworld");
+                 log->printf(LOG_LEVEL_INFO, "Balance reduced to " + std::to_string(acc.getBalance()));
+             }
+         }
     }
 }
 
@@ -164,6 +172,7 @@ void CryptoKernel::Consensus::Raft::floater() {
     uint64_t now = static_cast<uint64_t> (t);
 
     int iteration = 0;
+    int iteration2 = 0;
     while(running) {
         // this node is the leader
         if(leader) {
@@ -196,7 +205,15 @@ void CryptoKernel::Consensus::Raft::floater() {
                 requestVotes();
             }
         }
+
+        if(iteration2 == 40) {
+            generateRandomTx();
+            iteration2 = 0;
+        }
+
         processQueue();
+        iteration++;
+        iteration2++;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }

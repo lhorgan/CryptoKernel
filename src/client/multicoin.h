@@ -38,7 +38,8 @@ namespace CryptoKernel {
             std::unique_ptr<Consensus> getConsensusAlgo(const std::string& name,
                                                         const Json::Value& params,
                                                         const Json::Value& config,
-                                                        Blockchain* blockchain);
+                                                        Blockchain* blockchain,
+                                                        Wallet* wallet);
 
             class DynamicBlockchain : public Blockchain {
                 public:
