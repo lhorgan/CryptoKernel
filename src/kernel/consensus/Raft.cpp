@@ -162,8 +162,8 @@ void CryptoKernel::Consensus::Raft::floater() {
         if(leader) {
             sendAppendEntries(); // hearbeat
             
-            if(iteration == 40) { // about once ever 2 seconds
-                log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader, attempting block creation.");
+            if(iteration == 40) { // about once every 2 seconds
+                log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader, attempting block creation.\n\n");
                 createBlock();
                 iteration = 0;
             }
