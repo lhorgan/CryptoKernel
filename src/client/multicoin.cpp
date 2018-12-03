@@ -32,12 +32,6 @@ CryptoKernel::MulticoinLoader::MulticoinLoader(const std::string& configFile,
                                                         coinbaseOwnerFunc,
                                                         subsidyFunc));
 
-        newCoin->consensusAlgo = getConsensusAlgo(coin["consensus"]["type"].asString(),
-                                                  coin["consensus"]["params"],
-                                                  config,
-                                                  newCoin->blockchain.get(),
-                                                  newCoin->wallet.get());
-
         newCoin->blockchain->loadChain(newCoin->consensusAlgo.get(),
                                       coin["genesisblock"].asString());
 
@@ -53,6 +47,12 @@ CryptoKernel::MulticoinLoader::MulticoinLoader(const std::string& configFile,
                                             log,
                                             coin["walletdb"].asString()));
         }
+
+        newCoin->consensusAlgo = getConsensusAlgo(coin["consensus"]["type"].asString(),
+                                                  coin["consensus"]["params"],
+                                                  config,
+                                                  newCoin->blockchain.get(),
+                                                  newCoin->wallet.get());
 
         newCoin->httpserver.reset(new jsonrpc::HttpServerLocal(coin["rpcport"].asUInt(),
                                   config["rpcuser"].asString(),
