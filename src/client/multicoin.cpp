@@ -32,9 +32,6 @@ CryptoKernel::MulticoinLoader::MulticoinLoader(const std::string& configFile,
                                                         coinbaseOwnerFunc,
                                                         subsidyFunc));
 
-        newCoin->blockchain->loadChain(newCoin->consensusAlgo.get(),
-                                      coin["genesisblock"].asString());
-
         newCoin->network.reset(new Network(log, newCoin->blockchain.get(),
                                            coin["port"].asUInt(),
                                            coin["peerdb"].asString()));
@@ -51,6 +48,9 @@ CryptoKernel::MulticoinLoader::MulticoinLoader(const std::string& configFile,
                                                   config,
                                                   newCoin->blockchain.get(),
                                                   newCoin->wallet.get());
+
+        newCoin->blockchain->loadChain(newCoin->consensusAlgo.get(),
+                                      coin["genesisblock"].asString());
 
         newCoin->consensusAlgo->start();
 
