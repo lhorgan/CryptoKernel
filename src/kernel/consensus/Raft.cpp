@@ -31,7 +31,7 @@ void CryptoKernel::Consensus::Raft::start() {
 bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* transaction,
                                                         CryptoKernel::Blockchain::block& block,
                                                         const CryptoKernel::Blockchain::dbBlock& previousBlock) {
-    
+    return true;
 }
 
 void CryptoKernel::Consensus::Raft::processQueue() {
@@ -160,7 +160,7 @@ void CryptoKernel::Consensus::Raft::floater() {
         // this node is the leader
         if(leader) {
             sendAppendEntries(); // hearbeat
-            log->printf(LOG_LEVEL_INFO, "Leader here, sending heartbeat " + std::to_string(iteration));
+            l//og->printf(LOG_LEVEL_INFO, "Leader here, sending heartbeat " + std::to_string(iteration));
             if(iteration == 40) { // about once every 2 seconds
                 log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader, attempting block creation.\n\n");
                 createBlock();
