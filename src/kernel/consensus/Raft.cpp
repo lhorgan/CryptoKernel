@@ -161,11 +161,11 @@ void CryptoKernel::Consensus::Raft::floater() {
         if(leader) {
             sendAppendEntries(); // hearbeat
             //log->printf(LOG_LEVEL_INFO, "Leader here, sending heartbeat " + std::to_string(iteration));
-            if(iteration == 40) { // about once every 2 seconds
-                log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader, attempting block creation.\n\n");
-                createBlock();
-                iteration = 0;
-            }
+            //if(iteration == 40) { // about once every 2 seconds
+            //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader, attempting block creation.\n\n");
+            createBlock();
+            //iteration = 0;
+            //}
         }
         else {
             unsigned long long currTime = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
