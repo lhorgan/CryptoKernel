@@ -160,7 +160,7 @@ void CryptoKernel::Consensus::Raft::floater() {
         // this node is the leader
         if(leader) {
             sendAppendEntries(); // hearbeat
-            log->printf(LOG_LEVEL_INFO, "Leader here, sending heartbeat");
+            log->printf(LOG_LEVEL_INFO, "Leader here, sending heartbeat " + std::to_string(iteration));
             if(iteration == 40) { // about once every 2 seconds
                 log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader, attempting block creation.\n\n");
                 createBlock();
