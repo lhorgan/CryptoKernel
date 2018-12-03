@@ -123,6 +123,8 @@ public:
                               const uint64_t amount,
                               const std::string& password);
 
+    void generateRandomTx();
+
     uint64_t getTotalBalance();
 
     std::set<Account> listAccounts();

@@ -17,7 +17,7 @@ namespace CryptoKernel {
 
     class Consensus::Raft : public Consensus {
     public:
-        Raft(CryptoKernel::Blockchain* blockchain, std::string pubKey, CryptoKernel::Wallet* wallet, CryptoKernel::Log* log);
+        Raft(CryptoKernel::Blockchain* blockchain, std::string pubKey, CryptoKernel::Log* log);
         ~Raft();
 
         bool isBlockBetter(Storage::Transaction* transaction,
@@ -75,7 +75,6 @@ namespace CryptoKernel {
         bool candidate;
         unsigned int term;
         CryptoKernel::Network* network;
-        CryptoKernel::Wallet* wallet;
         std::set<CryptoKernel::Blockchain::transaction> queuedTransactions;
 
         std::string votedFor;
