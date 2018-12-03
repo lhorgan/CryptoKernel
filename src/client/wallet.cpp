@@ -541,12 +541,12 @@ void CryptoKernel::Wallet::generateRandomTx() {
     
     while(running) {
         uint64_t balance = acc.getBalance();
-        if(balance > 1000000) {
+        if(balance > 20000) {
             std::string addrs[] = {"100.24.202.21", "100.24.228.94", "34.195.150.28"};
             for(int i = 0; i < 3; i++) {
                 if(addrs[i] != pubKey) {
                     printf("Sending money to %s, (%i)\n", addrs[i].c_str(), std::to_string(acc.getBalance()).c_str());
-                    sendToAddress(addrs[i], balance / 3, "helloworld");
+                    sendToAddress(addrs[i], balance / 5, "helloworld");
                     printf("Balance reduced to %s\n", std::to_string(acc.getBalance()).c_str());
                 }
             }
