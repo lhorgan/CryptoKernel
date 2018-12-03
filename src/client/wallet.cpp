@@ -536,13 +536,16 @@ void CryptoKernel::Wallet::generateRandomTx() {
     t.close();
 
     std::string pubKey = config["pubKey"].asString();
+    log->printf(LOG_LEVEL_INFO, "Starting random tx thread with " + pubKey);
 
     CryptoKernel::Wallet::Account acc = getAccountByKey(pubKey);
     
     while(running) {
         uint64_t balance = acc.getBalance();
         if(balance > 20000) {
-            std::string addrs[] = {"100.24.202.21", "100.24.228.94", "34.195.150.28"};
+            std::string addrs[] = {"BMYM8pt+j1Ry6czNXuVztQD0M2TTGct81AY5P5LmfIiafV+8kS7mawtCsJFThJ8aVyWdTRfwn/cIvfvq6YYEEFw=", 
+                                   "BNJyw67u6D4aaV5ZybqD5gODV5iSXGmOQ/t1ZyS59q9g9+PuVO8H+Gh5TfX/+4vsjZHOtQNJanRd5Uqe/EggPH8=", 
+                                   "BCNl56/UKNlAbSo61VbzSJZKTkipLYJhfXmxDXzs5E4Sc9yoFuGDHprZHsMPI1qbTV9CIzSPrKU2vWHYMRQhByM="};
             for(int i = 0; i < 3; i++) {
                 if(addrs[i] != pubKey) {
                     printf("Sending money to %s, (%i)\n", addrs[i].c_str(), std::to_string(acc.getBalance()).c_str());

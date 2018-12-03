@@ -146,12 +146,12 @@ public:
         if(it == clients.end()) {
             sf::TcpSocket* socket = new sf::TcpSocket();
             Sender* sender = new Sender(socket, addr, port, false, log);
-            log->printf(LOG_LEVEL_INFO, "a) Pushing message to " + addr + ": " + message.substr(0, 10));
+            //log->printf(LOG_LEVEL_INFO, "a) Pushing message to " + addr + ": " + message.substr(0, 10));
             sender->pushMessage(message);
             clients[addr] = sender;
         }
         else {
-            log->printf(LOG_LEVEL_INFO, "b) Pushing message to " + addr + ": " + message.substr(0, 10));
+            //log->printf(LOG_LEVEL_INFO, "b) Pushing message to " + addr + ": " + message.substr(0, 10));
             it->second->pushMessage(message);
         }
         clientMutex.unlock();
