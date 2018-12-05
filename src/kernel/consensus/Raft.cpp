@@ -252,12 +252,15 @@ void CryptoKernel::Consensus::Raft::createBlock() {
     consensusData["nonce"] = rand() % 10000000; // make this random**
     consensusData["term"] = termCopy;
     consensusData["index"] = entryLog.size() - 1;
+    entryLog.push_back(termCopy);
+    int entryLogSize = entryLog.size();
     logEntryMutex.unlock();
     Block.setConsensusData(consensusData);
     bool res = std::get<0>(blockchain->submitBlock(Block));
-    if(res) {
+    if(!res) {
         logEntryMutex.lock();
-        entryLog.push_back(termCopy);
+        log->printf(LOG_LEVEL_INFO, "Couldn't confirm block, rolling back.");
+        entryLog.erase(entryLog.begin() + entryLogSize - 1);
         logEntryMutex.unlock();
     }
 }
