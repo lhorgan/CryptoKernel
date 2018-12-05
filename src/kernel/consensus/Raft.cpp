@@ -28,11 +28,11 @@ CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::s
 }
 
 void CryptoKernel::Consensus::Raft::generateEntryLog() {
-    uint64_t currentHeight = blockchain->getBlockDB("tip").getHeight();
-    log->printf(LOG_LEVEL_INFO, "CURRENT HEIGHT " + std::to_string(currentHeight));
     entryLog.push_back(-1);
 
     try {
+        uint64_t currentHeight = blockchain->getBlockDB("tip").getHeight();
+        log->printf(LOG_LEVEL_INFO, "CURRENT HEIGHT " + std::to_string(currentHeight));
         for(int i = 2; i <= currentHeight; i++) {
             int term = blockchain->getBlockByHeight(i).getConsensusData()["term"].isInt();
             entryLog.push_back(term);
