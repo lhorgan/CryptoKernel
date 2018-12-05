@@ -5,6 +5,13 @@ CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::s
     this->pubKey = pubKey;
     this->log = log;
 
+    Host* host1 = new Host("100.24.202.21", 0, 0);
+    Host* host2 = new Host("100.24.228.94", 0, 0);
+    Host* host3 = new Host("34.195.150.28", 0, 0);
+    hosts["BMYM8pt+j1Ry6czNXuVztQD0M2TTGct81AY5P5LmfIiafV+8kS7mawtCsJFThJ8aVyWdTRfwn/cIvfvq6YYEEFw="] = host1;
+    hosts["BNJyw67u6D4aaV5ZybqD5gODV5iSXGmOQ/t1ZyS59q9g9+PuVO8H+Gh5TfX/+4vsjZHOtQNJanRd5Uqe/EggPH8="] = host2;
+    hosts["BCNl56/UKNlAbSo61VbzSJZKTkipLYJhfXmxDXzs5E4Sc9yoFuGDHprZHsMPI1qbTV9CIzSPrKU2vWHYMRQhByM="] = host3;
+
     this->generateEntryLog(); // set up the entry log
 
     this->raftNet = new RaftNet(log);
@@ -116,7 +123,13 @@ void CryptoKernel::Consensus::Raft::handleRequestVotes(Json::Value& data) {
             if(data["vote"].asBool()) { // the vote was a yes
                 supporters.insert(data["sender"].asString());
                 if(supporters.size() > networkSize / 2) { // we have a simple majority of voters
-                    //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I have been elected leader");
+                    log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I have been elected leader");
+                    hostMutex.lock();
+                    for(auto it = hosts.begin(); it != hosts.end(); it++) {
+                        it->second->commitIndex = 0; // todo
+                        it->second->lastIndex = entryLog.size() - 1;
+                    }
+                    hostMutex.unlock();
                     leader = true; // I am the captain now!
                 }
             }
@@ -319,31 +332,33 @@ void CryptoKernel::Consensus::Raft::sendAppendEntries() {
     dummyData["term"] = term;
     dummyData["commitIndex"] = commitIndex;
 
-    std::map<std::string, Host> hostsCopy = cacheHosts();
+    std::map<std::string, Host*> hostsCopy = cacheHosts();
 
     for(auto it = hostsCopy.begin(); it != hostsCopy.end(); it++) {
         dummyData["log"] = {};
 
         logEntryMutex.lock();
-        for(int i = 0; i < it->second.lastIndex; i++) {
+        for(int i = 0; i < it->second->lastIndex; i++) {
             dummyData["log"].append(entryLog[i]);
         }
         logEntryMutex.unlock();
 
-        dummyData["prevLogIndex"] = it->second.lastIndex;
+        dummyData["prevIndex"] = it->second->lastIndex;
         logEntryMutex.lock();
-        dummyData["prevLogTerm"] = entryLog[it->second.lastIndex];
+        dummyData["prevTerm"] = entryLog[it->second->lastIndex];
         logEntryMutex.unlock();
-        this->raftNet->send(it->second.ip, 1701, CryptoKernel::Storage::toString(dummyData));
+        this->raftNet->send(it->second->ip, 1701, CryptoKernel::Storage::toString(dummyData));
     }
+
+    hostsCopy.clear();
 }
 
-std::map<std::string, CryptoKernel::Host> CryptoKernel::Consensus::Raft::cacheHosts() {
-    std::map<std::string, Host> hostsCopy;
+std::map<std::string, CryptoKernel::Host*> CryptoKernel::Consensus::Raft::cacheHosts() {
+    std::map<std::string, CryptoKernel::Host*> hostsCopy;
 
     hostMutex.lock();
     for(auto it = hosts.begin(); it != hosts.end(); it++) {
-        hostsCopy[it->first] = it->second->copy();
+        hostsCopy.at(it->first) = new Host(*(it->second));
     }
     hostMutex.unlock();
 

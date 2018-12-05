@@ -18,16 +18,24 @@ namespace CryptoKernel {
     class Host {
     public:
         std::string ip;
-        //int lastTerm;
         int lastIndex;
         int commitIndex;
     
     public:
-        Host copy() {
-            Host copyHost;
-            copyHost.ip = ip;
-            copyHost.lastIndex = lastIndex;
-            copyHost.commitIndex = commitIndex;
+        Host(std::string ip, int lastIndex, int commitIndex) {
+            this->ip = ip;
+            this->lastIndex = lastIndex;
+            this->commitIndex = commitIndex;
+        }
+
+        Host(const Host& other) {
+            this->ip = other.ip;
+            this->lastIndex = other.lastIndex;
+            this->commitIndex = other.commitIndex;
+        }
+
+        ~Host() {
+
         }
     };
 
@@ -73,7 +81,7 @@ namespace CryptoKernel {
         void handleTermDisparity(int requesterTerm);
         void createBlock();
         void generateRandomTx();
-        std::map<std::string, Host> cacheHosts();
+        std::map<std::string, Host*> cacheHosts();
 
         class LifeRaft;
     
