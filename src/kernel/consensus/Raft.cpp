@@ -363,7 +363,7 @@ std::map<std::string, CryptoKernel::Host*> CryptoKernel::Consensus::Raft::cacheH
     log->printf(LOG_LEVEL_INFO, "caching hosts");
     hostMutex.lock();
     for(auto it = hosts.begin(); it != hosts.end(); it++) {
-        hostsCopy[it->first] = new Host(*(it->second));
+        hostsCopy[it->first] = new Host(it->second->ip, it->second->lastIndex, it->second->commitIndex);
     }
     hostMutex.unlock();
     log->printf(LOG_LEVEL_INFO, "cached hosts");
