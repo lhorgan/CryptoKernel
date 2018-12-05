@@ -64,7 +64,7 @@ CryptoKernel::Wallet::Wallet(CryptoKernel::Blockchain* blockchain,
 CryptoKernel::Wallet::~Wallet() {
     running = false;
     watchThread->join();
-    randomTxThread->join();
+    //randomTxThread->join();
 }
 
 void CryptoKernel::Wallet::upgradeWallet() {

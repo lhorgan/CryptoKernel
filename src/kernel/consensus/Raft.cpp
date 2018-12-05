@@ -70,7 +70,8 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
         prevBlockTerm = -1; // special case for genesis block
     }
 
-    //log->printf(LOG_LEVEL_INFO, "CONSENSUS DATA: " + std::to_string(blockTerm) + ", " + std::to_string(blockIndex) + "," + std::to_string(prevBlockTerm) + ", " + std::to_string(prevBlockIndex));
+    log->printf(LOG_LEVEL_INFO, "CONSENSUS DATA: " + std::to_string(blockTerm) + ", " + std::to_string(blockIndex) + "," + std::to_string(prevBlockTerm) + ", " + std::to_string(prevBlockIndex));
+    log->printf(LOG_LEVEL_INFO, "THE LOG: " + printEntryLog());
 
     bool result = false;
     logEntryMutex.lock();
