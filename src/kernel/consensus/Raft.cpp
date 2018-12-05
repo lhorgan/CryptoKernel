@@ -32,6 +32,7 @@ void CryptoKernel::Consensus::Raft::generateEntryLog() {
     while(!found && running) {
         try {
             uint64_t currentHeight = blockchain->getBlockDB("tip").getHeight();
+            log->printf(LOG_LEVEL_INFO, "CURRENT HEIGHT " + std::to_string(currentHeight));
             for(int i = 1; i <= currentHeight; i++) {
                 if(i == 1) {
                     entryLog.push_back(-1);
@@ -368,7 +369,7 @@ void CryptoKernel::Consensus::Raft::sendAppendEntries() {
         log->printf(LOG_LEVEL_INFO, std::to_string(term) + "c");
 
         int lengthThingie = it->second->nextIndex - 1 < 0 ? 0 : it->second->nextIndex - 1;
-        log->printf(LOG_LEVEL_INFO, "The length thingie is " + std::to_string(lengthThingie));
+        log->printf(LOG_LEVEL_INFO, "The length thingie is " + std::to_string(lengthThingie) + " and the size of the entry log is " + std::to_string(entryLog.size()));
         dummyData["prevIndex"] = lengthThingie;
         dummyData["prevTerm"] = entryLog[lengthThingie];
         logEntryMutex.unlock();
