@@ -132,7 +132,7 @@ void CryptoKernel::Consensus::Raft::handleRequestVotes(Json::Value& data) {
                     hostMutex.lock();
                     for(auto it = hosts.begin(); it != hosts.end(); it++) {
                         it->second->commitIndex = 0; // todo
-                        it->second->lastIndex = entryLog.size() - 1;
+                        it->second->lastIndex = entryLog.size();
                     }
                     hostMutex.unlock();
                     leader = true; // I am the captain now!
@@ -347,14 +347,19 @@ void CryptoKernel::Consensus::Raft::sendAppendEntries() {
         log->printf(LOG_LEVEL_INFO, std::to_string(term) + "b");
 
         logEntryMutex.lock();
-        for(int i = 0; i < it->second->lastIndex; i++) {
+        for(int i = it->second->lastIndex; i < entryLog.size(); i++) {
             dummyData["log"].append(entryLog[i]);
         }
 
         log->printf(LOG_LEVEL_INFO, std::to_string(term) + "c");
 
-        dummyData["prevIndex"] = it->second->lastIndex;
-        dummyData["prevTerm"] = entryLog[it->second->lastIndex];
+        dummyData["prevIndex"] = it->second->lastIndex - 1;
+        if(entryLog.size() > 0) {
+            dummyData["prevTerm"] = entryLog[it->second->lastIndex - 1];
+        }
+        else {
+            dummyData["prevTerm"] = 0;
+        }
         logEntryMutex.unlock();
 
         log->printf(LOG_LEVEL_INFO, std::to_string(term) + "d");
