@@ -66,6 +66,9 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
     Json::Value prevBlockData = previousBlock.getConsensusData();
     int prevBlockTerm = prevBlockData["term"].asInt();
     int prevBlockIndex = prevBlockData["index"].asInt();
+    if(prevBlockIndex == 0) {
+        prevBlockTerm = -1; // special case for genesis block
+    }
 
     log->printf(LOG_LEVEL_INFO, "CONSENSUS DATA: " + std::to_string(blockTerm) + ", " + std::to_string(blockIndex) + "," + std::to_string(prevBlockTerm) + ", " + std::to_string(prevBlockIndex));
 
