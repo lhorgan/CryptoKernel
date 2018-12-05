@@ -158,10 +158,12 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
             currentLeader = data["sender"].asString();
             lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
 
-            
+            log->printf(LOG_LEVEL_INFO, std::to_string(term) + "Alive 1");
             int prevTerm = data["prevTerm"].asInt();
+            log->printf(LOG_LEVEL_INFO, std::to_string(term) + "Alive 2");
             int prevIndex = data["prevIndex"].asInt();
 
+            log->printf(LOG_LEVEL_INFO, std::to_string(term) + "Alive 3");
             log->printf(LOG_LEVEL_INFO, "PREV TERM, PREV INDEX: (" + std::to_string(prevTerm) + " " + std::to_string(prevIndex) + ")");
             
             // bring our logs in sync
