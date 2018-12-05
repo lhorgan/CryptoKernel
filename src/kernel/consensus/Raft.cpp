@@ -67,6 +67,8 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
     int prevBlockTerm = prevBlockData["term"].asInt();
     int prevBlockIndex = prevBlockData["index"].asInt();
 
+    log->printf(LOG_LEVEL_INFO, "CONSENSUS DATA: " + std::to_string(blockTerm) + ", " + std::to_string(blockIndex) + "," + std::to_string(prevBlockTerm) + ", " + std::to_string(prevBlockIndex));
+
     bool result = false;
     logEntryMutex.lock();
     if(blockIndex == prevBlockIndex + 1) {
