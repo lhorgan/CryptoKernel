@@ -367,6 +367,7 @@ void CryptoKernel::Consensus::Raft::sendAppendEntries() {
 
         log->printf(LOG_LEVEL_INFO, std::to_string(term) + "c");
 
+        log->printf(LOG_LEVEL_INFO, "The length thingie is " + std::to_string(->second->nextIndex - 1));
         dummyData["prevIndex"] = it->second->nextIndex - 1 < 0 ? 0 : it->second->nextIndex - 1;
         dummyData["prevTerm"] = entryLog[it->second->nextIndex - 1];
         logEntryMutex.unlock();
