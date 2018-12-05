@@ -18,19 +18,19 @@ namespace CryptoKernel {
     class Host {
     public:
         std::string ip;
-        int lastIndex;
+        int nextIndex; // next index to push
         int commitIndex;
     
     public:
         Host(std::string ip, int lastIndex, int commitIndex) {
             this->ip = ip;
-            this->lastIndex = lastIndex;
+            this->nextIndex = lastIndex;
             this->commitIndex = commitIndex;
         }
 
         Host(const Host& other) {
             this->ip = other.ip;
-            this->lastIndex = other.lastIndex;
+            this->nextIndex = other.nextIndex;
             this->commitIndex = other.commitIndex;
         }
 

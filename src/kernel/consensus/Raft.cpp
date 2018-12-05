@@ -31,8 +31,13 @@ void CryptoKernel::Consensus::Raft::generateEntryLog() {
     //try {
         uint64_t currentHeight = blockchain->getBlockDB("tip").getHeight();
         for(int i = 1; i <= currentHeight; i++) {
-            int term = blockchain->getBlockByHeight(i).getConsensusData()["term"].isInt();
-            entryLog.push_back(term);
+            if(i == 1) {
+                entryLog.push_back(-1);
+            }
+            else {
+                int term = blockchain->getBlockByHeight(i).getConsensusData()["term"].isInt();
+                entryLog.push_back(term);
+            }
         }
     /*} catch(const Blockchain::NotFoundException& e) {
         log->printf(LOG_LEVEL_INFO, "grk, blockchain exception");
@@ -132,7 +137,7 @@ void CryptoKernel::Consensus::Raft::handleRequestVotes(Json::Value& data) {
                     hostMutex.lock();
                     for(auto it = hosts.begin(); it != hosts.end(); it++) {
                         it->second->commitIndex = 0; // todo
-                        it->second->lastIndex = entryLog.size();
+                        it->second->nextIndex = entryLog.size();
                     }
                     hostMutex.unlock();
                     leader = true; // I am the captain now!
@@ -161,11 +166,7 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
             
             // bring our logs in sync
             logEntryMutex.lock();
-            if(prevIndex < 0) {
-                log->printf(LOG_LEVEL_INFO, "Accepting, cuz prevIndex < 0.");
-                success = true;
-            }
-            else if(prevIndex < entryLog.size()) {
+            if(prevIndex < entryLog.size()) {
                 log->printf(LOG_LEVEL_INFO, std::to_string(prevIndex) + " is less than " + std::to_string(entryLog.size()));
                 if(entryLog[prevIndex] == prevTerm) {
                     log->printf(LOG_LEVEL_INFO, "Leader says term at index " + std::to_string(prevTerm) + ", and I agree.  Appending new log entries.");
@@ -198,7 +199,7 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
             log->printf(LOG_LEVEL_INFO, "Follower responded that it couldn't accept log, decrementing lastIndex");
             hostMutex.lock();
             std::string sender = data["sender"].asString();
-            hosts[sender]->lastIndex--;
+            hosts[sender]->nextIndex--;
             hostMutex.unlock();
         }
         handleTermDisparity(requesterTerm);
@@ -355,19 +356,14 @@ void CryptoKernel::Consensus::Raft::sendAppendEntries() {
         log->printf(LOG_LEVEL_INFO, std::to_string(term) + "b");
 
         logEntryMutex.lock();
-        for(int i = it->second->lastIndex; i < entryLog.size(); i++) {
+        for(int i = it->second->nextIndex; i < entryLog.size(); i++) {
             dummyData["log"].append(entryLog[i]);
         }
 
         log->printf(LOG_LEVEL_INFO, std::to_string(term) + "c");
 
-        dummyData["prevIndex"] = it->second->lastIndex - 1;
-        if(entryLog.size() > 0) {
-            dummyData["prevTerm"] = entryLog[it->second->lastIndex - 1];
-        }
-        else {
-            dummyData["prevTerm"] = 0;
-        }
+        dummyData["prevIndex"] = it->second->nextIndex - 1 < 0 ? 0 : it->second->nextIndex - 1;
+        dummyData["prevTerm"] = entryLog[it->second->nextIndex - 1];
         logEntryMutex.unlock();
 
         log->printf(LOG_LEVEL_INFO, std::to_string(term) + "d");
@@ -387,7 +383,7 @@ std::map<std::string, CryptoKernel::Host*> CryptoKernel::Consensus::Raft::cacheH
     log->printf(LOG_LEVEL_INFO, "caching hosts");
     hostMutex.lock();
     for(auto it = hosts.begin(); it != hosts.end(); it++) {
-        hostsCopy[it->first] = new Host(it->second->ip, it->second->lastIndex, it->second->commitIndex);
+        hostsCopy[it->first] = new Host(it->second->ip, it->second->nextIndex, it->second->commitIndex);
     }
     hostMutex.unlock();
     log->printf(LOG_LEVEL_INFO, "cached hosts");
