@@ -336,9 +336,10 @@ void CryptoKernel::Consensus::Raft::sendAppendEntries() {
     dummyData["term"] = term;
     dummyData["commitIndex"] = commitIndex;
 
-    std::map<std::string, Host*> hostsCopy = cacheHosts();
+    //std::map<std::string, Host*> hostsCopy = cacheHosts();
 
-    for(auto it = hostsCopy.begin(); it != hostsCopy.end(); it++) {
+    hostMutex.lock();
+    for(auto it = hosts.begin(); it != hosts.end(); it++) {
         dummyData["log"] = {};
 
         logEntryMutex.lock();
@@ -353,8 +354,9 @@ void CryptoKernel::Consensus::Raft::sendAppendEntries() {
         logEntryMutex.unlock();
         this->raftNet->send(it->second->ip, 1701, CryptoKernel::Storage::toString(dummyData));
     }
+    hostMutex.unlock();
 
-    hostsCopy.clear();
+    //hostsCopy.clear();
 }
 
 std::map<std::string, CryptoKernel::Host*> CryptoKernel::Consensus::Raft::cacheHosts() {
