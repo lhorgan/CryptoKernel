@@ -249,11 +249,11 @@ void CryptoKernel::Consensus::Raft::createBlock() {
 
     logEntryMutex.lock();
     int termCopy = term;
-    consensusData["nonce"] = rand() % 10000000; // make this random**
-    consensusData["term"] = termCopy;
-    consensusData["index"] = entryLog.size() - 1;
     entryLog.push_back(termCopy);
     int entryLogSize = entryLog.size();
+    consensusData["nonce"] = rand() % 10000000; // make this random**
+    consensusData["term"] = termCopy;
+    consensusData["index"] = entryLogSize - 1;
     logEntryMutex.unlock();
     Block.setConsensusData(consensusData);
     bool res = std::get<0>(blockchain->submitBlock(Block));
