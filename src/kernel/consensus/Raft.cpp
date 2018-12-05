@@ -28,20 +28,24 @@ CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::s
 }
 
 void CryptoKernel::Consensus::Raft::generateEntryLog() {
-    //try {
-        uint64_t currentHeight = blockchain->getBlockDB("tip").getHeight();
-        for(int i = 1; i <= currentHeight; i++) {
-            if(i == 1) {
-                entryLog.push_back(-1);
+    bool found = false;
+    while(!found) {
+        try {
+            uint64_t currentHeight = blockchain->getBlockDB("tip").getHeight();
+            for(int i = 1; i <= currentHeight; i++) {
+                if(i == 1) {
+                    entryLog.push_back(-1);
+                }
+                else {
+                    int term = blockchain->getBlockByHeight(i).getConsensusData()["term"].isInt();
+                    entryLog.push_back(term);
+                }
             }
-            else {
-                int term = blockchain->getBlockByHeight(i).getConsensusData()["term"].isInt();
-                entryLog.push_back(term);
-            }
+            found = true;
+        } catch(const Blockchain::NotFoundException& e) {
+            log->printf(LOG_LEVEL_INFO, "grk, blockchain exception");
         }
-    /*} catch(const Blockchain::NotFoundException& e) {
-        log->printf(LOG_LEVEL_INFO, "grk, blockchain exception");
-    }*/
+    }
 }
 
 CryptoKernel::Consensus::Raft::~Raft() {
