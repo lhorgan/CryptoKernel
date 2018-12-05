@@ -211,6 +211,15 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
             hosts[sender]->nextIndex--;
             hostMutex.unlock();
         }
+        else {
+            hostMutex.lock();
+            std::string sender = data["sender"].asString();
+            hosts[sender]->nextIndex++;
+            if(hosts[sender]->nextIndex > entryLog.size()) {
+                hosts[sender]->nextIndex = entryLog.size();
+            }
+            hostMutex.unlock();
+        }
         handleTermDisparity(requesterTerm);
     }
 }
