@@ -58,7 +58,7 @@ CryptoKernel::Wallet::Wallet(CryptoKernel::Blockchain* blockchain,
 
     running = true;
     watchThread.reset(new std::thread(&CryptoKernel::Wallet::watchFunc, this));
-    randomTxThread.reset(new std::thread(&CryptoKernel::Wallet::generateRandomTx, this));
+    //randomTxThread.reset(new std::thread(&CryptoKernel::Wallet::generateRandomTx, this));
 }
 
 CryptoKernel::Wallet::~Wallet() {
