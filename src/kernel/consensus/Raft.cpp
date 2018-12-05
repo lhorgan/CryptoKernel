@@ -289,6 +289,7 @@ void CryptoKernel::Consensus::Raft::floater() {
             unsigned long long currTime = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
             if(currTime - lastBlockTime > 5000) {
                 log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader, attempting block creation.\n\n");
+                log->printf(LOG_LEVEL_INFO, printEntryLog());
                 createBlock(); // it's been a minute, attempt a block
                 lastBlockTime = currTime;
             }
