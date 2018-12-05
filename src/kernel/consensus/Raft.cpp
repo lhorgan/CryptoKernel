@@ -34,7 +34,7 @@ void CryptoKernel::Consensus::Raft::generateEntryLog() {
         uint64_t currentHeight = blockchain->getBlockDB("tip").getHeight();
         //log->printf(LOG_LEVEL_INFO, "CURRENT HEIGHT " + std::to_string(currentHeight));
         for(int i = 2; i <= currentHeight; i++) {
-            int term = blockchain->getBlockByHeight(i).getConsensusData()["term"].isInt();
+            int term = blockchain->getBlockByHeight(i).getConsensusData()["term"].asInt();
             entryLog.push_back(term);
         }
     } catch(const Blockchain::NotFoundException& e) {
