@@ -91,7 +91,7 @@ namespace CryptoKernel {
         unsigned long long lastPing;
         unsigned long long electionTimeout;
         int commitIndex;
-        std::vector<uint64_t> entryLog;
+        std::vector<long long> entryLog;
 
         std::mutex hostMutex;
         std::mutex logEntryMutex;
