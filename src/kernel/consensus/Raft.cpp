@@ -28,33 +28,17 @@ CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::s
 }
 
 void CryptoKernel::Consensus::Raft::generateEntryLog() {
-    /*bool found = false;
-    while(!found && running) {
-        try {
-            uint64_t currentHeight = blockchain->getBlockDB("tip").getHeight();
-            log->printf(LOG_LEVEL_INFO, "CURRENT HEIGHT " + std::to_string(currentHeight));
-            for(int i = 1; i <= currentHeight; i++) {
-                if(i == 1) {
-                    entryLog.push_back(-1);
-                }
-                else {
-                    int term = blockchain->getBlockByHeight(i).getConsensusData()["term"].isInt();
-                    entryLog.push_back(term);
-                }
-            }
-            found = true;
-        } catch(const Blockchain::NotFoundException& e) {
-            log->printf(LOG_LEVEL_INFO, "grk, blockchain exception");
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    }*/
-
     uint64_t currentHeight = blockchain->getBlockDB("tip").getHeight();
     log->printf(LOG_LEVEL_INFO, "CURRENT HEIGHT " + std::to_string(currentHeight));
     entryLog.push_back(-1);
-    for(int i = 2; i <= currentHeight; i++) {
-        int term = blockchain->getBlockByHeight(i).getConsensusData()["term"].isInt();
-        entryLog.push_back(term);
+
+    try {
+        for(int i = 2; i <= currentHeight; i++) {
+            int term = blockchain->getBlockByHeight(i).getConsensusData()["term"].isInt();
+            entryLog.push_back(term);
+        }
+    } catch(const Blockchain::NotFoundException& e) {
+        log->printf(LOG_LEVEL_INFO, "grk, blockchain exception");
     }
 }
 
