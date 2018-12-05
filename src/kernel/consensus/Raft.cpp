@@ -360,11 +360,13 @@ void CryptoKernel::Consensus::Raft::sendAppendEntries() {
 std::map<std::string, CryptoKernel::Host*> CryptoKernel::Consensus::Raft::cacheHosts() {
     std::map<std::string, CryptoKernel::Host*> hostsCopy;
 
+    log->printf(LOG_LEVEL_INFO, "caching hosts");
     hostMutex.lock();
     for(auto it = hosts.begin(); it != hosts.end(); it++) {
-        hostsCopy.at(it->first) = new Host(*(it->second));
+        hostsCopy[it->first] = new Host(*(it->second));
     }
     hostMutex.unlock();
+    log->printf(LOG_LEVEL_INFO, "cached hosts");
 
     return hostsCopy;
 }
