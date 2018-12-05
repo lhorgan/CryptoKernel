@@ -160,7 +160,7 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
         if(requesterTerm >= term) {
             // update last ping
             resetValues();
-            //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I have received a heartbeat from " + data["sender"].asString());
+            log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I have received a heartbeat from " + data["sender"].asString());
             currentLeader = data["sender"].asString();
             lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
 
@@ -170,14 +170,14 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
             int prevIndex = data["prevIndex"].asInt();
 
             //log->printf(LOG_LEVEL_INFO, std::to_string(term) + "Alive 3");
-            //log->printf(LOG_LEVEL_INFO, "PREV TERM, PREV INDEX: (" + std::to_string(prevTerm) + " " + std::to_string(prevIndex) + ")");
+            log->printf(LOG_LEVEL_INFO, "PREV TERM, PREV INDEX: (" + std::to_string(prevTerm) + " " + std::to_string(prevIndex) + ")");
             
             // bring our logs in sync
             logEntryMutex.lock();
             if(prevIndex < entryLog.size()) {
-                //log->printf(LOG_LEVEL_INFO, std::to_string(prevIndex) + " is less than " + std::to_string(entryLog.size()));
+                log->printf(LOG_LEVEL_INFO, std::to_string(prevIndex) + " is less than " + std::to_string(entryLog.size()));
                 if(entryLog[prevIndex] == prevTerm) {
-                    //log->printf(LOG_LEVEL_INFO, "Leader says term at index " + std::to_string(prevTerm) + ", and I agree.  Appending new log entries.");
+                    log->printf(LOG_LEVEL_INFO, "Leader says term at index " + std::to_string(prevTerm) + ", and I agree.  Appending new log entries.");
                     entryLog.resize(prevIndex + 1); // trim off any entries that don't belong
                     Json::Value logArr = data["log"];
                     for(Json::Value::ArrayIndex i = 0; i < logArr.size(); i++) {
@@ -187,7 +187,7 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
                 }
             }
             else {
-                 //log->printf(LOG_LEVEL_INFO, std::to_string(prevIndex) + " is NOT less than " + std::to_string(entryLog.size()));
+                 log->printf(LOG_LEVEL_INFO, std::to_string(prevIndex) + " is NOT less than " + std::to_string(entryLog.size()));
             }
             logEntryMutex.unlock();
         }
