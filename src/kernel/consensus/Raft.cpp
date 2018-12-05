@@ -162,6 +162,7 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
             // bring our logs in sync
             logEntryMutex.lock();
             if(prevIndex < 0) {
+                log->printf(LOG_LEVEL_INFO, "Accepting, cuz prevIndex < 0.");
                 success = true;
             }
             else if(prevIndex < entryLog.size()) {
