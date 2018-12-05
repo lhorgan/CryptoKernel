@@ -29,7 +29,7 @@ CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::s
 
 void CryptoKernel::Consensus::Raft::generateEntryLog() {
     bool found = false;
-    while(!found) {
+    while(!found && running) {
         try {
             uint64_t currentHeight = blockchain->getBlockDB("tip").getHeight();
             for(int i = 1; i <= currentHeight; i++) {
@@ -45,6 +45,7 @@ void CryptoKernel::Consensus::Raft::generateEntryLog() {
         } catch(const Blockchain::NotFoundException& e) {
             log->printf(LOG_LEVEL_INFO, "grk, blockchain exception");
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 }
 
