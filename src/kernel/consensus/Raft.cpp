@@ -288,7 +288,7 @@ void CryptoKernel::Consensus::Raft::floater() {
             if(currTime - lastBlockTime > 5000) {
                 log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader, attempting block creation.\n\n");
                 createBlock(); // it's been a minute, attempt a block
-                lastBlockTime = now;
+                lastBlockTime = currTime;
             }
             //iteration = 0;
             //}
