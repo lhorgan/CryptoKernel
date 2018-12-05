@@ -161,6 +161,8 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
             
             int prevTerm = data["prevTerm"].asInt();
             int prevIndex = data["prevIndex"].asInt();
+
+            log->printf(LOG_LEVEL_INFO, "PREV TERM, PREV INDEX: (" + std::to_string(prevTerm) + " " + std::to_string(prevIndex) + ")");
             
             // bring our logs in sync
             logEntryMutex.lock();
