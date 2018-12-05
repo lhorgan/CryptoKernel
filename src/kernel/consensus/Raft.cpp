@@ -248,12 +248,12 @@ void CryptoKernel::Consensus::Raft::createBlock() {
     Json::Value consensusData = Block.getConsensusData();
 
     logEntryMutex.lock();
-    entryLog.push_back(term);
     Block.setConsensusData(consensusData);
+    consensusData["nonce"] = rand() % 10000000; // make this random**
+    consensusData["term"] = term;
+    consensusData["index"] = entryLog.size() - 1;
     if(std::get<0>(blockchain->submitBlock(Block))) {
-        consensusData["nonce"] = rand() % 10000000; // make this random**
-        consensusData["term"] = term;
-        consensusData["index"] = entryLog.size() - 1;
+        entryLog.push_back(term);
     }
     logEntryMutex.unlock();
 }
