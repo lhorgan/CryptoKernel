@@ -77,7 +77,7 @@ public:
                     poisonedMutex.unlock();
                 }
                 else {
-                    log->printf(LOG_LEVEL_INFO, "Successfully sent message " + data.substr(0, 10) + " to " + dest.toString());
+                    log->printf(LOG_LEVEL_INFO, "Successfully sent message " + data + " to " + dest.toString());
                 }
             }
         }
