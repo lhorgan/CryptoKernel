@@ -180,6 +180,7 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
                     log->printf(LOG_LEVEL_INFO, "Leader says term at index " + std::to_string(prevTerm) + ", and I agree.  Appending new log entries.");
                     entryLog.resize(prevIndex + 1); // trim off any entries that don't belong
                     Json::Value logArr = data["log"];
+                    log->printf(LOG_LEVEL_INFO, "THE LOG WE ARE APPENDING: " + logArr.toStyledString());
                     for(Json::Value::ArrayIndex i = 0; i < logArr.size(); i++) {
                         entryLog.push_back(logArr[i].asInt());
                     }
