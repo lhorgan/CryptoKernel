@@ -79,10 +79,10 @@ bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* tr
 
 void CryptoKernel::Consensus::Raft::processQueue() {
     std::vector<std::string> queue = this->raftNet->pullMessages();
-    //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Queue length: " + std::to_string(queue.size()));
+    log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Queue length: " + std::to_string(queue.size()));
 
     for(int i = 0; i < queue.size(); i++) {
-        //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " THE DECODED MESSAGE: " + queue[i]);
+        log->printf(LOG_LEVEL_INFO, std::to_string(term) + " THE DECODED MESSAGE: " + queue[i]);
         Json::Value dataArr = CryptoKernel::Storage::toJson(queue[i]);
         for(Json::Value::ArrayIndex j = 0; j < dataArr.size(); j++) {
             Json::Value data = CryptoKernel::Storage::toJson(dataArr[j].asString());
@@ -100,7 +100,7 @@ void CryptoKernel::Consensus::Raft::processQueue() {
 }
 
 void CryptoKernel::Consensus::Raft::handleRequestVotes(Json::Value& data) {
-    //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Handling vote request , " + data["direction"].asString());
+    log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Handling vote request , " + data["direction"].asString());
 
     int requesterTerm = data["term"].asInt();
 
@@ -112,12 +112,12 @@ void CryptoKernel::Consensus::Raft::handleRequestVotes(Json::Value& data) {
                 castVote(data["sender"].asString(), true);
             }
             else {
-                //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am not voting for " + data["sender"].asString() + " because I already voted for " + votedFor);
+                log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am not voting for " + data["sender"].asString() + " because I already voted for " + votedFor);
                 castVote(data["sender"].asString(), false);
             }
         }
         else { // their term is too small, don't vote for them
-            //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am not voting for " + data["sender"].asString() + " because their term is smaller than mine.");
+            log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am not voting for " + data["sender"].asString() + " because their term is smaller than mine.");
             castVote(data["sender"].asString(), false);
         }
     }
@@ -150,7 +150,7 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
         if(requesterTerm >= term) {
             // update last ping
             resetValues();
-            //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I have received a heartbeat from " + data["sender"].asString());
+            log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I have received a heartbeat from " + data["sender"].asString());
             currentLeader = data["sender"].asString();
             lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
 
@@ -207,7 +207,7 @@ void CryptoKernel::Consensus::Raft::sendToLeader(Json::Value value) {
 
 void CryptoKernel::Consensus::Raft::handleTermDisparity(int requesterTerm) {
     if(requesterTerm > term) {
-        //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Received ping from server with GREATER term " + std::to_string(requesterTerm) + ", " + std::to_string(term));
+        log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Received ping from server with GREATER term " + std::to_string(requesterTerm) + ", " + std::to_string(term));
         term = requesterTerm;
         votedFor = "";
         candidate = false;
@@ -254,9 +254,9 @@ void CryptoKernel::Consensus::Raft::floater() {
         // this node is the leader
         if(leader) {
             sendAppendEntries(); // hearbeat
-            //log->printf(LOG_LEVEL_INFO, "Leader here, sending heartbeat " + std::to_string(iteration));
+            log->printf(LOG_LEVEL_INFO, "Leader here, sending heartbeat " + std::to_string(iteration));
             //if(iteration == 40) { // about once every 2 seconds
-            //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader, attempting block creation.\n\n");
+            log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader, attempting block creation.\n\n");
             createBlock();
             //iteration = 0;
             //}
@@ -268,13 +268,13 @@ void CryptoKernel::Consensus::Raft::floater() {
                 resetValues();
             }
             else {
-                //log->printf(LOG_LEVEL_INFO, "\n~~~~~~~\n\n");
+                log->printf(LOG_LEVEL_INFO, "\n~~~~~~~\n\n");
 
                 // time to elect a new leader
                 currentLeader = "";
                 lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
                 electionTimeout = 150 + rand() % 150;
-                //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I haven't got a leader.  We need to elect a leader!");
+                log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I haven't got a leader.  We need to elect a leader!");
                 resetValues();
                 candidate = true;
                 supporters.insert(pubKey);
@@ -298,7 +298,7 @@ void CryptoKernel::Consensus::Raft::resetValues() {
 }
 
 void CryptoKernel::Consensus::Raft::requestVotes() {
-    //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Requesting votes...");
+    log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Requesting votes...");
     Json::Value dummyData;
     dummyData["rpc"] = "request_votes";
     dummyData["direction"] = "sending";
@@ -309,11 +309,11 @@ void CryptoKernel::Consensus::Raft::requestVotes() {
 
 void CryptoKernel::Consensus::Raft::castVote(std::string candidateId, bool vote) {
     if(vote) {
-        //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Casting YES vote for " + candidateId);
+        log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Casting YES vote for " + candidateId);
         votedFor = candidateId;
     }
     else {
-        //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Casting NO vote for " + candidateId);
+        log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Casting NO vote for " + candidateId);
     }
     
     Json::Value dummyData;
@@ -327,7 +327,7 @@ void CryptoKernel::Consensus::Raft::castVote(std::string candidateId, bool vote)
 }
 
 void CryptoKernel::Consensus::Raft::sendAppendEntries() {
-    //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Sending heartbeat...");
+    log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Sending heartbeat...");
     Json::Value dummyData;
     dummyData["rpc"] = "append_entries";
     dummyData["direction"] = "sending";
