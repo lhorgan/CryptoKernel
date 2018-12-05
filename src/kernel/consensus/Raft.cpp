@@ -375,7 +375,7 @@ void CryptoKernel::Consensus::Raft::sendAll(Json::Value data) {
     std::string addrs[] = {"100.24.202.21", "100.24.228.94", "34.195.150.28"};
 
     for(int i =  0; i < 3; i++) {
-        log->printf(LOG_LEVEL_INFO, "SENDING TO " + std::to_string(addrs[i]));
+        log->printf(LOG_LEVEL_INFO, "SENDING TO " + addrs[i]);
         this->raftNet->send(addrs[i], 1701, CryptoKernel::Storage::toString(data));
     }
 }
