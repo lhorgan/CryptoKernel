@@ -82,6 +82,7 @@ namespace CryptoKernel {
         void createBlock();
         void generateRandomTx();
         std::map<std::string, Host*> cacheHosts();
+        std::string printEntryLog();
 
         class LifeRaft;
     

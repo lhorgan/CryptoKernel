@@ -366,6 +366,7 @@ void CryptoKernel::Consensus::Raft::sendAppendEntries() {
 
         int lengthThingie = it->second->nextIndex - 1 < 0 ? 0 : it->second->nextIndex - 1;
         log->printf(LOG_LEVEL_INFO, "The length thingie is " + std::to_string(lengthThingie) + " and the size of the entry log is " + std::to_string(entryLog.size()));
+        log->printf(LOG_LEVEL_INFO, "THE LOG: " + printEntryLog());
         dummyData["prevIndex"] = lengthThingie;
         dummyData["prevTerm"] = entryLog[lengthThingie];
         logEntryMutex.unlock();
@@ -393,6 +394,14 @@ std::map<std::string, CryptoKernel::Host*> CryptoKernel::Consensus::Raft::cacheH
     log->printf(LOG_LEVEL_INFO, "cached hosts");
 
     return hostsCopy;
+}
+
+std::string CryptoKernel::Consensus::Raft::printEntryLog() {
+    std::string logStr = "";
+    for(int i = 0; i < entryLog.size(); i++) {
+        logStr +=  std::to_string(entryLog[i]) + " ";
+    }
+    return logStr;
 }
 
 void CryptoKernel::Consensus::Raft::sendAll(Json::Value data) {
