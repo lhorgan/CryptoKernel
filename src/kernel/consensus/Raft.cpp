@@ -5,7 +5,7 @@ CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::s
     this->pubKey = pubKey;
     this->log = log;
 
-    //this->network = network;
+    this->generateEntryLog(); // set up the entry log
 
     this->raftNet = new RaftNet(log);
 
@@ -17,6 +17,14 @@ CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::s
     candidate = false;
     term = 0;
     votedFor = "";
+}
+
+void CryptoKernel::Consensus::Raft::generateEntryLog() {
+    uint64_t currentHeight = blockchain->getBlockDB("tip").getHeight();
+    for(int i = 0; i <= currentHeight; i++) {
+        int term = blockchain->getBlockByHeight(i).getConsensusData()["term"].isInt();
+        entryLog.push_back(term);
+    }
 }
 
 CryptoKernel::Consensus::Raft::~Raft() {
@@ -101,6 +109,7 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
             // update last ping
             resetValues();
             //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I have received a heartbeat from " + data["sender"].asString());
+            currentLeader = data["sender"].asString();
             lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
         }
         handleTermDisparity(requesterTerm);
@@ -111,12 +120,47 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
         response["sender"] = pubKey;
         response["term"] = term;
 
-        sendAll(response);
+        int prevTerm = data["prevTerm"].asInt();
+        int prevIndex = data["prevIndex"].asInt();
+
+        bool success = false;
+
+        logEntryMutex.lock();
+        if(prevIndex < entryLog.size()) {
+            if(entryLog[prevIndex] == prevTerm) {
+                log->printf(LOG_LEVEL_INFO, "Leader says term at index " + std::to_string(prevTerm) + ", and I agree.  Appending new log entries.");
+                entryLog.resize(prevIndex + 1); // trim off any entries that don't belong
+                Json::Value logArr = data["log"];
+                for(Json::Value::ArrayIndex i = 0; i < logArr.size(); i++) {
+                    entryLog.push_back(logArr[i].asInt());
+                }
+                success = true;
+            }
+        }
+        logEntryMutex.unlock();
+        response["success"] = success;
+
+        sendToLeader(response);
     }
     else if(data["direction"] == "responding") { // someone responded to our heartbeat
-        // right now, there's nothing to do here
+        if(leader && !data["success"].asBool()) {
+            log->printf(LOG_LEVEL_INFO, "Follower responded that it couldn't accept log, decrementing lastIndex");
+            hostMutex.lock();
+            std::string sender = data["sender"].asString();
+            hosts[sender]->lastIndex--;
+            hostMutex.unlock();
+        }
         handleTermDisparity(requesterTerm);
     }
+}
+
+void CryptoKernel::Consensus::Raft::sendToLeader(Json::Value value) {
+    hostMutex.lock();
+    auto it = hosts.find(currentLeader);
+    if(it != hosts.end()) {
+        raftNet->send(it->second->ip, 1701, CryptoKernel::Storage::toString(value));
+    }
+    hostMutex.unlock();
 }
 
 void CryptoKernel::Consensus::Raft::handleTermDisparity(int requesterTerm) {
@@ -133,12 +177,14 @@ void CryptoKernel::Consensus::Raft::createBlock() {
     CryptoKernel::Blockchain::block Block = blockchain->generateVerifyingBlock(pubKey);
     const std::set<CryptoKernel::Blockchain::transaction> blockTransactions = Block.getTransactions();
     
-    /*for(auto it = blockTransactions.begin(); it != blockTransactions.end(); it++) {
-        if(queuedTransactions.find(it) == queuedTransactions.end()) { // this transaction is not "queued"
-            queuedTransactions.insert(*it);
+    int notFoundNum = 0;
+    for(auto it = blockTransactions.begin(); it != blockTransactions.end(); it++) {
+        if(queuedTransactions.find(*it) == queuedTransactions.end()) { // this transaction is not "queued"
+            notFoundNum += 1;
         }
     }
-    for(auto it = queuedTransactions.begin(); it != queuedTransactions.end(); it++) {
+    
+    /*for(auto it = queuedTransactions.begin(); it != queuedTransactions.end(); it++) {
         if(blockTransactions.find(*it) == blockTransactions.end()) { // this transaction has evidently been confirmed
             queuedTransactions.erase(it);
         }
@@ -237,9 +283,39 @@ void CryptoKernel::Consensus::Raft::sendAppendEntries() {
     dummyData["rpc"] = "append_entries";
     dummyData["direction"] = "sending";
     dummyData["sender"] = pubKey;
+    
     dummyData["term"] = term;
-    dummyData["log"] = {};
-    sendAll(dummyData);
+    dummyData["commitIndex"] = commitIndex;
+
+    std::map<std::string, Host> hostsCopy = cacheHosts();
+
+    for(auto it = hostsCopy.begin(); it != hostsCopy.end(); it++) {
+        dummyData["log"] = {};
+
+        logEntryMutex.lock();
+        for(int i = 0; i < it->second.lastIndex; i++) {
+            dummyData["log"].append(entryLog[i]);
+        }
+        logEntryMutex.unlock();
+
+        dummyData["prevLogIndex"] = it->second.lastIndex;
+        logEntryMutex.lock();
+        dummyData["prevLogTerm"] = entryLog[it->second.lastIndex];
+        logEntryMutex.unlock();
+        this->raftNet->send(it->second.ip, 1701, CryptoKernel::Storage::toString(dummyData));
+    }
+}
+
+std::map<std::string, CryptoKernel::Host> CryptoKernel::Consensus::Raft::cacheHosts() {
+    std::map<std::string, Host> hostsCopy;
+
+    hostMutex.lock();
+    for(auto it = hosts.begin(); it != hosts.end(); it++) {
+        hostsCopy[it->first] = it->second->copy();
+    }
+    hostMutex.unlock();
+
+    return hostsCopy;
 }
 
 void CryptoKernel::Consensus::Raft::sendAll(Json::Value data) {

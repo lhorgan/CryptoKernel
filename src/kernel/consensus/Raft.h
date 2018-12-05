@@ -15,6 +15,22 @@ namespace CryptoKernel {
         std::string data;
     };
 
+    class Host {
+    public:
+        std::string ip;
+        //int lastTerm;
+        int lastIndex;
+        int commitIndex;
+    
+    public:
+        Host copy() {
+            Host copyHost;
+            copyHost.ip = ip;
+            copyHost.lastIndex = lastIndex;
+            copyHost.commitIndex = commitIndex;
+        }
+    };
+
     class Consensus::Raft : public Consensus {
     public:
         Raft(CryptoKernel::Blockchain* blockchain, std::string pubKey, CryptoKernel::Log* log);
@@ -57,6 +73,7 @@ namespace CryptoKernel {
         void handleTermDisparity(int requesterTerm);
         void createBlock();
         void generateRandomTx();
+        std::map<std::string, Host> cacheHosts();
 
         class LifeRaft;
     
@@ -64,6 +81,12 @@ namespace CryptoKernel {
         bool running;
         unsigned long long lastPing;
         unsigned long long electionTimeout;
+        int commitIndex;
+        std::vector<uint64_t> entryLog;
+
+        std::mutex hostMutex;
+        std::mutex logEntryMutex;
+
         CryptoKernel::Blockchain* blockchain;
         std::string pubKey;
         CryptoKernel::Log* log;
@@ -77,15 +100,22 @@ namespace CryptoKernel {
         CryptoKernel::Network* network;
         std::set<CryptoKernel::Blockchain::transaction> queuedTransactions;
 
+        std::string currentLeader;
+
         std::string votedFor;
 
         RaftNet* raftNet;
 
         void sendAll(Json::Value data);
+        void sendToLeader(Json::Value data);
         void processQueue(); // process the incoming message queue
 
         void handleAppendEntries(Json::Value& data);
         void handleRequestVotes(Json::Value& data);
+
+        void generateEntryLog();
+
+        std::map<std::string, Host*> hosts;
     };
 }
 
