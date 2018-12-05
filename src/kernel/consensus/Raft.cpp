@@ -162,6 +162,7 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
             // bring our logs in sync
             logEntryMutex.lock();
             if(prevIndex < entryLog.size()) {
+                log->printf(LOG_LEVEL_INFO, std::to_string(prevIndex) + " is less than " + std::to_string(entryLog.size()));
                 if(entryLog[prevIndex] == prevTerm) {
                     log->printf(LOG_LEVEL_INFO, "Leader says term at index " + std::to_string(prevTerm) + ", and I agree.  Appending new log entries.");
                     entryLog.resize(prevIndex + 1); // trim off any entries that don't belong
@@ -171,6 +172,9 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
                     }
                     success = true;
                 }
+            }
+            else {
+                 log->printf(LOG_LEVEL_INFO, std::to_string(prevIndex) + " is NOT less than " + std::to_string(entryLog.size()));
             }
             logEntryMutex.unlock();
         }
