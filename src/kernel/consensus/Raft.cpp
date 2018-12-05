@@ -28,6 +28,9 @@ void CryptoKernel::Consensus::Raft::generateEntryLog() {
 }
 
 CryptoKernel::Consensus::Raft::~Raft() {
+    hostMutex.lock();
+    hosts.clear(); // clear out the hosts
+    hostMutex.unlock();
     running = false;
     floaterThread->join();
 }
@@ -39,7 +42,28 @@ void CryptoKernel::Consensus::Raft::start() {
 bool CryptoKernel::Consensus::Raft::checkConsensusRules(Storage::Transaction* transaction,
                                                         CryptoKernel::Blockchain::block& block,
                                                         const CryptoKernel::Blockchain::dbBlock& previousBlock) {
-    return true;
+    // leader has this block and the previous block
+    // block.index = prevBlockIndex + 1
+    Json::Value blockData = block.getConsensusData();
+    int blockTerm = blockData["term"].asInt();
+    int blockIndex = blockData["index"].asInt();
+
+    Json::Value prevBlockData = previousBlock.getConsensusData();
+    int prevBlockTerm = prevBlockData["term"].asInt();
+    int prevBlockIndex = prevBlockData["index"].asInt();
+
+    bool result = false;
+    logEntryMutex.lock();
+    if(blockIndex == prevBlockIndex + 1) {
+        if(blockIndex < entryLog.size()) {
+            if(entryLog[blockIndex] == blockTerm && entryLog[prevBlockIndex] == prevBlockTerm) {
+                result = true;
+            }
+        }
+    }
+    logEntryMutex.unlock();
+    
+    return result;
 }
 
 void CryptoKernel::Consensus::Raft::processQueue() {
@@ -105,12 +129,32 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
     int requesterTerm = data["term"].asInt();
 
     if(data["direction"] == "sending") { // we have received a heartbeat from a node
+        bool success = false;
         if(requesterTerm >= term) {
             // update last ping
             resetValues();
             //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I have received a heartbeat from " + data["sender"].asString());
             currentLeader = data["sender"].asString();
             lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
+
+            
+            int prevTerm = data["prevTerm"].asInt();
+            int prevIndex = data["prevIndex"].asInt();
+            
+            // bring our logs in sync
+            logEntryMutex.lock();
+            if(prevIndex < entryLog.size()) {
+                if(entryLog[prevIndex] == prevTerm) {
+                    log->printf(LOG_LEVEL_INFO, "Leader says term at index " + std::to_string(prevTerm) + ", and I agree.  Appending new log entries.");
+                    entryLog.resize(prevIndex + 1); // trim off any entries that don't belong
+                    Json::Value logArr = data["log"];
+                    for(Json::Value::ArrayIndex i = 0; i < logArr.size(); i++) {
+                        entryLog.push_back(logArr[i].asInt());
+                    }
+                    success = true;
+                }
+            }
+            logEntryMutex.unlock();
         }
         handleTermDisparity(requesterTerm);
 
@@ -119,25 +163,6 @@ void CryptoKernel::Consensus::Raft::handleAppendEntries(Json::Value& data) {
         response["direction"] = "responding";
         response["sender"] = pubKey;
         response["term"] = term;
-
-        int prevTerm = data["prevTerm"].asInt();
-        int prevIndex = data["prevIndex"].asInt();
-
-        bool success = false;
-
-        logEntryMutex.lock();
-        if(prevIndex < entryLog.size()) {
-            if(entryLog[prevIndex] == prevTerm) {
-                log->printf(LOG_LEVEL_INFO, "Leader says term at index " + std::to_string(prevTerm) + ", and I agree.  Appending new log entries.");
-                entryLog.resize(prevIndex + 1); // trim off any entries that don't belong
-                Json::Value logArr = data["log"];
-                for(Json::Value::ArrayIndex i = 0; i < logArr.size(); i++) {
-                    entryLog.push_back(logArr[i].asInt());
-                }
-                success = true;
-            }
-        }
-        logEntryMutex.unlock();
         response["success"] = success;
 
         sendToLeader(response);
@@ -192,7 +217,13 @@ void CryptoKernel::Consensus::Raft::createBlock() {
 
     CryptoKernel::Blockchain::dbBlock previousBlock = blockchain->getBlockDB(Block.getPreviousBlockId().toString());
     Json::Value consensusData = Block.getConsensusData();
+
+    logEntryMutex.lock();
+    entryLog.push_back(term);
     consensusData["nonce"] = rand() % 10000000; // make this random**
+    consensusData["term"] = term;
+    consensusData["index"] = entryLog.size() - 1;
+    logEntryMutex.unlock();
     Block.setConsensusData(consensusData);
     blockchain->submitBlock(Block);
 }
@@ -223,6 +254,7 @@ void CryptoKernel::Consensus::Raft::floater() {
                 //log->printf(LOG_LEVEL_INFO, "\n~~~~~~~\n\n");
 
                 // time to elect a new leader
+                currentLeader = "";
                 lastPing = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
                 electionTimeout = 150 + rand() % 150;
                 //log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I haven't got a leader.  We need to elect a leader!");
@@ -329,7 +361,21 @@ void CryptoKernel::Consensus::Raft::sendAll(Json::Value data) {
 bool CryptoKernel::Consensus::Raft::isBlockBetter(Storage::Transaction* transaction,
                                const CryptoKernel::Blockchain::block& block,
                                const CryptoKernel::Blockchain::dbBlock& tip) {
-                                   return true;
+                                   // case: leader has our tip
+                                      // leader also has the block --> block is better
+                                      // leader does not have the block --> block is not better
+                                   // case: leader does not have our itp
+                                      // leader has the block --> block is better
+                                      // leader does not have the block --> block is not better
+                                   
+                                   // So, regardless of whether or not the leader has our tip, the block is better if the leader has it,
+                                   // under the assumption that anything coming into this function represents A BLOCK THAT WE DO NOT YET HAVE
+                                   int blockIndex = block.getConsensusData()["index"].asInt();
+                                   int blockTerm = block.getConsensusData()["term"].asInt();
+                                   if(entryLog[blockIndex] == blockTerm) {
+                                       return true;
+                                   }
+                                   return false;
                                }
 
 
