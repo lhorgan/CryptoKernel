@@ -51,14 +51,15 @@ void CryptoKernel::Consensus::Raft::generateEntryLog() {
 
     uint64_t currentHeight = blockchain->getBlockDB("tip").getHeight();
     log->printf(LOG_LEVEL_INFO, "CURRENT HEIGHT " + std::to_string(currentHeight));
-    for(int i = 1; i <= currentHeight; i++) {
-        if(i == 1) {
+    entryLog.push_back(-1);
+    for(int i = 2; i <= currentHeight; i++) {
+        /*if(i == 1) {
             entryLog.push_back(-1);
         }
         else {
             int term = blockchain->getBlockByHeight(i).getConsensusData()["term"].isInt();
             entryLog.push_back(term);
-        }
+        }*/
     }
 }
 
