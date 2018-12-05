@@ -1,6 +1,7 @@
 #include "multicoin.h"
 
 #include "consensus/PoW.h"
+#include "consensus/Raft.h"
 
 CryptoKernel::MulticoinLoader::MulticoinLoader(const std::string& configFile,
                                                Log* log,
@@ -111,7 +112,11 @@ std::unique_ptr<CryptoKernel::Consensus> CryptoKernel::MulticoinLoader::getConse
                                                  config["miner"].asBool(),
                                                  config["pubKey"].asString(),
                                                  log));
-    } else {
+    }
+    else if(name == "raft") {
+        return std::unique_ptr<CryptoKernel::Consensus>(new Consensus::Raft(blockchain, config["pubKey"].asString(), log));
+    } 
+    else {
         throw std::runtime_error("Unknown consensus algorithm " + name);
     }
 }

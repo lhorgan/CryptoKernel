@@ -58,11 +58,13 @@ CryptoKernel::Wallet::Wallet(CryptoKernel::Blockchain* blockchain,
 
     running = true;
     watchThread.reset(new std::thread(&CryptoKernel::Wallet::watchFunc, this));
+    //randomTxThread.reset(new std::thread(&CryptoKernel::Wallet::generateRandomTx, this));
 }
 
 CryptoKernel::Wallet::~Wallet() {
     running = false;
     watchThread->join();
+    //randomTxThread->join();
 }
 
 void CryptoKernel::Wallet::upgradeWallet() {
@@ -520,6 +522,41 @@ Json::Value CryptoKernel::Wallet::Txo::toJson() const {
     returning["value"] = value;
 
     return returning;
+}
+
+void CryptoKernel::Wallet::generateRandomTx() {
+    std::ifstream t("config.json");
+    if(!t.is_open()) {
+        throw std::runtime_error("Could not open config file");
+    }
+
+    std::string buffer((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+    Json::Value config = CryptoKernel::Storage::toJson(buffer);
+
+    t.close();
+
+    std::string pubKey = config["pubKey"].asString();
+    log->printf(LOG_LEVEL_INFO, "Starting random tx thread with " + pubKey);
+
+    CryptoKernel::Wallet::Account acc = getAccountByKey(pubKey);
+    
+    while(running) {
+        uint64_t balance = acc.getBalance();
+        if(balance > 20000) {
+            std::string addrs[] = {"BMYM8pt+j1Ry6czNXuVztQD0M2TTGct81AY5P5LmfIiafV+8kS7mawtCsJFThJ8aVyWdTRfwn/cIvfvq6YYEEFw=", 
+                                   "BNJyw67u6D4aaV5ZybqD5gODV5iSXGmOQ/t1ZyS59q9g9+PuVO8H+Gh5TfX/+4vsjZHOtQNJanRd5Uqe/EggPH8=", 
+                                   "BCNl56/UKNlAbSo61VbzSJZKTkipLYJhfXmxDXzs5E4Sc9yoFuGDHprZHsMPI1qbTV9CIzSPrKU2vWHYMRQhByM="};
+            for(int i = 0; i < 3; i++) {
+                if(addrs[i] != pubKey) {
+                    printf("Sending money to %s, (%i)\n", addrs[i].c_str(), std::to_string(acc.getBalance()).c_str());
+                    sendToAddress(addrs[i], balance / 5, "helloworld");
+                    printf("Balance reduced to %s\n", std::to_string(acc.getBalance()).c_str());
+                }
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(20000));
+    }
 }
 
 void CryptoKernel::Wallet::Txo::spend() {

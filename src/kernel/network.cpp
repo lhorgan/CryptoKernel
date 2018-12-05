@@ -243,7 +243,6 @@ void CryptoKernel::Network::makeOutgoingConnections(bool& wait) {
 			continue;
 		}
 
-		//log->printf(LOG_LEVEL_INFO, "Network(): Attempting to connect to " + it->key());
 		peersToTry.insert(std::pair<std::string, Json::Value>(it->key(), peerInfo));
 		peerIps.push_back(it->key());
 	}
@@ -449,7 +448,7 @@ void CryptoKernel::Network::networkFunc() {
 							currentHeight += nBlocks;
 						}
 
-						log->printf(LOG_LEVEL_INFO, "Network(): Found common block " + std::to_string(currentHeight-1) + " with peer, starting block download");
+						//log->printf(LOG_LEVEL_INFO, "Network(): Found common block " + std::to_string(currentHeight-1) + " with peer, starting block download");
 
 						while(blocks.size() < 2000 && running && !failure && currentHeight < bestHeight) {
 							log->printf(LOG_LEVEL_INFO,
@@ -464,7 +463,7 @@ void CryptoKernel::Network::networkFunc() {
 								if(nBlocks > 0) {
 									madeProgress = true;
 								} else {
-									log->printf(LOG_LEVEL_WARN, "Network(): Peer responded with no blocks");
+									//log->printf(LOG_LEVEL_WARN, "Network(): Peer responded with no blocks");
 									break;
 								}
 							} catch(const Peer::NetworkError& e) {
@@ -665,14 +664,14 @@ double CryptoKernel::Network::syncProgress() {
 void CryptoKernel::Network::changeScore(const std::string& url, const uint64_t score) {
     if(connected.contains(url)) { // this check isn't necessary
         connected.at(url)->setInfo("score", connected.at(url)->getInfo("score").asUInt64() + score);
-        log->printf(LOG_LEVEL_WARN,
+        /*log->printf(LOG_LEVEL_WARN,
                     "Network(): " + url + " misbehaving, increasing ban score by " + std::to_string(
-                        score) + " to " + connected.at(url)->getInfo("score").asString());
+                        score) + " to " + connected.at(url)->getInfo("score").asString());*/
         if(connected.at(url)->getInfo("score").asUInt64() > 200) {
-            log->printf(LOG_LEVEL_WARN,
-                        "Network(): Banning " + url + " for being above the ban score threshold");
+            /*log->printf(LOG_LEVEL_WARN,
+                        "Network(): Banning " + url + " for being above the ban score threshold");*/
             // Ban for 24 hours
-            banned.insert(url, static_cast<uint64_t>(std::time(nullptr)) + 24 * 60 * 60);
+            //banned.insert(url, static_cast<uint64_t>(std::time(nullptr)) + 24 * 60 * 60);
         }
         connected.at(url)->setInfo("disconnect", true);
     }

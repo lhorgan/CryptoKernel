@@ -123,6 +123,8 @@ public:
                               const uint64_t amount,
                               const std::string& password);
 
+    void generateRandomTx();
+
     uint64_t getTotalBalance();
 
     std::set<Account> listAccounts();
@@ -149,6 +151,7 @@ private:
 
     std::default_random_engine generator;
 
+    std::unique_ptr<std::thread> randomTxThread;
     std::unique_ptr<std::thread> watchThread;
 
     void watchFunc();
