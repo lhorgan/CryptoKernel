@@ -23,6 +23,7 @@ CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::s
     leader = false;
     candidate = false;
     term = 0;
+    commitIndex = 0;
     votedFor = "";
 }
 
@@ -340,6 +341,7 @@ void CryptoKernel::Consensus::Raft::sendAppendEntries() {
 
     hostMutex.lock();
     for(auto it = hosts.begin(); it != hosts.end(); it++) {
+        log->printf(LOG_LEVEL_INFO, std::to_string(term) + "Sending hearbeat to " + it->first);
         dummyData["log"] = {};
 
         logEntryMutex.lock();
