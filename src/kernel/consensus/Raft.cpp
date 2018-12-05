@@ -341,20 +341,27 @@ void CryptoKernel::Consensus::Raft::sendAppendEntries() {
 
     hostMutex.lock();
     for(auto it = hosts.begin(); it != hosts.end(); it++) {
-        log->printf(LOG_LEVEL_INFO, std::to_string(term) + "Sending hearbeat to " + it->first);
+        log->printf(LOG_LEVEL_INFO, std::to_string(term) + " Sending hearbeat to " + it->first);
         dummyData["log"] = {};
+
+        log->printf(LOG_LEVEL_INFO, std::to_string(term) + "b");
 
         logEntryMutex.lock();
         for(int i = 0; i < it->second->lastIndex; i++) {
             dummyData["log"].append(entryLog[i]);
         }
-        logEntryMutex.unlock();
+
+        log->printf(LOG_LEVEL_INFO, std::to_string(term) + "c");
 
         dummyData["prevIndex"] = it->second->lastIndex;
-        logEntryMutex.lock();
         dummyData["prevTerm"] = entryLog[it->second->lastIndex];
         logEntryMutex.unlock();
+
+        log->printf(LOG_LEVEL_INFO, std::to_string(term) + "d");
+
         this->raftNet->send(it->second->ip, 1701, CryptoKernel::Storage::toString(dummyData));
+
+        log->printf(LOG_LEVEL_INFO, std::to_string(term) + "e");
     }
     hostMutex.unlock();
 
