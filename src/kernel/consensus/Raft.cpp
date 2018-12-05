@@ -235,44 +235,47 @@ void CryptoKernel::Consensus::Raft::handleTermDisparity(int requesterTerm) {
 void CryptoKernel::Consensus::Raft::createBlock() {
     CryptoKernel::Blockchain::block Block = blockchain->generateVerifyingBlock(pubKey);
     const std::set<CryptoKernel::Blockchain::transaction> blockTransactions = Block.getTransactions();
-    
-    int notFoundNum = 0;
-    for(auto it = blockTransactions.begin(); it != blockTransactions.end(); it++) {
-        if(queuedTransactions.find(*it) == queuedTransactions.end()) { // this transaction is not "queued"
-            notFoundNum += 1;
-        }
-    }
-    
-    /*for(auto it = queuedTransactions.begin(); it != queuedTransactions.end(); it++) {
-        if(blockTransactions.find(*it) == blockTransactions.end()) { // this transaction has evidently been confirmed
-            queuedTransactions.erase(it);
-        }
-    }*/
+    if(blockTransactions.size() > 0) {
+        log->printf(LOG_LEVEL_INFO, "We actually have " + std::to_string(blockTransactions.size()) + " transactions to mine into a block.");
+        /*int notFoundNum = 0;
+        for(auto it = blockTransactions.begin(); it != blockTransactions.end(); it++) {
+            if(queuedTransactions.find(*it) == queuedTransactions.end()) { // this transaction is not "queued"
+                notFoundNum += 1;
+            }
+        }*/
+        
+        /*for(auto it = queuedTransactions.begin(); it != queuedTransactions.end(); it++) {
+            if(blockTransactions.find(*it) == blockTransactions.end()) { // this transaction has evidently been confirmed
+                queuedTransactions.erase(it);
+            }
+        }*/
 
-    CryptoKernel::Blockchain::dbBlock previousBlock = blockchain->getBlockDB(Block.getPreviousBlockId().toString());
-    Json::Value consensusData = Block.getConsensusData();
+        CryptoKernel::Blockchain::dbBlock previousBlock = blockchain->getBlockDB(Block.getPreviousBlockId().toString());
+        Json::Value consensusData = Block.getConsensusData();
 
-    logEntryMutex.lock();
-    int termCopy = term;
-    entryLog.push_back(termCopy);
-    int entryLogSize = entryLog.size();
-    consensusData["nonce"] = rand() % 10000000; // make this random**
-    consensusData["term"] = termCopy;
-    consensusData["index"] = entryLogSize - 1;
-    logEntryMutex.unlock();
-    Block.setConsensusData(consensusData);
-    bool res = std::get<0>(blockchain->submitBlock(Block));
-    if(!res) {
         logEntryMutex.lock();
-        log->printf(LOG_LEVEL_INFO, "Couldn't confirm block, rolling back.");
-        entryLog.erase(entryLog.begin() + entryLogSize - 1);
+        int termCopy = term;
+        entryLog.push_back(termCopy);
+        int entryLogSize = entryLog.size();
+        consensusData["nonce"] = rand() % 10000000; // make this random**
+        consensusData["term"] = termCopy;
+        consensusData["index"] = entryLogSize - 1;
         logEntryMutex.unlock();
+        Block.setConsensusData(consensusData);
+        bool res = std::get<0>(blockchain->submitBlock(Block));
+        if(!res) {
+            logEntryMutex.lock();
+            log->printf(LOG_LEVEL_INFO, "Couldn't confirm block, rolling back.");
+            entryLog.erase(entryLog.begin() + entryLogSize - 1);
+            logEntryMutex.unlock();
+        }
     }
 }
 
 void CryptoKernel::Consensus::Raft::floater() {
     time_t t = std::time(0);
     uint64_t now = static_cast<uint64_t> (t);
+    unsigned long long lastBlockTime = 0;
 
     int iteration = 0;
     while(running) {
@@ -282,7 +285,11 @@ void CryptoKernel::Consensus::Raft::floater() {
             log->printf(LOG_LEVEL_INFO, "Leader here, sending heartbeat " + std::to_string(iteration));
             //if(iteration == 40) { // about once every 2 seconds
             log->printf(LOG_LEVEL_INFO, std::to_string(term) + " I am the leader, attempting block creation.\n\n");
-            createBlock();
+            unsigned long long currTime = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count();
+            if(currTime - lastBlockTime > 60000) {
+                createBlock(); // it's been a minute, attempt a block
+                lastBlockTime = now;
+            }
             //iteration = 0;
             //}
         }
