@@ -5,12 +5,12 @@ CryptoKernel::Consensus::Raft::Raft(CryptoKernel::Blockchain* blockchain, std::s
     this->pubKey = pubKey;
     this->log = log;
 
-    Host* host1 = new Host("100.24.202.21", 0, 0);
-    Host* host2 = new Host("100.24.228.94", 0, 0);
-    Host* host3 = new Host("34.195.150.28", 0, 0);
+    Host* host1 = new Host("54.172.101.222", 0, 0); // ck1
+    Host* host2 = new Host("3.87.184.210", 0, 0); // ck2
+    Host* host3 = new Host("129.10.179.252", 0, 0); // me
     hosts["BMYM8pt+j1Ry6czNXuVztQD0M2TTGct81AY5P5LmfIiafV+8kS7mawtCsJFThJ8aVyWdTRfwn/cIvfvq6YYEEFw="] = host1;
     hosts["BNJyw67u6D4aaV5ZybqD5gODV5iSXGmOQ/t1ZyS59q9g9+PuVO8H+Gh5TfX/+4vsjZHOtQNJanRd5Uqe/EggPH8="] = host2;
-    hosts["BCNl56/UKNlAbSo61VbzSJZKTkipLYJhfXmxDXzs5E4Sc9yoFuGDHprZHsMPI1qbTV9CIzSPrKU2vWHYMRQhByM="] = host3;
+    hosts["BFhOfWX+HkBHWYqWQdS+V3lakAOhKc07Urff15EsC/F7tlkpwuGAhSuNtyfhVMDSb/JZGUkPndZvbfi4QHjNXRk="] = host3;
 
     this->generateEntryLog(); // set up the entry log
 
